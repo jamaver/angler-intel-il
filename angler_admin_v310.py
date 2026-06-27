@@ -239,8 +239,17 @@ def _render_admin_page() -> str:
     }
     a { color: #0b5d2a; }
   </style>
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
+  <nav class="ai-main-tabs" aria-label="Angler Intel navigation">
+  <a class="ai-main-tab" href="/">Dashboard</a>
+  <a class="ai-main-tab" href="/waters">Local Waters</a>
+  <a class="ai-main-tab" href="/reports">Saved Reports</a>
+  <a class="ai-main-tab" href="/app-health">App Health</a>
+  <a class="ai-main-tab active" href="/admin">Admin</a>
+  <a class="ai-main-tab" href="/exports">Export</a>
+</nav>
   <h1>Angler Intel IL Admin</h1>
   <p class="muted">v3.10 local admin tools. Delete/restart actions require your admin token.</p>
 

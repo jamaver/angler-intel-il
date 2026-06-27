@@ -241,8 +241,17 @@ def _render_report_html(report_meta: dict[str, Any], payload: dict[str, Any]) ->
       .card {{ break-inside: avoid; }}
     }}
   </style>
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
+  <nav class="ai-main-tabs" aria-label="Angler Intel navigation">
+  <a class="ai-main-tab" href="/">Dashboard</a>
+  <a class="ai-main-tab" href="/waters">Local Waters</a>
+  <a class="ai-main-tab active" href="/reports">Saved Reports</a>
+  <a class="ai-main-tab" href="/app-health">App Health</a>
+  <a class="ai-main-tab" href="/admin">Admin</a>
+  <a class="ai-main-tab" href="/exports">Export</a>
+</nav>
   <div class="top">
     <h1>{html.escape(title)}</h1>
     <p class="muted">Saved by Angler Intel IL v3.8</p>

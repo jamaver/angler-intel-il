@@ -256,8 +256,17 @@ def _render_waters_page() -> str:
     }
     a { color: #0b5d2a; }
   </style>
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
+  <nav class="ai-main-tabs" aria-label="Angler Intel navigation">
+  <a class="ai-main-tab" href="/">Dashboard</a>
+  <a class="ai-main-tab active" href="/waters">Local Waters</a>
+  <a class="ai-main-tab" href="/reports">Saved Reports</a>
+  <a class="ai-main-tab" href="/app-health">App Health</a>
+  <a class="ai-main-tab" href="/admin">Admin</a>
+  <a class="ai-main-tab" href="/exports">Export</a>
+</nav>
   <h1>Local Illinois Waters</h1>
   <p class="muted">v4.0 local waters foundation. This uses a Pi-local database instead of depending only on live OpenStreetMap.</p>
 

@@ -253,8 +253,17 @@ def register_export_routes_v37(app):
       white-space: pre-wrap;
     }
   </style>
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
+  <nav class="ai-main-tabs" aria-label="Angler Intel navigation">
+  <a class="ai-main-tab" href="/">Dashboard</a>
+  <a class="ai-main-tab" href="/waters">Local Waters</a>
+  <a class="ai-main-tab" href="/reports">Saved Reports</a>
+  <a class="ai-main-tab" href="/app-health">App Health</a>
+  <a class="ai-main-tab" href="/admin">Admin</a>
+  <a class="ai-main-tab active" href="/exports">Export</a>
+</nav>
   <h1>Angler Intel IL Backup & Export</h1>
   <p>v3.7 adds safe exports for favorites, catches, and local app data.</p>
 

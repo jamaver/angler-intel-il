@@ -384,8 +384,17 @@ def _render_health_html(payload: dict[str, Any]) -> str:
       color: #0b5d2a;
     }}
   </style>
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
+  <nav class="ai-main-tabs" aria-label="Angler Intel navigation">
+  <a class="ai-main-tab" href="/">Dashboard</a>
+  <a class="ai-main-tab" href="/waters">Local Waters</a>
+  <a class="ai-main-tab" href="/reports">Saved Reports</a>
+  <a class="ai-main-tab active" href="/app-health">App Health</a>
+  <a class="ai-main-tab" href="/admin">Admin</a>
+  <a class="ai-main-tab" href="/exports">Export</a>
+</nav>
   <h1>Angler Intel IL App Health</h1>
   <p>v3.9 diagnostics and cleanup readiness check.</p>
 
