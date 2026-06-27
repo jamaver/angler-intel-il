@@ -372,3 +372,56 @@ button {
     color: black;
   }
 }
+
+/* Angler Intel IL v4.0.1 main navigation tabs */
+.ai-main-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  margin: 0.75rem 0 1rem 0;
+  padding: 0.65rem;
+  border: 1px solid rgba(120, 120, 120, 0.25);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.ai-main-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(90, 120, 90, 0.35);
+  text-decoration: none;
+  font-weight: 700;
+  line-height: 1;
+  color: inherit;
+  background: rgba(245, 248, 244, 0.95);
+}
+
+.ai-main-tab:hover,
+.ai-main-tab:focus {
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.ai-main-tab.active {
+  background: rgba(20, 92, 43, 0.12);
+  border-color: rgba(20, 92, 43, 0.5);
+}
+
+@media (max-width: 640px) {
+  .ai-main-tabs {
+    gap: 0.35rem;
+    padding: 0.5rem;
+  }
+
+  .ai-main-tab {
+    flex: 1 1 calc(50% - 0.5rem);
+    padding: 0.55rem 0.5rem;
+  }
+}
+/* end Angler Intel IL v4.0.1 main navigation tabs */
