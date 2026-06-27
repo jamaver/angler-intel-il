@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel IL",
-  "version": "v4.3.1",
-  "updated": "2026-06-27T18:01:03",
+  "version": "v4.4",
+  "updated": "2026-06-27T18:19:09",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -12,11 +12,13 @@
     "dashboard_navigation": "v4.0.2/v4.1.2",
     "dashboard_local_waters": "v4.2",
     "species_rigs": "v4.3",
-    "cleanup_readiness": "v4.3.1"
+    "cleanup_readiness": "v4.3.1",
+    "smart_recommendations": "v4.4"
   },
   "notes": [
     "Common freshwater species are active by default.",
     "Optional species can be enabled locally.",
-    "Species IDs, rig IDs, and waterbody species IDs are normalized for future recommendation logic."
+    "Species IDs, rig IDs, and waterbody species IDs are normalized for future recommendation logic.",
+    "v4.4 adds a smart recommendation layer connecting local waters, active species, rig setups, seasonal logic, and distance scoring."
   ]
 }

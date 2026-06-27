@@ -13,6 +13,7 @@
     ["/waters", "Local Waters"],
     ["/species", "Species"],
     ["/rigs", "Rig Setups"],
+    ["/recommendations", "Smart Picks"],
     ["/reports", "Saved Reports"],
     ["/data-tools", "Data Tools"],
     ["/app-health", "App Health"],

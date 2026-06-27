@@ -1,0 +1,19 @@
+{
+  "version": "v4.4",
+  "seasonal_species_boosts": {
+    "winter": ["rainbow-trout", "brown-trout", "walleye", "sauger", "northern-pike", "yellow-perch"],
+    "spring": ["largemouth-bass", "smallmouth-bass", "crappie", "bluegill", "walleye", "rainbow-trout", "brown-trout", "northern-pike"],
+    "summer": ["largemouth-bass", "smallmouth-bass", "bluegill", "channel-catfish", "flathead-catfish", "common-carp", "white-bass"],
+    "fall": ["largemouth-bass", "smallmouth-bass", "walleye", "sauger", "northern-pike", "muskie", "crappie", "rainbow-trout", "brown-trout"]
+  },
+  "condition_lure_boosts": {
+    "wind": ["spinnerbait", "spoon", "walleye-jig"],
+    "clouds": ["spinnerbait", "topwater", "spoon"],
+    "clear": ["micro-jig", "minnow", "worm", "jig"],
+    "stained": ["spinnerbait", "catfish-bait", "spoon"],
+    "cold": ["micro-jig", "walleye-jig", "minnow", "trout-float-rig"],
+    "warm": ["topwater", "spinnerbait", "worm", "catfish-bait"]
+  },
+  "default_radius_miles": 35,
+  "default_limit": 5
+}

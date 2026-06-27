@@ -14,6 +14,15 @@ from intelligence.scoring import overall_score, time_blocks, rating, hourly_bite
 
 app = Flask(__name__)
 
+# --- Angler Intel IL v4.4 smart recommendation routes ---
+try:
+    from angler_recommendations_v44 import register_recommendation_routes_v44
+    register_recommendation_routes_v44(app)
+except Exception as exc:
+    print(f"[angler-intel v4.4 recommendations disabled] {exc}")
+# --- end v4.4 smart recommendation routes ---
+
+
 # --- Angler Intel IL v4.3.1 cleanup/readiness routes ---
 try:
     from angler_cleanup_v431 import register_cleanup_routes_v431
