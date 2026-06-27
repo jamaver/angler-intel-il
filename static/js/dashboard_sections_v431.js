@@ -1,5 +1,6 @@
 /*
-  Angler Intel IL v4.3.1 Dashboard Section Controls
+  Angler Intel IL v4.4.1 Dashboard Section Controls
+  Shows/hides newer dashboard panels. Preferences are saved in this browser.
 */
 (function () {
   "use strict";
@@ -7,6 +8,7 @@
   if (location.pathname !== "/") return;
 
   const SECTIONS = [
+    { id: "ai-recommendations-panel-v44", label: "Smart Recommendations" },
     { id: "ai-local-waters-panel-v42", label: "Local Waters" },
     { id: "ai-rig-panel-v43", label: "Rig Setup Guide" }
   ];
@@ -24,7 +26,7 @@
     panel.className = "ai-dashboard-section-controls card";
     panel.innerHTML = `
       <h2>Dashboard Sections</h2>
-      <p class="muted">Show or hide newer dashboard panels. Preferences are saved in this browser.</p>
+      <p class="muted">Show or hide dashboard helper panels. Preferences are saved in this browser.</p>
       <div id="aiDashboardSectionButtons"></div>
     `;
 
@@ -38,14 +40,15 @@
     return panel;
   }
 
+  function visibleFor(id) {
+    return localStorage.getItem(key(id)) !== "hidden";
+  }
+
   function applyVisibility() {
     for (const section of SECTIONS) {
       const el = document.getElementById(section.id);
       if (!el) continue;
-
-      const stored = localStorage.getItem(key(section.id));
-      const visible = stored !== "hidden";
-      el.style.display = visible ? "" : "none";
+      el.style.display = visibleFor(section.id) ? "" : "none";
     }
 
     renderButtons();
@@ -56,7 +59,7 @@
     const box = panel.querySelector("#aiDashboardSectionButtons");
 
     box.innerHTML = SECTIONS.map(section => {
-      const visible = localStorage.getItem(key(section.id)) !== "hidden";
+      const visible = visibleFor(section.id);
       return `
         <button type="button" data-section="${section.id}">
           ${visible ? "Hide" : "Show"} ${section.label}
@@ -67,7 +70,7 @@
     box.querySelectorAll("[data-section]").forEach(btn => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-section");
-        const visible = localStorage.getItem(key(id)) !== "hidden";
+        const visible = visibleFor(id);
         localStorage.setItem(key(id), visible ? "hidden" : "visible");
         applyVisibility();
       });
@@ -76,9 +79,12 @@
 
   function init() {
     ensurePanel();
+
+    // Other dashboard panels load asynchronously, so apply a few times.
     window.setTimeout(applyVisibility, 300);
     window.setTimeout(applyVisibility, 1200);
     window.setTimeout(applyVisibility, 2500);
+    window.setTimeout(applyVisibility, 4000);
   }
 
   if (document.readyState === "loading") {
