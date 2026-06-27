@@ -379,18 +379,26 @@ def register_report_routes_v38(app):
   <meta charset="utf-8">
   <title>Angler Intel IL - Saved Reports</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/css/style.css">
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       margin: 2rem;
-      max-width: 1000px;
+      max-width: 1100px;
       line-height: 1.45;
+      background: #0b1710;
+      color: #f4fff6;
+    }
+    .page-title {
+      margin-top: 1rem;
     }
     .card {
-      border: 1px solid #ddd;
+      border: 1px solid rgba(166, 232, 182, 0.35);
       border-radius: 12px;
       padding: 1rem;
       margin: 1rem 0;
+      background: #f8fff9;
+      color: #102417;
     }
     input, button {
       font-size: 1rem;
@@ -400,33 +408,108 @@ def register_report_routes_v38(app):
     input {
       width: 100%;
       max-width: 420px;
+      border-radius: 8px;
+      border: 1px solid #8bbd96;
     }
     button {
       border-radius: 8px;
-      border: 1px solid #bbb;
+      border: 1px solid #5fa66f;
       cursor: pointer;
+      background: #e9f8ee;
+      color: #102417;
+      font-weight: 700;
     }
     pre {
-      background: #f5f5f5;
+      background: #102417;
+      color: #f4fff6;
       padding: 1rem;
       border-radius: 8px;
       overflow-x: auto;
       white-space: pre-wrap;
     }
     .muted {
-      color: #666;
+      color: #5b6b60;
     }
     .report-row {
-      border-top: 1px solid #eee;
+      border-top: 1px solid #dceee1;
       padding: 0.75rem 0;
     }
     a {
-      color: #0b5d2a;
+      color: #1f8f45;
+      font-weight: 700;
+    }
+
+    .ai-main-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      align-items: center;
+      margin: 0.75rem 0 1rem 0;
+      padding: 0.65rem;
+      border: 1px solid #2f6f45;
+      border-radius: 14px;
+      background: #102417;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+    }
+    .ai-main-tab {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 2.25rem;
+      padding: 0.45rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid #5fa66f;
+      text-decoration: none;
+      font-weight: 800;
+      line-height: 1;
+      color: #102417;
+      background: #f4fff6;
+    }
+    .ai-main-tab:visited {
+      color: #102417;
+    }
+    .ai-main-tab:hover,
+    .ai-main-tab:focus {
+      text-decoration: none;
+      background: #dff6e5;
+      color: #06150a;
+      border-color: #7ad08d;
+      transform: translateY(-1px);
+    }
+    .ai-main-tab.active {
+      background: #1f8f45;
+      color: #ffffff;
+      border-color: #a6e8b6;
+    }
+    .ai-main-tab.active:visited {
+      color: #ffffff;
+    }
+    @media (max-width: 640px) {
+      body {
+        margin: 1rem;
+      }
+      .ai-main-tabs {
+        gap: 0.35rem;
+        padding: 0.5rem;
+      }
+      .ai-main-tab {
+        flex: 1 1 calc(50% - 0.5rem);
+        padding: 0.55rem 0.5rem;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Saved Offline Reports</h1>
+  <nav class="ai-main-tabs" aria-label="Angler Intel navigation">
+    <a class="ai-main-tab" href="/">Dashboard</a>
+    <a class="ai-main-tab" href="/waters">Local Waters</a>
+    <a class="ai-main-tab active" href="/reports">Saved Reports</a>
+    <a class="ai-main-tab" href="/app-health">App Health</a>
+    <a class="ai-main-tab" href="/admin">Admin</a>
+    <a class="ai-main-tab" href="/exports">Export</a>
+  </nav>
+
+  <h1 class="page-title">Saved Offline Reports</h1>
   <p>v3.8 saves local fishing reports on this Pi using your current Angler Intel data.</p>
 
   <div class="card">
@@ -455,7 +538,10 @@ def register_report_routes_v38(app):
     <div id="reportsList">Loading...</div>
   </div>
 
-  <p><a href="/">Back to dashboard</a> | <a href="/exports">Backup & Export</a></p>
+  <p>
+    <a href="/">Back to dashboard</a> |
+    <a href="/exports">Backup & Export</a>
+  </p>
 
 <script>
 async function createReport() {
@@ -524,6 +610,7 @@ loadReports();
 </body>
 </html>
 """
+
 
     @app.route("/api/reports")
     def list_reports_v38():
