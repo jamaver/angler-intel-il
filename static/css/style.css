@@ -425,3 +425,39 @@ button {
   }
 }
 /* end Angler Intel IL v4.0.1 main navigation tabs */
+
+/* Angler Intel IL v4.0.2 nav contrast fix */
+.ai-main-tabs {
+  background: #102417 !important;
+  border: 1px solid #2f6f45 !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.ai-main-tab {
+  background: #f4fff6 !important;
+  color: #102417 !important;
+  border: 1px solid #5fa66f !important;
+  font-weight: 800;
+}
+
+.ai-main-tab:visited {
+  color: #102417 !important;
+}
+
+.ai-main-tab:hover,
+.ai-main-tab:focus {
+  background: #dff6e5 !important;
+  color: #06150a !important;
+  border-color: #7ad08d !important;
+}
+
+.ai-main-tab.active {
+  background: #1f8f45 !important;
+  color: #ffffff !important;
+  border-color: #a6e8b6 !important;
+}
+
+.ai-main-tab.active:visited {
+  color: #ffffff !important;
+}
+/* end Angler Intel IL v4.0.2 nav contrast fix */
