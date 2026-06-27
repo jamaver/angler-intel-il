@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300">
+<rect width="100%" height="100%" rx="30" fill="#0f172a"/>
+<ellipse cx="315" cy="150" rx="185" ry="72" fill="#7c2d12"/>
+<path d="M475 150 L590 82 L560 150 L590 218 Z" fill="#7c2d12"/>
+<ellipse cx="245" cy="135" rx="18" ry="14" fill="#020617"/>
+<path d="M185 175 C265 218,395 215,490 162" stroke="#fed7aa" stroke-width="12" fill="none"/>
+<path d="M270 78 C315 35,390 45,420 92" fill="#fed7aa" opacity=".75"/>
+<path d="M285 225 C340 260,405 246,430 205" fill="#fed7aa" opacity=".75"/>
+<text x="320" y="278" text-anchor="middle" font-size="32" font-family="Arial" fill="#f8fafc">Brown Trout</text>
+</svg>

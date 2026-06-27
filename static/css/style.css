@@ -1,0 +1,374 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #08111f;
+  color: #f8fafc;
+}
+
+.app {
+  max-width: 980px;
+  margin: auto;
+  padding: 14px;
+}
+
+header {
+  padding: 12px 4px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 30px;
+}
+
+h2 {
+  margin-top: 0;
+}
+
+.search {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+input {
+  flex: 1;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  font-size: 18px;
+}
+
+button {
+  padding: 14px 18px;
+  border: none;
+  border-radius: 14px;
+  background: #22c55e;
+  color: #052e16;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.card {
+  background: #152238;
+  border-radius: 18px;
+  padding: 16px;
+  margin: 12px 0;
+  box-shadow: 0 8px 20px rgba(0,0,0,.25);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.cards {
+  display: grid;
+  gap: 12px;
+}
+
+.species-card, .time-card, .forecast-day, .water-row {
+  background: #22314d;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.score {
+  font-size: 28px;
+  font-weight: bold;
+  color: #22c55e;
+}
+
+.small {
+  color: #cbd5e1;
+  font-size: 14px;
+}
+
+.lures {
+  margin-top: 8px;
+  line-height: 1.6;
+}
+
+.forecast {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.forecast-day {
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .forecast {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  h1 {
+    font-size: 26px;
+  }
+}
+
+.secondary {
+  margin-top: 12px;
+  background: #38bdf8;
+  color: #082f49;
+}
+
+.hourly {
+  display: grid;
+  gap: 8px;
+}
+
+.hour-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 50px;
+  gap: 8px;
+  align-items: center;
+}
+
+.bar-wrap {
+  background: #334155;
+  border-radius: 999px;
+  overflow: hidden;
+  height: 14px;
+}
+
+.bar {
+  height: 14px;
+  background: #22c55e;
+}
+
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+
+  .card, .species-card, .time-card, .forecast-day, .water-row {
+    background: white;
+    color: black;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+
+  button, .search {
+    display: none;
+  }
+
+  .bar-wrap {
+    border: 1px solid #aaa;
+  }
+
+  .bar {
+    background: #999;
+  }
+}
+
+.lure-cards {
+  display: grid;
+  gap: 18px;
+}
+
+.lure-card {
+  background: linear-gradient(180deg, #101c2f, #0f1b2d);
+  border-radius: 24px;
+  padding: 18px;
+  overflow: hidden;
+  box-shadow: 0 12px 28px rgba(0,0,0,.35);
+}
+
+.lure-top {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.badge {
+  background: #14b8a6;
+  color: #042f2e;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-weight: bold;
+}
+
+.mini {
+  background: #1f2c44;
+  padding: 8px 12px;
+  border-radius: 12px;
+  color: #e2e8f0;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.lure-img {
+  width: 100%;
+  height: 210px;
+  object-fit: contain;
+  display: block;
+  margin: 16px 0;
+}
+
+.lure-card h3 {
+  font-size: 28px;
+  margin: 8px 0 4px;
+}
+
+.lure-sub {
+  color: #34d399;
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.color-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.color-pill {
+  background: #263a5c;
+  color: #e5e7eb;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+@media print {
+  .lure-card {
+    background: white;
+    color: black;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+
+  .mini, .color-pill {
+    border: 1px solid #aaa;
+    background: white;
+    color: black;
+  }
+
+  .badge {
+    border: 1px solid #aaa;
+    background: white;
+    color: black;
+  }
+}
+
+.favorites {
+  display: grid;
+  gap: 8px;
+}
+
+.favorite-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.favorite-row button {
+  text-align: left;
+}
+
+.favorite-row span {
+  font-size: 12px;
+  opacity: .8;
+}
+
+.favorite-add {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.danger {
+  background: #ef4444;
+  color: white;
+}
+
+@media (max-width: 700px) {
+  .favorite-add {
+    grid-template-columns: 1fr;
+  }
+}
+
+.best-bet-card {
+  border: 1px solid rgba(34,197,94,.35);
+}
+
+.best-bet-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+.fish-img {
+  width: 100%;
+  border-radius: 18px;
+  background: #0f172a;
+}
+
+.best-reasons {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+  color: #d1fae5;
+}
+
+.species-with-image {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 14px;
+  align-items: center;
+}
+
+.fish-thumb {
+  width: 100%;
+  border-radius: 14px;
+  background: #0f172a;
+}
+
+.insight-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pill-line {
+  background: #22314d;
+  padding: 10px 12px;
+  border-radius: 999px;
+  margin: 8px 0;
+}
+
+@media (max-width: 700px) {
+  .best-bet-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .species-with-image {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .best-bet-card,
+  .species-with-image,
+  .pill-line {
+    background: white;
+    color: black;
+    border: 1px solid #ccc;
+  }
+
+  .best-reasons {
+    color: black;
+  }
+}

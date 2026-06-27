@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300">
+<rect width="100%" height="100%" rx="30" fill="#0f1b2d"/>
+<circle cx="265" cy="150" r="60" fill="#92400e"/>
+<circle cx="335" cy="150" r="45" fill="#78350f"/>
+<path d="M360 120 C420 70,500 85,530 130" fill="none" stroke="#cbd5e1" stroke-width="8"/>
+<path d="M530 130 C565 170,540 210,500 205" fill="none" stroke="#cbd5e1" stroke-width="8"/>
+<text x="165" y="250" fill="#f8fafc" font-size="34" font-family="Arial">bottom bait</text>
+</svg>

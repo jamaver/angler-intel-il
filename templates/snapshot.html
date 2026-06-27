@@ -1,0 +1,199 @@
+<!doctype html>
+<html>
+<head>
+  <title>Angler Intel Trip Snapshot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 18px;
+      background: #f8fafc;
+      color: #0f172a;
+    }
+
+    .snapshot {
+      max-width: 850px;
+      margin: auto;
+    }
+
+    h1 {
+      margin-bottom: 0;
+    }
+
+    .muted {
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 16px;
+      padding: 16px;
+      margin: 14px 0;
+      break-inside: avoid;
+    }
+
+    .score {
+      font-size: 32px;
+      font-weight: bold;
+      color: #16a34a;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+
+    th, td {
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+      padding: 8px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    button {
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 12px;
+      background: #16a34a;
+      color: white;
+      font-weight: bold;
+    }
+
+    .fish {
+      width: 100%;
+      max-width: 400px;
+      display: block;
+      margin: 8px 0;
+    }
+
+    @media print {
+      .actions {
+        display: none;
+      }
+
+      body {
+        background: white;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="snapshot">
+    <h1>🎣 Angler Intel Trip Snapshot</h1>
+    <p class="muted">Generated {{ data.generated_at }}</p>
+
+    <div class="actions">
+      <button onclick="window.print()">Save / Export PDF</button>
+      <button onclick="history.back()">Back</button>
+    </div>
+
+    <div class="card">
+      <h2>{{ data.location.city }}, {{ data.location.state }}</h2>
+      <p>ZIP: {{ data.location.zip }}</p>
+      <div class="score">{{ data.overall.score }}/100</div>
+      <p>{{ data.overall.rating }}</p>
+      <p>Detected water type: {{ data.area_type }}</p>
+    </div>
+
+    <div class="card">
+      <h2>⭐ Best Bet Today</h2>
+      <img class="fish" src="{{ data.best_bet.fish_image }}">
+      <h3>{{ data.best_bet.species }} — {{ data.best_bet.species_score }}%</h3>
+      <p><b>Best Window:</b> {{ data.best_bet.time_label }} · {{ data.best_bet.time_range }}</p>
+      {% if data.best_bet.best_hour %}
+      <p><b>Best Hour:</b> {{ data.best_bet.best_hour }}</p>
+      {% endif %}
+      <p><b>Throw:</b> {{ data.best_bet.lure_name }}</p>
+      <p><b>Retrieve:</b> {{ data.best_bet.speed }}</p>
+      <p><b>Size:</b> {{ data.best_bet.size }}</p>
+      <p><b>Colors:</b> {{ data.best_bet.colors | join(", ") }}</p>
+
+      <ul>
+        {% for reason in data.best_bet.reasons %}
+        <li>{{ reason }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Conditions</h2>
+      <p>Temperature: {{ data.weather.temp }}°F</p>
+      <p>Wind: {{ data.weather.wind }} mph</p>
+      <p>Pressure: {{ data.weather.pressure }} inHg</p>
+      <p>Cloud Cover: {{ data.weather.cloud }}%</p>
+    </div>
+
+    <div class="card">
+      <h2>Top Species</h2>
+      <table>
+        <tr>
+          <th>Species</th>
+          <th>Score</th>
+          <th>Rating</th>
+        </tr>
+        {% for s in data.species[:6] %}
+        <tr>
+          <td>{{ s.name }}</td>
+          <td>{{ s.score }}%</td>
+          <td>{{ s.rating }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Top Lures</h2>
+      <table>
+        <tr>
+          <th>Species</th>
+          <th>Lure</th>
+          <th>Speed</th>
+          <th>Size</th>
+        </tr>
+        {% for l in data.lure_cards[:4] %}
+        <tr>
+          <td>{{ l.species }}</td>
+          <td>{{ l.name }}</td>
+          <td>{{ l.speed }}</td>
+          <td>{{ l.size }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>7-Day Outlook</h2>
+      <table>
+        <tr>
+          <th>Date</th>
+          <th>Score</th>
+          <th>Rating</th>
+          <th>Temp</th>
+        </tr>
+        {% for f in data.forecast %}
+        <tr>
+          <td>{{ f.date }}</td>
+          <td>{{ f.score }}</td>
+          <td>{{ f.rating }}</td>
+          <td>{{ f.low }}° / {{ f.high }}°</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Notes</h2>
+      <p>Pack based on the Best Bet, top lure, and best time window. Save this PDF before leaving your local network.</p>
+    </div>
+  </div>
+</body>
+</html>

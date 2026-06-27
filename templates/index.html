@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head>
+  <title>Angler Intel IL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>🎣 Angler Intel IL</h1>
+      <p>Local fishing intelligence for Illinois waters</p>
+    </header>
+
+    <form id="searchForm" class="search">
+      <input id="zipInput" name="zip" value="60543" placeholder="Enter ZIP code">
+      <button type="submit">Search</button>
+    </form>
+
+    <section class="card">
+      <h2>⭐ Favorites</h2>
+      <div id="favorites" class="favorites"></div>
+
+      <div class="favorite-add">
+        <input id="favoriteName" placeholder="Favorite name">
+        <button onclick="saveFavorite()" type="button">Save Current ZIP</button>
+      </div>
+    </section>
+
+    <section id="status" class="card">Loading...</section>
+
+    <section class="card best-bet-card">
+      <h2>⭐ Best Bet Today</h2>
+      <div id="bestBet"></div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2>Best Time Today</h2>
+        <div id="bestTime"></div>
+      </div>
+
+      <div class="card">
+        <h2>Conditions</h2>
+        <div id="conditions"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Recommended Lures</h2>
+      <div id="lureCards" class="lure-cards"></div>
+    </section>
+
+    <section class="card">
+      <h2>Hourly Bite Forecast</h2>
+      <div id="hourly" class="hourly"></div>
+    </section>
+
+    <section class="card">
+      <h2>Hourly Bite Windows</h2>
+      <div id="timeBlocks" class="cards"></div>
+    </section>
+
+    <section class="card">
+      <h2>Top Species & Lures</h2>
+      <div id="species" class="cards"></div>
+    </section>
+
+    <section class="card">
+      <h2>Nearby Waters</h2>
+      <div id="waters"></div>
+    </section>
+
+    <section class="card">
+      <h2>7-Day Fishing Forecast</h2>
+      <div id="forecast" class="forecast"></div>
+    </section>
+
+    <section class="card">
+      <h2>📊 Personal Catch Insights</h2>
+      <div id="catchInsights"></div>
+    </section>
+
+    <section class="card">
+      <h2>🎣 Catch Log</h2>
+
+      <div class="catch-form">
+        <select id="catchSpecies"></select>
+        <input id="catchLure" placeholder="Lure used">
+        <textarea id="catchNotes" placeholder="Notes, spot, depth, color, retrieve..."></textarea>
+        <button type="button" onclick="saveCatch()">Save Catch</button>
+      </div>
+
+      <div id="catchLog" class="catch-log"></div>
+    </section>
+  </div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
