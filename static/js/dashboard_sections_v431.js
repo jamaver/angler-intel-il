@@ -1,7 +1,3 @@
-/*
-  Angler Intel IL v4.4.1 Dashboard Section Controls
-  Shows/hides newer dashboard panels. Preferences are saved in this browser.
-*/
 (function () {
   "use strict";
 
@@ -50,7 +46,6 @@
       if (!el) continue;
       el.style.display = visibleFor(section.id) ? "" : "none";
     }
-
     renderButtons();
   }
 
@@ -79,8 +74,6 @@
 
   function init() {
     ensurePanel();
-
-    // Other dashboard panels load asynchronously, so apply a few times.
     window.setTimeout(applyVisibility, 300);
     window.setTimeout(applyVisibility, 1200);
     window.setTimeout(applyVisibility, 2500);

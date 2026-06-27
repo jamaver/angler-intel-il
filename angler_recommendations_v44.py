@@ -745,6 +745,7 @@ async function loadRecommendations() {
 
 loadSpecies().then(loadRecommendations);
 </script>
+  <script src="/static/js/ui_polish_v442.js"></script>
 </body>
 </html>
 """

@@ -1,11 +1,3 @@
-/*
-  Angler Intel IL v4.4.1
-  Responsive global navigation.
-
-  Replaces any old ai-main-tabs nav with one consistent menu.
-  Desktop: full tab row.
-  Mobile/narrow: hamburger menu.
-*/
 (function () {
   "use strict";
 
@@ -27,7 +19,6 @@
 
   function activeForPath() {
     const path = window.location.pathname || "/";
-
     if (path === "/" || path === "") return "/";
 
     const matches = NAV_ITEMS
@@ -114,7 +105,6 @@
     if (!body) return;
 
     const firstMeaningful = body.querySelector("h1, main, section, .card");
-
     if (firstMeaningful && firstMeaningful.parentNode) {
       firstMeaningful.parentNode.insertBefore(fresh, firstMeaningful);
     } else {
