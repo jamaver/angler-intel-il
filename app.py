@@ -14,6 +14,15 @@ from intelligence.scoring import overall_score, time_blocks, rating, hourly_bite
 
 app = Flask(__name__)
 
+# --- Angler Intel IL v4.3 species and rig routes ---
+try:
+    from angler_species_rigs_v43 import register_species_rig_routes_v43
+    register_species_rig_routes_v43(app)
+except Exception as exc:
+    print(f"[angler-intel v4.3 species/rigs disabled] {exc}")
+# --- end v4.3 species and rig routes ---
+
+
 # --- Angler Intel IL v4.0 local waters routes ---
 try:
     from angler_waters_v40 import register_local_waters_routes_v40

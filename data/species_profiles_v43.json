@@ -1,0 +1,138 @@
+[
+  {
+    "id": "largemouth-bass",
+    "name": "Largemouth Bass",
+    "group": "bass",
+    "best_lures": ["spinnerbait", "jig", "worm", "topwater", "minnow"],
+    "habitat": ["weeds", "wood", "docks", "laydowns", "pond edges", "shade"],
+    "quick_pattern": "Fish cover, weed edges, shade, and low-light feeding windows. Slow down when sunny or post-front."
+  },
+  {
+    "id": "smallmouth-bass",
+    "name": "Smallmouth Bass",
+    "group": "bass",
+    "best_lures": ["jig", "spinnerbait", "minnow", "topwater", "spoon"],
+    "habitat": ["rock", "riprap", "current seams", "points", "gravel", "bridges"],
+    "quick_pattern": "Focus on rock, current breaks, riprap, and moving water. Natural colors and compact baits work well in clear water."
+  },
+  {
+    "id": "bluegill",
+    "name": "Bluegill",
+    "group": "panfish",
+    "best_lures": ["worm", "microjig"],
+    "habitat": ["weed edges", "shallow flats", "docks", "brush", "shoreline"],
+    "quick_pattern": "Use small hooks, light line, wax worms, red worms, or tiny jigs near weeds, docks, and shoreline cover."
+  },
+  {
+    "id": "crappie",
+    "name": "Crappie",
+    "group": "panfish",
+    "best_lures": ["microjig", "minnow"],
+    "habitat": ["brush", "standing timber", "docks", "dropoffs", "bridge pilings"],
+    "quick_pattern": "Fish small jigs or minnows around brush, timber, docks, and suspended fish. Slow presentations are usually best."
+  },
+  {
+    "id": "channel-catfish",
+    "name": "Channel Catfish",
+    "group": "catfish",
+    "best_lures": ["catfishbait", "worm"],
+    "habitat": ["deep holes", "current breaks", "mud flats", "riprap", "creek mouths"],
+    "quick_pattern": "Use bottom rigs with cut bait, stink bait, worms, or chicken liver near current breaks, deeper holes, and evening feeding areas."
+  },
+  {
+    "id": "flathead-catfish",
+    "name": "Flathead Catfish",
+    "group": "catfish",
+    "best_lures": ["catfishbait"],
+    "habitat": ["log jams", "deep holes", "outside bends", "tailwaters", "heavy cover"],
+    "quick_pattern": "Use heavier tackle and live bait near wood, deep holes, log jams, and current breaks, especially at night."
+  },
+  {
+    "id": "walleye",
+    "name": "Walleye",
+    "group": "walleye",
+    "best_lures": ["walleyejig", "minnow", "spoon"],
+    "habitat": ["riprap", "points", "dropoffs", "tailwaters", "wind-blown banks"],
+    "quick_pattern": "Fish low light, wind-blown structure, riprap, current seams, and dropoffs with jigs, minnows, or spoons."
+  },
+  {
+    "id": "sauger",
+    "name": "Sauger",
+    "group": "walleye",
+    "best_lures": ["walleyejig", "minnow", "spoon"],
+    "habitat": ["tailwaters", "river channels", "current seams", "deep holes", "riprap"],
+    "quick_pattern": "Use jig-and-minnow rigs or blade-style presentations near tailwaters, current seams, and river channel edges."
+  },
+  {
+    "id": "northern-pike",
+    "name": "Northern Pike",
+    "group": "pike",
+    "best_lures": ["spinnerbait", "spoon", "minnow", "topwater"],
+    "habitat": ["weed edges", "shallow bays", "points", "channels", "ambush cover"],
+    "quick_pattern": "Use wire leader, larger moving baits, spoons, spinnerbaits, or big minnows around weeds, bays, and ambush edges."
+  },
+  {
+    "id": "muskie",
+    "name": "Muskie",
+    "group": "pike",
+    "best_lures": ["spinnerbait", "spoon", "topwater", "minnow"],
+    "habitat": ["weed edges", "points", "deep weedlines", "timber", "main-lake structure"],
+    "quick_pattern": "Use heavy tackle, wire leader, large baits, and figure-eight boatside. Focus on major structure and feeding windows."
+  },
+  {
+    "id": "rainbow-trout",
+    "name": "Rainbow Trout",
+    "group": "trout",
+    "best_lures": ["spoon", "microjig", "worm", "minnow"],
+    "habitat": ["stocked ponds", "cool water", "inlets", "shoreline breaks", "current"],
+    "quick_pattern": "Use small spoons, inline spinners, micro jigs, worms, or PowerBait-style bottom/float rigs in stocked waters."
+  },
+  {
+    "id": "brown-trout",
+    "name": "Brown Trout",
+    "group": "trout",
+    "best_lures": ["spoon", "minnow", "microjig"],
+    "habitat": ["cool water", "harbors", "current", "shoreline breaks", "structure"],
+    "quick_pattern": "Use small spoons, minnow-style baits, or subtle jigs near cool-water edges, structure, harbors, and current breaks."
+  },
+  {
+    "id": "yellow-perch",
+    "name": "Yellow Perch",
+    "group": "panfish",
+    "best_lures": ["microjig", "minnow", "worm"],
+    "habitat": ["weed edges", "sand flats", "harbors", "dropoffs", "schools"],
+    "quick_pattern": "Use small minnows, worms, or tiny jigs near schools, bottom transitions, weeds, and harbor areas."
+  },
+  {
+    "id": "white-bass",
+    "name": "White Bass",
+    "group": "temperate bass",
+    "best_lures": ["spoon", "spinnerbait", "minnow", "walleyejig"],
+    "habitat": ["wind-blown banks", "points", "tailwaters", "open water", "bait schools"],
+    "quick_pattern": "Look for baitfish activity, current, wind-blown banks, and schooling fish. Spoons, small jigs, and minnow baits work well."
+  },
+  {
+    "id": "common-carp",
+    "name": "Common Carp",
+    "group": "rough fish",
+    "best_lures": ["worm"],
+    "habitat": ["mud flats", "shallow bays", "warm shallows", "creek mouths"],
+    "quick_pattern": "Use bottom rigs with corn, dough bait, or worms. Fish quietly around shallow flats, mud edges, and warm-water areas."
+  },
+  {
+    "id": "coho-salmon",
+    "name": "Coho Salmon",
+    "group": "salmon",
+    "best_lures": ["spoon", "minnow"],
+    "habitat": ["Lake Michigan", "harbors", "shoreline breaks", "piers"],
+    "quick_pattern": "Use spoons, crank/minnow baits, or spawn-style presentations around Lake Michigan harbors, piers, and shoreline movement."
+  },
+  {
+    "id": "chinook-salmon",
+    "name": "Chinook Salmon",
+    "group": "salmon",
+    "best_lures": ["spoon", "minnow"],
+    "habitat": ["Lake Michigan", "harbors", "piers", "open water"],
+    "quick_pattern": "Use heavier spoons, plugs, or minnow-style baits around Lake Michigan staging areas and low-light windows."
+  }
+]
