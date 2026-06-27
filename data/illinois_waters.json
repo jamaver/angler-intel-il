@@ -7,11 +7,34 @@
     "county": "Kane",
     "lat": 41.7606,
     "lon": -88.3201,
-    "access": ["shore", "wade", "boat nearby"],
-    "species": ["smallmouth bass", "largemouth bass", "channel catfish", "walleye", "white bass"],
-    "habitat": ["current seams", "riprap", "bridges", "dam tailwaters", "eddies"],
+    "access": [
+      "shore",
+      "wade",
+      "boat nearby"
+    ],
+    "species": [
+      "smallmouth bass",
+      "largemouth bass",
+      "channel catfish",
+      "walleye",
+      "white bass"
+    ],
+    "habitat": [
+      "current seams",
+      "riprap",
+      "bridges",
+      "dam tailwaters",
+      "eddies"
+    ],
     "notes": "Good river option for current breaks, bridge pilings, riprap, and evening smallmouth patterns.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "channel-catfish",
+      "largemouth-bass",
+      "smallmouth-bass",
+      "walleye",
+      "white-bass"
+    ]
   },
   {
     "id": "fox-river-elgin",
@@ -21,11 +44,33 @@
     "county": "Kane",
     "lat": 42.0373,
     "lon": -88.2812,
-    "access": ["shore", "wade", "boat nearby"],
-    "species": ["smallmouth bass", "channel catfish", "walleye", "carp", "white bass"],
-    "habitat": ["current breaks", "bridges", "riprap", "tailwaters"],
+    "access": [
+      "shore",
+      "wade",
+      "boat nearby"
+    ],
+    "species": [
+      "smallmouth bass",
+      "channel catfish",
+      "walleye",
+      "carp",
+      "white bass"
+    ],
+    "habitat": [
+      "current breaks",
+      "bridges",
+      "riprap",
+      "tailwaters"
+    ],
     "notes": "Urban river fishing with good structure and current-oriented patterns.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "channel-catfish",
+      "common-carp",
+      "smallmouth-bass",
+      "walleye",
+      "white-bass"
+    ]
   },
   {
     "id": "fox-river-montgomery",
@@ -35,11 +80,29 @@
     "county": "Kendall",
     "lat": 41.7306,
     "lon": -88.3459,
-    "access": ["shore", "wade"],
-    "species": ["smallmouth bass", "channel catfish", "largemouth bass", "carp"],
-    "habitat": ["riprap", "current breaks", "bridge areas"],
+    "access": [
+      "shore",
+      "wade"
+    ],
+    "species": [
+      "smallmouth bass",
+      "channel catfish",
+      "largemouth bass",
+      "carp"
+    ],
+    "habitat": [
+      "riprap",
+      "current breaks",
+      "bridge areas"
+    ],
     "notes": "Useful local Fox River entry for Kendall/Kane county searches.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "channel-catfish",
+      "common-carp",
+      "largemouth-bass",
+      "smallmouth-bass"
+    ]
   },
   {
     "id": "whalon-lake",
@@ -48,12 +111,31 @@
     "city": "Naperville / Bolingbrook",
     "county": "Will",
     "lat": 41.7047,
-    "lon": -88.1190,
-    "access": ["shore", "small craft"],
-    "species": ["largemouth bass", "bluegill", "crappie", "channel catfish"],
-    "habitat": ["shoreline", "weed edges", "pond basin", "points"],
+    "lon": -88.119,
+    "access": [
+      "shore",
+      "small craft"
+    ],
+    "species": [
+      "largemouth bass",
+      "bluegill",
+      "crappie",
+      "channel catfish"
+    ],
+    "habitat": [
+      "shoreline",
+      "weed edges",
+      "pond basin",
+      "points"
+    ],
     "notes": "Good suburban lake option for bank fishing and family trips.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "bluegill",
+      "channel-catfish",
+      "crappie",
+      "largemouth-bass"
+    ]
   },
   {
     "id": "mallard-lake",
@@ -63,11 +145,32 @@
     "county": "DuPage",
     "lat": 41.9553,
     "lon": -88.1454,
-    "access": ["shore", "boat"],
-    "species": ["largemouth bass", "bluegill", "crappie", "channel catfish", "walleye"],
-    "habitat": ["points", "shoreline cover", "deeper basin", "riprap"],
+    "access": [
+      "shore",
+      "boat"
+    ],
+    "species": [
+      "largemouth bass",
+      "bluegill",
+      "crappie",
+      "channel catfish",
+      "walleye"
+    ],
+    "habitat": [
+      "points",
+      "shoreline cover",
+      "deeper basin",
+      "riprap"
+    ],
     "notes": "DuPage-area lake with mixed warmwater species opportunities.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "bluegill",
+      "channel-catfish",
+      "crappie",
+      "largemouth-bass",
+      "walleye"
+    ]
   },
   {
     "id": "herrick-lake",
@@ -77,11 +180,29 @@
     "county": "DuPage",
     "lat": 41.8412,
     "lon": -88.1548,
-    "access": ["shore", "small craft"],
-    "species": ["largemouth bass", "bluegill", "crappie", "channel catfish"],
-    "habitat": ["shoreline", "weed edges", "wood cover"],
+    "access": [
+      "shore",
+      "small craft"
+    ],
+    "species": [
+      "largemouth bass",
+      "bluegill",
+      "crappie",
+      "channel catfish"
+    ],
+    "habitat": [
+      "shoreline",
+      "weed edges",
+      "wood cover"
+    ],
     "notes": "Good close-to-town lake option for DuPage searches.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "bluegill",
+      "channel-catfish",
+      "crappie",
+      "largemouth-bass"
+    ]
   },
   {
     "id": "silver-lake-blackwell",
@@ -91,11 +212,29 @@
     "county": "DuPage",
     "lat": 41.8325,
     "lon": -88.1864,
-    "access": ["shore", "small craft"],
-    "species": ["largemouth bass", "bluegill", "crappie", "channel catfish"],
-    "habitat": ["shoreline", "weed edges", "dropoffs"],
+    "access": [
+      "shore",
+      "small craft"
+    ],
+    "species": [
+      "largemouth bass",
+      "bluegill",
+      "crappie",
+      "channel catfish"
+    ],
+    "habitat": [
+      "shoreline",
+      "weed edges",
+      "dropoffs"
+    ],
     "notes": "Useful local lake entry for central DuPage searches.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "bluegill",
+      "channel-catfish",
+      "crappie",
+      "largemouth-bass"
+    ]
   },
   {
     "id": "heidecke-lake",
@@ -105,11 +244,32 @@
     "county": "Grundy",
     "lat": 41.3565,
     "lon": -88.3195,
-    "access": ["shore", "boat"],
-    "species": ["walleye", "hybrid striped bass", "smallmouth bass", "largemouth bass", "channel catfish"],
-    "habitat": ["riprap", "wind-blown banks", "points", "open water"],
+    "access": [
+      "shore",
+      "boat"
+    ],
+    "species": [
+      "walleye",
+      "hybrid striped bass",
+      "smallmouth bass",
+      "largemouth bass",
+      "channel catfish"
+    ],
+    "habitat": [
+      "riprap",
+      "wind-blown banks",
+      "points",
+      "open water"
+    ],
     "notes": "Bigger-water option where wind and bait movement matter.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "channel-catfish",
+      "hybrid-striped-bass",
+      "largemouth-bass",
+      "smallmouth-bass",
+      "walleye"
+    ]
   },
   {
     "id": "mazonia-braidwood",
@@ -117,13 +277,34 @@
     "type": "lake complex",
     "city": "Braidwood",
     "county": "Grundy",
-    "lat": 41.2570,
+    "lat": 41.257,
     "lon": -88.2639,
-    "access": ["shore", "small craft"],
-    "species": ["largemouth bass", "bluegill", "crappie", "channel catfish", "northern pike"],
-    "habitat": ["clear pits", "steep drops", "weed edges", "shoreline cover"],
+    "access": [
+      "shore",
+      "small craft"
+    ],
+    "species": [
+      "largemouth bass",
+      "bluegill",
+      "crappie",
+      "channel catfish",
+      "northern pike"
+    ],
+    "habitat": [
+      "clear pits",
+      "steep drops",
+      "weed edges",
+      "shoreline cover"
+    ],
     "notes": "Clear pit-lake style fishing; finesse and natural presentations often matter.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "bluegill",
+      "channel-catfish",
+      "crappie",
+      "largemouth-bass",
+      "northern-pike"
+    ]
   },
   {
     "id": "shabbona-lake",
@@ -133,11 +314,37 @@
     "county": "DeKalb",
     "lat": 41.7462,
     "lon": -88.8643,
-    "access": ["shore", "boat"],
-    "species": ["largemouth bass", "smallmouth bass", "muskie", "walleye", "crappie", "bluegill", "channel catfish"],
-    "habitat": ["standing timber", "weed edges", "points", "dropoffs", "riprap"],
+    "access": [
+      "shore",
+      "boat"
+    ],
+    "species": [
+      "largemouth bass",
+      "smallmouth bass",
+      "muskie",
+      "walleye",
+      "crappie",
+      "bluegill",
+      "channel catfish"
+    ],
+    "habitat": [
+      "standing timber",
+      "weed edges",
+      "points",
+      "dropoffs",
+      "riprap"
+    ],
     "notes": "Excellent multi-species lake for v4 intelligence expansion.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "bluegill",
+      "channel-catfish",
+      "crappie",
+      "largemouth-bass",
+      "muskie",
+      "smallmouth-bass",
+      "walleye"
+    ]
   },
   {
     "id": "busse-lake",
@@ -145,13 +352,37 @@
     "type": "lake",
     "city": "Elk Grove Village",
     "county": "Cook",
-    "lat": 42.0260,
+    "lat": 42.026,
     "lon": -87.9946,
-    "access": ["shore", "boat"],
-    "species": ["largemouth bass", "northern pike", "bluegill", "crappie", "channel catfish", "walleye"],
-    "habitat": ["shoreline", "weed edges", "channels", "bridges", "bays"],
+    "access": [
+      "shore",
+      "boat"
+    ],
+    "species": [
+      "largemouth bass",
+      "northern pike",
+      "bluegill",
+      "crappie",
+      "channel catfish",
+      "walleye"
+    ],
+    "habitat": [
+      "shoreline",
+      "weed edges",
+      "channels",
+      "bridges",
+      "bays"
+    ],
     "notes": "Popular Cook County fishery with multiple basins and shoreline access.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "bluegill",
+      "channel-catfish",
+      "crappie",
+      "largemouth-bass",
+      "northern-pike",
+      "walleye"
+    ]
   },
   {
     "id": "skokie-lagoons",
@@ -159,13 +390,36 @@
     "type": "lagoon system",
     "city": "Winnetka / Glencoe",
     "county": "Cook",
-    "lat": 42.1230,
+    "lat": 42.123,
     "lon": -87.7628,
-    "access": ["shore", "paddle craft"],
-    "species": ["largemouth bass", "northern pike", "bluegill", "crappie", "channel catfish", "carp"],
-    "habitat": ["channels", "weed edges", "wood cover", "shoreline"],
+    "access": [
+      "shore",
+      "paddle craft"
+    ],
+    "species": [
+      "largemouth bass",
+      "northern pike",
+      "bluegill",
+      "crappie",
+      "channel catfish",
+      "carp"
+    ],
+    "habitat": [
+      "channels",
+      "weed edges",
+      "wood cover",
+      "shoreline"
+    ],
     "notes": "North suburban lagoon system; good candidate for future map layers.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "bluegill",
+      "channel-catfish",
+      "common-carp",
+      "crappie",
+      "largemouth-bass",
+      "northern-pike"
+    ]
   },
   {
     "id": "wolf-lake-chicago",
@@ -175,11 +429,34 @@
     "county": "Cook",
     "lat": 41.6725,
     "lon": -87.5317,
-    "access": ["shore", "boat"],
-    "species": ["largemouth bass", "northern pike", "bluegill", "crappie", "channel catfish", "walleye"],
-    "habitat": ["shoreline", "weed edges", "open water", "channels"],
+    "access": [
+      "shore",
+      "boat"
+    ],
+    "species": [
+      "largemouth bass",
+      "northern pike",
+      "bluegill",
+      "crappie",
+      "channel catfish",
+      "walleye"
+    ],
+    "habitat": [
+      "shoreline",
+      "weed edges",
+      "open water",
+      "channels"
+    ],
     "notes": "Large southeast Chicago fishery near the Indiana border.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "bluegill",
+      "channel-catfish",
+      "crappie",
+      "largemouth-bass",
+      "northern-pike",
+      "walleye"
+    ]
   },
   {
     "id": "lake-michigan-chicago",
@@ -189,11 +466,36 @@
     "county": "Cook",
     "lat": 41.8819,
     "lon": -87.6231,
-    "access": ["shore", "harbor", "boat"],
-    "species": ["yellow perch", "coho salmon", "chinook salmon", "brown trout", "lake trout", "smallmouth bass"],
-    "habitat": ["harbors", "breakwalls", "piers", "riprap", "open water"],
+    "access": [
+      "shore",
+      "harbor",
+      "boat"
+    ],
+    "species": [
+      "yellow perch",
+      "coho salmon",
+      "chinook salmon",
+      "brown trout",
+      "lake trout",
+      "smallmouth bass"
+    ],
+    "habitat": [
+      "harbors",
+      "breakwalls",
+      "piers",
+      "riprap",
+      "open water"
+    ],
     "notes": "Big-water lakefront fishery; conditions and regulations matter more here than small ponds.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "brown-trout",
+      "chinook-salmon",
+      "coho-salmon",
+      "lake-trout",
+      "smallmouth-bass",
+      "yellow-perch"
+    ]
   },
   {
     "id": "des-plaines-river-channahon",
@@ -203,11 +505,32 @@
     "county": "Will",
     "lat": 41.4295,
     "lon": -88.2287,
-    "access": ["shore", "boat nearby"],
-    "species": ["channel catfish", "smallmouth bass", "walleye", "carp", "white bass"],
-    "habitat": ["current breaks", "riprap", "confluences", "bridges"],
+    "access": [
+      "shore",
+      "boat nearby"
+    ],
+    "species": [
+      "channel catfish",
+      "smallmouth bass",
+      "walleye",
+      "carp",
+      "white bass"
+    ],
+    "habitat": [
+      "current breaks",
+      "riprap",
+      "confluences",
+      "bridges"
+    ],
     "notes": "Good river option near the Des Plaines/Kankakee/Illinois River corridor.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "channel-catfish",
+      "common-carp",
+      "smallmouth-bass",
+      "walleye",
+      "white-bass"
+    ]
   },
   {
     "id": "kankakee-river-wilmington",
@@ -217,11 +540,34 @@
     "county": "Will",
     "lat": 41.3078,
     "lon": -88.1467,
-    "access": ["shore", "wade", "boat nearby"],
-    "species": ["smallmouth bass", "walleye", "channel catfish", "northern pike", "rock bass"],
-    "habitat": ["riffles", "current seams", "rocks", "islands", "pools"],
+    "access": [
+      "shore",
+      "wade",
+      "boat nearby"
+    ],
+    "species": [
+      "smallmouth bass",
+      "walleye",
+      "channel catfish",
+      "northern pike",
+      "rock bass"
+    ],
+    "habitat": [
+      "riffles",
+      "current seams",
+      "rocks",
+      "islands",
+      "pools"
+    ],
     "notes": "Classic smallmouth river structure; flow and safety matter.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "channel-catfish",
+      "northern-pike",
+      "rock-bass",
+      "smallmouth-bass",
+      "walleye"
+    ]
   },
   {
     "id": "illinois-river-starved-rock",
@@ -229,13 +575,36 @@
     "type": "river",
     "city": "Utica",
     "county": "LaSalle",
-    "lat": 41.3210,
-    "lon": -88.9860,
-    "access": ["shore", "boat"],
-    "species": ["sauger", "walleye", "white bass", "channel catfish", "flathead catfish", "carp"],
-    "habitat": ["tailwaters", "current seams", "wing dams", "deep holes"],
+    "lat": 41.321,
+    "lon": -88.986,
+    "access": [
+      "shore",
+      "boat"
+    ],
+    "species": [
+      "sauger",
+      "walleye",
+      "white bass",
+      "channel catfish",
+      "flathead catfish",
+      "carp"
+    ],
+    "habitat": [
+      "tailwaters",
+      "current seams",
+      "wing dams",
+      "deep holes"
+    ],
     "notes": "Major river fishery; future version should include river-stage awareness.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "channel-catfish",
+      "common-carp",
+      "flathead-catfish",
+      "sauger",
+      "walleye",
+      "white-bass"
+    ]
   },
   {
     "id": "clinton-lake",
@@ -245,11 +614,35 @@
     "county": "DeWitt",
     "lat": 40.1534,
     "lon": -88.8467,
-    "access": ["shore", "boat"],
-    "species": ["largemouth bass", "white bass", "crappie", "bluegill", "channel catfish", "walleye"],
-    "habitat": ["points", "riprap", "brush", "creek arms", "warmwater influence"],
+    "access": [
+      "shore",
+      "boat"
+    ],
+    "species": [
+      "largemouth bass",
+      "white bass",
+      "crappie",
+      "bluegill",
+      "channel catfish",
+      "walleye"
+    ],
+    "habitat": [
+      "points",
+      "riprap",
+      "brush",
+      "creek arms",
+      "warmwater influence"
+    ],
     "notes": "Large central Illinois reservoir with seasonal and wind-driven patterns.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "bluegill",
+      "channel-catfish",
+      "crappie",
+      "largemouth-bass",
+      "walleye",
+      "white-bass"
+    ]
   },
   {
     "id": "lake-shelbyville",
@@ -259,11 +652,35 @@
     "county": "Shelby / Moultrie",
     "lat": 39.4556,
     "lon": -88.7417,
-    "access": ["shore", "boat"],
-    "species": ["largemouth bass", "white bass", "crappie", "walleye", "muskie", "channel catfish"],
-    "habitat": ["points", "standing timber", "creek arms", "riprap", "flats"],
+    "access": [
+      "shore",
+      "boat"
+    ],
+    "species": [
+      "largemouth bass",
+      "white bass",
+      "crappie",
+      "walleye",
+      "muskie",
+      "channel catfish"
+    ],
+    "habitat": [
+      "points",
+      "standing timber",
+      "creek arms",
+      "riprap",
+      "flats"
+    ],
     "notes": "Large reservoir; future v4 logic should separate upper arms, main lake, and tailwater.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "channel-catfish",
+      "crappie",
+      "largemouth-bass",
+      "muskie",
+      "walleye",
+      "white-bass"
+    ]
   },
   {
     "id": "carlyle-lake",
@@ -271,13 +688,37 @@
     "type": "reservoir",
     "city": "Carlyle",
     "county": "Clinton / Fayette / Bond",
-    "lat": 38.6320,
-    "lon": -89.3260,
-    "access": ["shore", "boat"],
-    "species": ["white bass", "sauger", "crappie", "channel catfish", "largemouth bass", "bluegill"],
-    "habitat": ["wind-blown banks", "riprap", "flats", "creek channels", "tailwater"],
+    "lat": 38.632,
+    "lon": -89.326,
+    "access": [
+      "shore",
+      "boat"
+    ],
+    "species": [
+      "white bass",
+      "sauger",
+      "crappie",
+      "channel catfish",
+      "largemouth bass",
+      "bluegill"
+    ],
+    "habitat": [
+      "wind-blown banks",
+      "riprap",
+      "flats",
+      "creek channels",
+      "tailwater"
+    ],
     "notes": "Large southern Illinois reservoir; wind direction is important.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "bluegill",
+      "channel-catfish",
+      "crappie",
+      "largemouth-bass",
+      "sauger",
+      "white-bass"
+    ]
   },
   {
     "id": "rend-lake",
@@ -287,11 +728,33 @@
     "county": "Franklin / Jefferson",
     "lat": 38.0912,
     "lon": -88.9776,
-    "access": ["shore", "boat"],
-    "species": ["crappie", "largemouth bass", "bluegill", "channel catfish", "white bass"],
-    "habitat": ["brush piles", "standing timber", "flats", "riprap", "creek arms"],
+    "access": [
+      "shore",
+      "boat"
+    ],
+    "species": [
+      "crappie",
+      "largemouth bass",
+      "bluegill",
+      "channel catfish",
+      "white bass"
+    ],
+    "habitat": [
+      "brush piles",
+      "standing timber",
+      "flats",
+      "riprap",
+      "creek arms"
+    ],
     "notes": "Southern Illinois reservoir with strong panfish and warmwater opportunities.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "bluegill",
+      "channel-catfish",
+      "crappie",
+      "largemouth-bass",
+      "white-bass"
+    ]
   },
   {
     "id": "crab-orchard-lake",
@@ -299,13 +762,35 @@
     "type": "lake",
     "city": "Marion",
     "county": "Williamson",
-    "lat": 37.7270,
-    "lon": -89.0810,
-    "access": ["shore", "boat"],
-    "species": ["largemouth bass", "crappie", "bluegill", "channel catfish", "white bass"],
-    "habitat": ["riprap", "weed edges", "points", "flats", "brush"],
+    "lat": 37.727,
+    "lon": -89.081,
+    "access": [
+      "shore",
+      "boat"
+    ],
+    "species": [
+      "largemouth bass",
+      "crappie",
+      "bluegill",
+      "channel catfish",
+      "white bass"
+    ],
+    "habitat": [
+      "riprap",
+      "weed edges",
+      "points",
+      "flats",
+      "brush"
+    ],
     "notes": "Southern Illinois lake with productive warmwater fishing patterns.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "bluegill",
+      "channel-catfish",
+      "crappie",
+      "largemouth-bass",
+      "white-bass"
+    ]
   },
   {
     "id": "kinkaid-lake",
@@ -315,10 +800,34 @@
     "county": "Jackson",
     "lat": 37.7986,
     "lon": -89.4483,
-    "access": ["shore", "boat"],
-    "species": ["largemouth bass", "muskie", "crappie", "bluegill", "channel catfish", "walleye"],
-    "habitat": ["clear water", "standing timber", "points", "bluffs", "weed edges"],
+    "access": [
+      "shore",
+      "boat"
+    ],
+    "species": [
+      "largemouth bass",
+      "muskie",
+      "crappie",
+      "bluegill",
+      "channel catfish",
+      "walleye"
+    ],
+    "habitat": [
+      "clear water",
+      "standing timber",
+      "points",
+      "bluffs",
+      "weed edges"
+    ],
     "notes": "Clearer southern Illinois lake; finesse and structure patterns matter.",
-    "confidence": "starter-local"
+    "confidence": "starter-local",
+    "species_ids": [
+      "bluegill",
+      "channel-catfish",
+      "crappie",
+      "largemouth-bass",
+      "muskie",
+      "walleye"
+    ]
   }
 ]

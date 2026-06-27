@@ -200,6 +200,7 @@ def _page_shell(title: str, active: str, body: str) -> str:
 <body>
   {_nav(active)}
   {body}
+  <script src="/static/js/species_controls_v431.js"></script>
 </body>
 </html>
 """

@@ -3,136 +3,485 @@
     "id": "largemouth-bass",
     "name": "Largemouth Bass",
     "group": "bass",
-    "best_lures": ["spinnerbait", "jig", "worm", "topwater", "minnow"],
-    "habitat": ["weeds", "wood", "docks", "laydowns", "pond edges", "shade"],
-    "quick_pattern": "Fish cover, weed edges, shade, and low-light feeding windows. Slow down when sunny or post-front."
+    "best_lures": [
+      "spinnerbait",
+      "jig",
+      "worm",
+      "topwater",
+      "minnow"
+    ],
+    "habitat": [
+      "weeds",
+      "wood",
+      "docks",
+      "laydowns",
+      "pond edges",
+      "shade"
+    ],
+    "quick_pattern": "Fish cover, weed edges, shade, and low-light feeding windows. Slow down when sunny or post-front.",
+    "tier": "common",
+    "enabled": true
   },
   {
     "id": "smallmouth-bass",
     "name": "Smallmouth Bass",
     "group": "bass",
-    "best_lures": ["jig", "spinnerbait", "minnow", "topwater", "spoon"],
-    "habitat": ["rock", "riprap", "current seams", "points", "gravel", "bridges"],
-    "quick_pattern": "Focus on rock, current breaks, riprap, and moving water. Natural colors and compact baits work well in clear water."
+    "best_lures": [
+      "jig",
+      "spinnerbait",
+      "minnow",
+      "topwater",
+      "spoon"
+    ],
+    "habitat": [
+      "rock",
+      "riprap",
+      "current seams",
+      "points",
+      "gravel",
+      "bridges"
+    ],
+    "quick_pattern": "Focus on rock, current breaks, riprap, and moving water. Natural colors and compact baits work well in clear water.",
+    "tier": "common",
+    "enabled": true
   },
   {
     "id": "bluegill",
     "name": "Bluegill",
     "group": "panfish",
-    "best_lures": ["worm", "microjig"],
-    "habitat": ["weed edges", "shallow flats", "docks", "brush", "shoreline"],
-    "quick_pattern": "Use small hooks, light line, wax worms, red worms, or tiny jigs near weeds, docks, and shoreline cover."
+    "best_lures": [
+      "worm",
+      "microjig"
+    ],
+    "habitat": [
+      "weed edges",
+      "shallow flats",
+      "docks",
+      "brush",
+      "shoreline"
+    ],
+    "quick_pattern": "Use small hooks, light line, wax worms, red worms, or tiny jigs near weeds, docks, and shoreline cover.",
+    "tier": "common",
+    "enabled": true
   },
   {
     "id": "crappie",
     "name": "Crappie",
     "group": "panfish",
-    "best_lures": ["microjig", "minnow"],
-    "habitat": ["brush", "standing timber", "docks", "dropoffs", "bridge pilings"],
-    "quick_pattern": "Fish small jigs or minnows around brush, timber, docks, and suspended fish. Slow presentations are usually best."
+    "best_lures": [
+      "microjig",
+      "minnow"
+    ],
+    "habitat": [
+      "brush",
+      "standing timber",
+      "docks",
+      "dropoffs",
+      "bridge pilings"
+    ],
+    "quick_pattern": "Fish small jigs or minnows around brush, timber, docks, and suspended fish. Slow presentations are usually best.",
+    "tier": "common",
+    "enabled": true
   },
   {
     "id": "channel-catfish",
     "name": "Channel Catfish",
     "group": "catfish",
-    "best_lures": ["catfishbait", "worm"],
-    "habitat": ["deep holes", "current breaks", "mud flats", "riprap", "creek mouths"],
-    "quick_pattern": "Use bottom rigs with cut bait, stink bait, worms, or chicken liver near current breaks, deeper holes, and evening feeding areas."
-  },
-  {
-    "id": "flathead-catfish",
-    "name": "Flathead Catfish",
-    "group": "catfish",
-    "best_lures": ["catfishbait"],
-    "habitat": ["log jams", "deep holes", "outside bends", "tailwaters", "heavy cover"],
-    "quick_pattern": "Use heavier tackle and live bait near wood, deep holes, log jams, and current breaks, especially at night."
+    "best_lures": [
+      "catfishbait",
+      "worm"
+    ],
+    "habitat": [
+      "deep holes",
+      "current breaks",
+      "mud flats",
+      "riprap",
+      "creek mouths"
+    ],
+    "quick_pattern": "Use bottom rigs with cut bait, stink bait, worms, or chicken liver near current breaks, deeper holes, and evening feeding areas.",
+    "tier": "common",
+    "enabled": true
   },
   {
     "id": "walleye",
     "name": "Walleye",
     "group": "walleye",
-    "best_lures": ["walleyejig", "minnow", "spoon"],
-    "habitat": ["riprap", "points", "dropoffs", "tailwaters", "wind-blown banks"],
-    "quick_pattern": "Fish low light, wind-blown structure, riprap, current seams, and dropoffs with jigs, minnows, or spoons."
-  },
-  {
-    "id": "sauger",
-    "name": "Sauger",
-    "group": "walleye",
-    "best_lures": ["walleyejig", "minnow", "spoon"],
-    "habitat": ["tailwaters", "river channels", "current seams", "deep holes", "riprap"],
-    "quick_pattern": "Use jig-and-minnow rigs or blade-style presentations near tailwaters, current seams, and river channel edges."
+    "best_lures": [
+      "walleyejig",
+      "minnow",
+      "spoon"
+    ],
+    "habitat": [
+      "riprap",
+      "points",
+      "dropoffs",
+      "tailwaters",
+      "wind-blown banks"
+    ],
+    "quick_pattern": "Fish low light, wind-blown structure, riprap, current seams, and dropoffs with jigs, minnows, or spoons.",
+    "tier": "common",
+    "enabled": true
   },
   {
     "id": "northern-pike",
     "name": "Northern Pike",
     "group": "pike",
-    "best_lures": ["spinnerbait", "spoon", "minnow", "topwater"],
-    "habitat": ["weed edges", "shallow bays", "points", "channels", "ambush cover"],
-    "quick_pattern": "Use wire leader, larger moving baits, spoons, spinnerbaits, or big minnows around weeds, bays, and ambush edges."
-  },
-  {
-    "id": "muskie",
-    "name": "Muskie",
-    "group": "pike",
-    "best_lures": ["spinnerbait", "spoon", "topwater", "minnow"],
-    "habitat": ["weed edges", "points", "deep weedlines", "timber", "main-lake structure"],
-    "quick_pattern": "Use heavy tackle, wire leader, large baits, and figure-eight boatside. Focus on major structure and feeding windows."
+    "best_lures": [
+      "spinnerbait",
+      "spoon",
+      "minnow",
+      "topwater"
+    ],
+    "habitat": [
+      "weed edges",
+      "shallow bays",
+      "points",
+      "channels",
+      "ambush cover"
+    ],
+    "quick_pattern": "Use wire leader, larger moving baits, spoons, spinnerbaits, or big minnows around weeds, bays, and ambush edges.",
+    "tier": "common",
+    "enabled": true
   },
   {
     "id": "rainbow-trout",
     "name": "Rainbow Trout",
     "group": "trout",
-    "best_lures": ["spoon", "microjig", "worm", "minnow"],
-    "habitat": ["stocked ponds", "cool water", "inlets", "shoreline breaks", "current"],
-    "quick_pattern": "Use small spoons, inline spinners, micro jigs, worms, or PowerBait-style bottom/float rigs in stocked waters."
+    "best_lures": [
+      "spoon",
+      "microjig",
+      "worm",
+      "minnow"
+    ],
+    "habitat": [
+      "stocked ponds",
+      "cool water",
+      "inlets",
+      "shoreline breaks",
+      "current"
+    ],
+    "quick_pattern": "Use small spoons, inline spinners, micro jigs, worms, or PowerBait-style bottom/float rigs in stocked waters.",
+    "tier": "common",
+    "enabled": true
   },
   {
     "id": "brown-trout",
     "name": "Brown Trout",
     "group": "trout",
-    "best_lures": ["spoon", "minnow", "microjig"],
-    "habitat": ["cool water", "harbors", "current", "shoreline breaks", "structure"],
-    "quick_pattern": "Use small spoons, minnow-style baits, or subtle jigs near cool-water edges, structure, harbors, and current breaks."
+    "best_lures": [
+      "spoon",
+      "minnow",
+      "microjig"
+    ],
+    "habitat": [
+      "cool water",
+      "harbors",
+      "current",
+      "shoreline breaks",
+      "structure"
+    ],
+    "quick_pattern": "Use small spoons, minnow-style baits, or subtle jigs near cool-water edges, structure, harbors, and current breaks.",
+    "tier": "common",
+    "enabled": true
   },
   {
     "id": "yellow-perch",
     "name": "Yellow Perch",
     "group": "panfish",
-    "best_lures": ["microjig", "minnow", "worm"],
-    "habitat": ["weed edges", "sand flats", "harbors", "dropoffs", "schools"],
-    "quick_pattern": "Use small minnows, worms, or tiny jigs near schools, bottom transitions, weeds, and harbor areas."
+    "best_lures": [
+      "microjig",
+      "minnow",
+      "worm"
+    ],
+    "habitat": [
+      "weed edges",
+      "sand flats",
+      "harbors",
+      "dropoffs",
+      "schools"
+    ],
+    "quick_pattern": "Use small minnows, worms, or tiny jigs near schools, bottom transitions, weeds, and harbor areas.",
+    "tier": "common",
+    "enabled": true
   },
   {
     "id": "white-bass",
     "name": "White Bass",
     "group": "temperate bass",
-    "best_lures": ["spoon", "spinnerbait", "minnow", "walleyejig"],
-    "habitat": ["wind-blown banks", "points", "tailwaters", "open water", "bait schools"],
-    "quick_pattern": "Look for baitfish activity, current, wind-blown banks, and schooling fish. Spoons, small jigs, and minnow baits work well."
+    "best_lures": [
+      "spoon",
+      "spinnerbait",
+      "minnow",
+      "walleyejig"
+    ],
+    "habitat": [
+      "wind-blown banks",
+      "points",
+      "tailwaters",
+      "open water",
+      "bait schools"
+    ],
+    "quick_pattern": "Look for baitfish activity, current, wind-blown banks, and schooling fish. Spoons, small jigs, and minnow baits work well.",
+    "tier": "common",
+    "enabled": true
   },
   {
     "id": "common-carp",
     "name": "Common Carp",
     "group": "rough fish",
-    "best_lures": ["worm"],
-    "habitat": ["mud flats", "shallow bays", "warm shallows", "creek mouths"],
-    "quick_pattern": "Use bottom rigs with corn, dough bait, or worms. Fish quietly around shallow flats, mud edges, and warm-water areas."
+    "best_lures": [
+      "worm"
+    ],
+    "habitat": [
+      "mud flats",
+      "shallow bays",
+      "warm shallows",
+      "creek mouths"
+    ],
+    "quick_pattern": "Use bottom rigs with corn, dough bait, or worms. Fish quietly around shallow flats, mud edges, and warm-water areas.",
+    "tier": "common",
+    "enabled": true
+  },
+  {
+    "id": "muskie",
+    "name": "Muskie",
+    "group": "pike",
+    "best_lures": [
+      "spinnerbait",
+      "spoon",
+      "topwater",
+      "minnow"
+    ],
+    "habitat": [
+      "weed edges",
+      "points",
+      "deep weedlines",
+      "timber",
+      "main-lake structure"
+    ],
+    "quick_pattern": "Use heavy tackle, wire leader, large baits, and figure-eight boatside. Focus on major structure and feeding windows.",
+    "tier": "optional",
+    "enabled": false
+  },
+  {
+    "id": "sauger",
+    "name": "Sauger",
+    "group": "walleye",
+    "best_lures": [
+      "walleyejig",
+      "minnow",
+      "spoon"
+    ],
+    "habitat": [
+      "tailwaters",
+      "river channels",
+      "current seams",
+      "deep holes",
+      "riprap"
+    ],
+    "quick_pattern": "Use jig-and-minnow rigs or blade-style presentations near tailwaters, current seams, and river channel edges.",
+    "tier": "optional",
+    "enabled": false
+  },
+  {
+    "id": "flathead-catfish",
+    "name": "Flathead Catfish",
+    "group": "catfish",
+    "best_lures": [
+      "catfishbait"
+    ],
+    "habitat": [
+      "log jams",
+      "deep holes",
+      "outside bends",
+      "tailwaters",
+      "heavy cover"
+    ],
+    "quick_pattern": "Use heavier tackle and live bait near wood, deep holes, log jams, and current breaks, especially at night.",
+    "tier": "optional",
+    "enabled": false
   },
   {
     "id": "coho-salmon",
     "name": "Coho Salmon",
     "group": "salmon",
-    "best_lures": ["spoon", "minnow"],
-    "habitat": ["Lake Michigan", "harbors", "shoreline breaks", "piers"],
-    "quick_pattern": "Use spoons, crank/minnow baits, or spawn-style presentations around Lake Michigan harbors, piers, and shoreline movement."
+    "best_lures": [
+      "spoon",
+      "minnow"
+    ],
+    "habitat": [
+      "Lake Michigan",
+      "harbors",
+      "shoreline breaks",
+      "piers"
+    ],
+    "quick_pattern": "Use spoons, crank/minnow baits, or spawn-style presentations around Lake Michigan harbors, piers, and shoreline movement.",
+    "tier": "optional",
+    "enabled": false
   },
   {
     "id": "chinook-salmon",
     "name": "Chinook Salmon",
     "group": "salmon",
-    "best_lures": ["spoon", "minnow"],
-    "habitat": ["Lake Michigan", "harbors", "piers", "open water"],
-    "quick_pattern": "Use heavier spoons, plugs, or minnow-style baits around Lake Michigan staging areas and low-light windows."
+    "best_lures": [
+      "spoon",
+      "minnow"
+    ],
+    "habitat": [
+      "Lake Michigan",
+      "harbors",
+      "piers",
+      "open water"
+    ],
+    "quick_pattern": "Use heavier spoons, plugs, or minnow-style baits around Lake Michigan staging areas and low-light windows.",
+    "tier": "optional",
+    "enabled": false
+  },
+  {
+    "id": "lake-trout",
+    "name": "Lake Trout",
+    "group": "trout",
+    "best_lures": [
+      "spoon",
+      "minnow"
+    ],
+    "habitat": [
+      "Lake Michigan",
+      "deep cold water",
+      "harbors",
+      "breakwalls"
+    ],
+    "quick_pattern": "Use spoons, minnow-style baits, or trolling presentations in cold deep water and Lake Michigan structure.",
+    "tier": "optional",
+    "enabled": false
+  },
+  {
+    "id": "brook-trout",
+    "name": "Brook Trout",
+    "group": "trout",
+    "best_lures": [
+      "microjig",
+      "spoon",
+      "worm"
+    ],
+    "habitat": [
+      "cool streams",
+      "spring-fed water",
+      "stocked trout areas"
+    ],
+    "quick_pattern": "Use tiny jigs, small spinners/spoons, worms, or float rigs in cold, clear, oxygen-rich water.",
+    "tier": "optional",
+    "enabled": false
+  },
+  {
+    "id": "hybrid-striped-bass",
+    "name": "Hybrid Striped Bass",
+    "group": "temperate bass",
+    "best_lures": [
+      "spoon",
+      "spinnerbait",
+      "minnow"
+    ],
+    "habitat": [
+      "open water",
+      "wind-blown points",
+      "bait schools",
+      "reservoirs"
+    ],
+    "quick_pattern": "Look for baitfish, birds, wind-blown banks, and schooling activity. Use spoons, swimbaits, and minnow-style baits.",
+    "tier": "optional",
+    "enabled": false
+  },
+  {
+    "id": "rock-bass",
+    "name": "Rock Bass",
+    "group": "panfish",
+    "best_lures": [
+      "microjig",
+      "worm",
+      "minnow"
+    ],
+    "habitat": [
+      "rock",
+      "current seams",
+      "creeks",
+      "riprap"
+    ],
+    "quick_pattern": "Fish small jigs, worms, or minnows around rocky cover, creeks, and current edges.",
+    "tier": "optional",
+    "enabled": false
+  },
+  {
+    "id": "freshwater-drum",
+    "name": "Freshwater Drum",
+    "group": "rough fish",
+    "best_lures": [
+      "worm",
+      "minnow",
+      "walleyejig"
+    ],
+    "habitat": [
+      "river channels",
+      "riprap",
+      "flats",
+      "current seams"
+    ],
+    "quick_pattern": "Use worms, minnows, or jigs near bottom around current, riprap, and river structure.",
+    "tier": "optional",
+    "enabled": false
+  },
+  {
+    "id": "bullhead",
+    "name": "Bullhead",
+    "group": "catfish",
+    "best_lures": [
+      "worm",
+      "catfishbait"
+    ],
+    "habitat": [
+      "muddy ponds",
+      "shallow bays",
+      "slow water",
+      "weedy edges"
+    ],
+    "quick_pattern": "Use worms or small bottom rigs around muddy bottoms, weedy edges, and evening feeding areas.",
+    "tier": "optional",
+    "enabled": false
+  },
+  {
+    "id": "gar",
+    "name": "Gar",
+    "group": "rough fish",
+    "best_lures": [
+      "minnow"
+    ],
+    "habitat": [
+      "slow rivers",
+      "backwaters",
+      "warm shallows",
+      "surface activity"
+    ],
+    "quick_pattern": "Look for surface-rolling fish in warm slow water. Use small baitfish presentations and strong abrasion-resistant leader.",
+    "tier": "optional",
+    "enabled": false
+  },
+  {
+    "id": "bowfin",
+    "name": "Bowfin",
+    "group": "rough fish",
+    "best_lures": [
+      "spinnerbait",
+      "minnow",
+      "worm"
+    ],
+    "habitat": [
+      "weeds",
+      "backwaters",
+      "sloughs",
+      "muddy shallows"
+    ],
+    "quick_pattern": "Use tough tackle, moving baits, worms, or minnows around weedy shallow backwaters.",
+    "tier": "optional",
+    "enabled": false
   }
 ]

@@ -642,3 +642,64 @@ button {
   font-weight: 800;
 }
 /* end Angler Intel IL v4.3 rig setup dashboard panel */
+
+/* Angler Intel IL v4.3.1 cleanup/readiness controls */
+.ai-species-controls,
+.ai-dashboard-section-controls {
+  margin: 1rem 0;
+  border: 1px solid rgba(95, 166, 111, 0.45);
+  border-radius: 16px;
+  padding: 1rem;
+  background: rgba(248, 255, 249, 0.96);
+  color: #102417;
+}
+
+.ai-species-control-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: end;
+}
+
+.ai-species-control-row select,
+.ai-species-control-row button,
+.ai-species-control-row a,
+.ai-dashboard-section-controls button {
+  min-height: 2.25rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid #5fa66f;
+  background: #f4fff6;
+  color: #102417;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.ai-species-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.45rem;
+  margin: 0.2rem;
+  border-radius: 999px;
+  background: #e9f8ee;
+  border: 1px solid #b9ddc5;
+  color: #102417;
+  font-weight: 800;
+}
+
+.ai-species-pill button {
+  border: 1px solid #9ccca8;
+  background: #ffffff;
+  color: #102417;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+#aiDashboardSectionButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+/* end Angler Intel IL v4.3.1 cleanup/readiness controls */

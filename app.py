@@ -14,6 +14,15 @@ from intelligence.scoring import overall_score, time_blocks, rating, hourly_bite
 
 app = Flask(__name__)
 
+# --- Angler Intel IL v4.3.1 cleanup/readiness routes ---
+try:
+    from angler_cleanup_v431 import register_cleanup_routes_v431
+    register_cleanup_routes_v431(app)
+except Exception as exc:
+    print(f"[angler-intel v4.3.1 cleanup disabled] {exc}")
+# --- end v4.3.1 cleanup/readiness routes ---
+
+
 # --- Angler Intel IL v4.3 species and rig routes ---
 try:
     from angler_species_rigs_v43 import register_species_rig_routes_v43

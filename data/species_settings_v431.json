@@ -1,0 +1,43 @@
+{
+  "version": "v4.3.1",
+  "updated": "2026-06-27T18:03:15",
+  "active_species": [
+    "largemouth-bass",
+    "bluegill",
+    "crappie",
+    "rainbow-trout",
+    "brown-trout",
+    "yellow-perch",
+    "white-bass",
+    "common-carp"
+  ],
+  "common_species": [
+    "largemouth-bass",
+    "smallmouth-bass",
+    "bluegill",
+    "crappie",
+    "channel-catfish",
+    "walleye",
+    "northern-pike",
+    "rainbow-trout",
+    "brown-trout",
+    "yellow-perch",
+    "white-bass",
+    "common-carp"
+  ],
+  "optional_species": [
+    "muskie",
+    "sauger",
+    "flathead-catfish",
+    "coho-salmon",
+    "chinook-salmon",
+    "lake-trout",
+    "brook-trout",
+    "hybrid-striped-bass",
+    "rock-bass",
+    "freshwater-drum",
+    "bullhead",
+    "gar",
+    "bowfin"
+  ]
+}

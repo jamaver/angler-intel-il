@@ -2,122 +2,397 @@
   {
     "id": "spinnerbait",
     "name": "Spinnerbait Rig",
-    "best_for": ["largemouth bass", "smallmouth bass", "northern pike", "muskie", "white bass"],
+    "best_for": [
+      "largemouth bass",
+      "smallmouth bass",
+      "northern pike",
+      "muskie",
+      "white bass"
+    ],
     "rod": "Medium-heavy baitcaster or medium spinning rod for smaller baits.",
     "line": "12-17 lb mono/fluoro for bass; 30-50 lb braid with wire leader for pike/muskie.",
     "terminal": "Tie direct with improved clinch, palomar, or loop knot. Add wire leader for pike/muskie.",
     "setup": "Cast around weed edges, wood, riprap, wind-blown banks, and stained water. Retrieve steadily and bump cover when possible.",
     "when": "Best with wind, clouds, stained water, spring/fall movement, or active fish.",
-    "tips": ["White/chartreuse in stained water", "Natural colors in clear water", "Slow roll deeper edges in cold water"]
+    "tips": [
+      "White/chartreuse in stained water",
+      "Natural colors in clear water",
+      "Slow roll deeper edges in cold water"
+    ],
+    "lure_id": "spinnerbait",
+    "species_ids": [
+      "largemouth-bass",
+      "muskie",
+      "northern-pike",
+      "smallmouth-bass",
+      "white-bass"
+    ],
+    "difficulty": "easy",
+    "best_water_types": [],
+    "best_conditions": [],
+    "avoid_conditions": [],
+    "season": [
+      "spring",
+      "summer",
+      "fall"
+    ]
   },
   {
     "id": "jig",
     "name": "Bass Jig Rig",
-    "best_for": ["largemouth bass", "smallmouth bass", "walleye"],
+    "best_for": [
+      "largemouth bass",
+      "smallmouth bass",
+      "walleye"
+    ],
     "rod": "Medium-heavy fast-action rod.",
     "line": "12-20 lb fluorocarbon or 30-50 lb braid depending on cover.",
     "terminal": "Tie directly to jig. Add soft-plastic trailer such as craw, chunk, or swimbait.",
     "setup": "Pitch to wood, weeds, docks, rocks, riprap, and dropoffs. Let it hit bottom, then hop, drag, or swim it.",
     "when": "Good year-round, especially around cover, structure, and pressured fish.",
-    "tips": ["Use compact jigs in cold fronts", "Use heavier jigs in wind/current", "Match trailer action to water temperature"]
+    "tips": [
+      "Use compact jigs in cold fronts",
+      "Use heavier jigs in wind/current",
+      "Match trailer action to water temperature"
+    ],
+    "lure_id": "jig",
+    "species_ids": [
+      "largemouth-bass",
+      "smallmouth-bass",
+      "walleye"
+    ],
+    "difficulty": "easy",
+    "best_water_types": [],
+    "best_conditions": [],
+    "avoid_conditions": [],
+    "season": [
+      "spring",
+      "summer",
+      "fall"
+    ]
   },
   {
     "id": "microjig",
     "name": "Micro Jig / Panfish Jig",
-    "best_for": ["bluegill", "crappie", "yellow perch", "rainbow trout", "brown trout"],
+    "best_for": [
+      "bluegill",
+      "crappie",
+      "yellow perch",
+      "rainbow trout",
+      "brown trout"
+    ],
     "rod": "Ultralight or light spinning rod.",
     "line": "2-6 lb mono or fluorocarbon.",
     "terminal": "1/64 to 1/16 oz jig. Optional float 1-4 feet above jig.",
     "setup": "Cast or vertical jig near brush, weeds, docks, schools, or stocked trout cruising lanes.",
     "when": "Good for panfish and trout when fish want a small slow presentation.",
-    "tips": ["Tip with wax worm or tiny plastic", "Use a float when fish are suspended", "Slow fall often gets more bites"]
+    "tips": [
+      "Tip with wax worm or tiny plastic",
+      "Use a float when fish are suspended",
+      "Slow fall often gets more bites"
+    ],
+    "lure_id": "micro-jig",
+    "species_ids": [
+      "bluegill",
+      "brown-trout",
+      "crappie",
+      "rainbow-trout",
+      "yellow-perch"
+    ],
+    "difficulty": "easy",
+    "best_water_types": [],
+    "best_conditions": [],
+    "avoid_conditions": [],
+    "season": [
+      "spring",
+      "summer",
+      "fall"
+    ]
   },
   {
     "id": "spoon",
     "name": "Spoon Rig",
-    "best_for": ["northern pike", "muskie", "walleye", "trout", "salmon", "white bass"],
+    "best_for": [
+      "northern pike",
+      "muskie",
+      "walleye",
+      "trout",
+      "salmon",
+      "white bass"
+    ],
     "rod": "Medium spinning or baitcasting rod; medium-heavy for pike/muskie.",
     "line": "8-12 lb for trout/walleye; 15-30 lb braid or heavier for pike/muskie.",
     "terminal": "Use a snap or split ring. Add barrel swivel if line twist is an issue. Use wire leader for pike/muskie.",
     "setup": "Cast and retrieve with pauses, flutter on drops, or jig vertically near schools and structure.",
     "when": "Good around wind, baitfish, open water, harbors, points, and aggressive fish.",
-    "tips": ["Silver for clear water and baitfish", "Gold/copper for stained water", "Pause to trigger followers"]
+    "tips": [
+      "Silver for clear water and baitfish",
+      "Gold/copper for stained water",
+      "Pause to trigger followers"
+    ],
+    "lure_id": "spoon",
+    "species_ids": [
+      "muskie",
+      "northern-pike",
+      "salmon",
+      "trout",
+      "walleye",
+      "white-bass"
+    ],
+    "difficulty": "easy",
+    "best_water_types": [],
+    "best_conditions": [],
+    "avoid_conditions": [],
+    "season": [
+      "spring",
+      "summer",
+      "fall"
+    ]
   },
   {
     "id": "minnow",
     "name": "Minnow Rig",
-    "best_for": ["walleye", "crappie", "yellow perch", "smallmouth bass", "northern pike", "trout"],
+    "best_for": [
+      "walleye",
+      "crappie",
+      "yellow perch",
+      "smallmouth bass",
+      "northern pike",
+      "trout"
+    ],
     "rod": "Light to medium spinning rod; medium-heavy for large minnows/pike.",
     "line": "4-8 lb for panfish/trout/walleye; heavier with leader for pike.",
     "terminal": "Hook through lips or back. Use split shot, slip float, jighead, or live-bait rig depending on depth.",
     "setup": "Fish near weed edges, brush, current seams, dropoffs, or suspended fish. Keep bait lively.",
     "when": "Good when fish are neutral, cold-fronted, or feeding on baitfish.",
-    "tips": ["Use slip float for precise depth", "Use jighead in current", "Use wire leader for pike"]
+    "tips": [
+      "Use slip float for precise depth",
+      "Use jighead in current",
+      "Use wire leader for pike"
+    ],
+    "lure_id": "minnow",
+    "species_ids": [
+      "crappie",
+      "northern-pike",
+      "smallmouth-bass",
+      "trout",
+      "walleye",
+      "yellow-perch"
+    ],
+    "difficulty": "easy",
+    "best_water_types": [],
+    "best_conditions": [],
+    "avoid_conditions": [],
+    "season": [
+      "spring",
+      "summer",
+      "fall"
+    ]
   },
   {
     "id": "worm",
     "name": "Worm Rig",
-    "best_for": ["bluegill", "catfish", "carp", "bass", "trout"],
+    "best_for": [
+      "bluegill",
+      "catfish",
+      "carp",
+      "bass",
+      "trout"
+    ],
     "rod": "Ultralight for panfish/trout; medium for bass/catfish/carp.",
     "line": "4-8 lb for panfish/trout; 10-20 lb for catfish/carp.",
     "terminal": "Use small hook under float for panfish; split-shot rig for trout; bottom rig for catfish/carp; Texas rig for bass plastics.",
     "setup": "Fish under a float, on bottom, or around cover depending on target species.",
     "when": "Reliable all-purpose bait when you want bites or when fish are inactive.",
-    "tips": ["Use small pieces for bluegill", "Use whole nightcrawler for catfish", "Keep hook size matched to fish size"]
+    "tips": [
+      "Use small pieces for bluegill",
+      "Use whole nightcrawler for catfish",
+      "Keep hook size matched to fish size"
+    ],
+    "lure_id": "worm",
+    "species_ids": [
+      "bass",
+      "bluegill",
+      "catfish",
+      "common-carp",
+      "trout"
+    ],
+    "difficulty": "easy",
+    "best_water_types": [],
+    "best_conditions": [],
+    "avoid_conditions": [],
+    "season": [
+      "spring",
+      "summer",
+      "fall"
+    ]
   },
   {
     "id": "walleyejig",
     "name": "Walleye Jig Rig",
-    "best_for": ["walleye", "sauger", "white bass", "smallmouth bass"],
+    "best_for": [
+      "walleye",
+      "sauger",
+      "white bass",
+      "smallmouth bass"
+    ],
     "rod": "Medium-light or medium fast-action spinning rod.",
     "line": "6-10 lb fluorocarbon or 10-15 lb braid with fluoro leader.",
     "terminal": "1/16 to 3/8 oz jig depending on depth/current. Tip with minnow, crawler, leech, or soft plastic.",
     "setup": "Cast, drag, snap, or vertical jig near riprap, current seams, tailwaters, points, and dropoffs.",
     "when": "Best in low light, current, wind-blown banks, and cooler-water periods.",
-    "tips": ["Use heavier jig in current", "Keep bottom contact", "Short hops beat big rips in cold water"]
+    "tips": [
+      "Use heavier jig in current",
+      "Keep bottom contact",
+      "Short hops beat big rips in cold water"
+    ],
+    "lure_id": "walleye-jig",
+    "species_ids": [
+      "sauger",
+      "smallmouth-bass",
+      "walleye",
+      "white-bass"
+    ],
+    "difficulty": "easy",
+    "best_water_types": [],
+    "best_conditions": [],
+    "avoid_conditions": [],
+    "season": [
+      "spring",
+      "summer",
+      "fall"
+    ]
   },
   {
     "id": "topwater",
     "name": "Topwater Rig",
-    "best_for": ["largemouth bass", "smallmouth bass", "northern pike", "muskie"],
+    "best_for": [
+      "largemouth bass",
+      "smallmouth bass",
+      "northern pike",
+      "muskie"
+    ],
     "rod": "Medium or medium-heavy rod with moderate/fast action.",
     "line": "12-17 lb mono for bass; braid with leader for heavy cover or pike.",
     "terminal": "Tie direct or use snap for walking baits. Avoid fluorocarbon because it sinks.",
     "setup": "Fish over weeds, along shade, points, calm banks, riprap, and low-light feeding areas.",
     "when": "Best early/late, cloudy days, warm water, and active shallow fish.",
-    "tips": ["Pause after misses", "Use buzzbait over cover", "Use walking bait on open points"]
+    "tips": [
+      "Pause after misses",
+      "Use buzzbait over cover",
+      "Use walking bait on open points"
+    ],
+    "lure_id": "topwater",
+    "species_ids": [
+      "largemouth-bass",
+      "muskie",
+      "northern-pike",
+      "smallmouth-bass"
+    ],
+    "difficulty": "easy",
+    "best_water_types": [],
+    "best_conditions": [],
+    "avoid_conditions": [],
+    "season": [
+      "spring",
+      "summer",
+      "fall"
+    ]
   },
   {
     "id": "catfishbait",
     "name": "Catfish Bottom Rig",
-    "best_for": ["channel catfish", "flathead catfish"],
+    "best_for": [
+      "channel catfish",
+      "flathead catfish"
+    ],
     "rod": "Medium-heavy spinning or casting rod.",
     "line": "15-30 lb mono or braid; heavier around wood/current.",
     "terminal": "Slip sinker or three-way rig, swivel, 12-24 inch leader, circle hook or kahle hook.",
     "setup": "Fish cut bait, stink bait, worms, chicken liver, or live bait on bottom near current breaks, holes, wood, and evening feeding flats.",
     "when": "Best evening/night, after rain/current changes, warm water, or near scent trails.",
-    "tips": ["Use circle hooks and avoid hard hooksets", "Fresh cut bait is excellent for channels", "Live bait is better for flatheads"]
+    "tips": [
+      "Use circle hooks and avoid hard hooksets",
+      "Fresh cut bait is excellent for channels",
+      "Live bait is better for flatheads"
+    ],
+    "lure_id": "catfish-bait",
+    "species_ids": [
+      "channel-catfish",
+      "flathead-catfish"
+    ],
+    "difficulty": "easy",
+    "best_water_types": [],
+    "best_conditions": [],
+    "avoid_conditions": [],
+    "season": [
+      "spring",
+      "summer",
+      "fall"
+    ]
   },
   {
     "id": "pike-wire-leader",
     "name": "Pike/Muskie Wire Leader Rig",
-    "best_for": ["northern pike", "muskie"],
+    "best_for": [
+      "northern pike",
+      "muskie"
+    ],
     "rod": "Medium-heavy to heavy rod.",
     "line": "30-80 lb braid depending on lure and fish size.",
     "terminal": "Use 9-18 inch wire or heavy fluorocarbon leader with strong snap/swivel.",
     "setup": "Pair with spoons, spinnerbaits, large minnows, swimbaits, or topwater. Fish weed edges, bays, channels, and points.",
     "when": "Any time toothy fish are possible. Especially important in pike/muskie waters.",
-    "tips": ["Retie after nicks", "Use long pliers", "Handle fish carefully and quickly"]
+    "tips": [
+      "Retie after nicks",
+      "Use long pliers",
+      "Handle fish carefully and quickly"
+    ],
+    "lure_id": "pike-wire-leader",
+    "species_ids": [
+      "muskie",
+      "northern-pike"
+    ],
+    "difficulty": "easy",
+    "best_water_types": [],
+    "best_conditions": [],
+    "avoid_conditions": [],
+    "season": [
+      "spring",
+      "summer",
+      "fall"
+    ]
   },
   {
     "id": "trout-float-rig",
     "name": "Trout Float / Bottom Rig",
-    "best_for": ["rainbow trout", "brown trout"],
+    "best_for": [
+      "rainbow trout",
+      "brown trout"
+    ],
     "rod": "Ultralight or light spinning rod.",
     "line": "2-6 lb mono or fluorocarbon.",
     "terminal": "Small hook, split shot, float for suspended fish, or sliding sinker for floating bait.",
     "setup": "Use worms, salmon eggs, small dough bait, micro jigs, or small minnows. Adjust float depth until you find cruising trout.",
     "when": "Good in stocked ponds, cool water, early season, and calm conditions.",
-    "tips": ["Light line gets more bites", "Move often until you contact fish", "Small presentations usually win"]
+    "tips": [
+      "Light line gets more bites",
+      "Move often until you contact fish",
+      "Small presentations usually win"
+    ],
+    "lure_id": "trout-float-rig",
+    "species_ids": [
+      "brown-trout",
+      "rainbow-trout"
+    ],
+    "difficulty": "easy",
+    "best_water_types": [],
+    "best_conditions": [],
+    "avoid_conditions": [],
+    "season": [
+      "spring",
+      "summer",
+      "fall"
+    ]
   }
 ]
