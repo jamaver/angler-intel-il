@@ -462,6 +462,7 @@ loadStatus();
 loadBackups();
 loadReports();
 </script>
+  <script src="/static/js/global_nav_v433.js"></script>
 </body>
 </html>
 """

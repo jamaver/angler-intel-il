@@ -458,6 +458,7 @@ def _render_health_html(payload: dict[str, Any]) -> str:
     <a href="/exports">Backup & Export</a> |
     <a href="/reports">Saved Reports</a>
   </p>
+  <script src="/static/js/global_nav_v433.js"></script>
 </body>
 </html>
 """

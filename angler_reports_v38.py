@@ -298,6 +298,7 @@ def _render_report_html(report_meta: dict[str, Any], payload: dict[str, Any]) ->
     <summary>Raw saved JSON</summary>
     <pre>{html.escape(raw_json)}</pre>
   </details>
+  <script src="/static/js/global_nav_v433.js"></script>
 </body>
 </html>
 """

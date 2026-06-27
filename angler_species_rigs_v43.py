@@ -112,6 +112,7 @@ def _nav(active: str) -> str:
         ("/species", "Species"),
         ("/rigs", "Rig Setups"),
         ("/reports", "Saved Reports"),
+        ("/data-tools", "Data Tools"),
         ("/app-health", "App Health"),
         ("/admin", "Admin"),
         ("/exports", "Export"),
@@ -201,6 +202,7 @@ def _page_shell(title: str, active: str, body: str) -> str:
   {_nav(active)}
   {body}
   <script src="/static/js/species_controls_v431.js"></script>
+  <script src="/static/js/global_nav_v433.js"></script>
 </body>
 </html>
 """

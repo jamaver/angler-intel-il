@@ -303,6 +303,7 @@ async function resetSpecies() {{
 
 loadSpecies();
 </script>
+  <script src="/static/js/global_nav_v433.js"></script>
 </body>
 </html>
 """
