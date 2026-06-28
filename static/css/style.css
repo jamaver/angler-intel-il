@@ -1025,3 +1025,12 @@ button {
 .health-details {
   margin-top: 0.5rem;
 }
+
+/* v4.5.2 Backup card in App Health */
+.backup-health-card {
+  margin-top: 1rem;
+}
+
+.backup-health-card code {
+  word-break: break-word;
+}

@@ -1,0 +1,11 @@
+{
+  "version": "v4.5.2-app-health-backup-polish",
+  "previous": "v4.5.1b-app-health-sqlite-status",
+  "json_source_of_truth": true,
+  "sqlite_role": "mirror/read-only foundation",
+  "admin_expanded": false,
+  "admin_menu_restored": false,
+  "app_health_maintenance_hub": true,
+  "backup_tool_added": true,
+  "installed_at": "2026-06-27T20:44:57-05:00"
+}

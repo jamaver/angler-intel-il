@@ -1,0 +1,60 @@
+<section class="card backup-health-card" id="backup-health-card">
+  <h2>Backups</h2>
+  <p class="muted">
+    App Health is the maintenance hub. Backups protect JSON, SQLite mirror data, templates, static files, intelligence helpers, and tools.
+  </p>
+
+  {% if backup_health %}
+    <div class="health-grid">
+      <div>
+        <strong>Status</strong><br>
+        {% if backup_health.ok %}
+          <span class="status-good">Backups available</span>
+        {% else %}
+          <span class="status-warn">No full backup yet</span>
+        {% endif %}
+      </div>
+
+      <div>
+        <strong>Backup count</strong><br>
+        <span>{{ backup_health.archive_count }}</span>
+      </div>
+
+      <div>
+        <strong>Backup folder</strong><br>
+        <span>{{ backup_health.backup_root or "backups" }}</span>
+      </div>
+
+      <div>
+        <strong>Source of truth</strong><br>
+        <span>JSON</span>
+      </div>
+    </div>
+
+    {% if backup_health.latest %}
+      <p class="muted">
+        Latest backup:
+        <code>{{ backup_health.latest.path }}</code>
+      </p>
+    {% endif %}
+
+    {% if backup_health.recent %}
+      <details class="health-details">
+        <summary>Recent backup manifests</summary>
+        <ul>
+          {% for item in backup_health.recent %}
+            <li>
+              {{ item.created_at }} —
+              {{ item.archive }} —
+              {{ item.file_count }} files
+            </li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+  {% else %}
+    <p class="status-warn">Backup health data unavailable.</p>
+  {% endif %}
+
+{% include "_backup_health_card.html" %}
+</section>
