@@ -1,0 +1,8 @@
+{
+  "version": "v4.5.1a-sqlite-diagnostics",
+  "previous": "v4.5-sqlite-foundation",
+  "json_source_of_truth": true,
+  "sqlite_role": "read-only diagnostics and mirror health only",
+  "flask_ui_changed": false,
+  "installed_at": "2026-06-27T20:18:35-05:00"
+}
