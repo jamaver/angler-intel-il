@@ -7,11 +7,9 @@
     ["/waters", "Local Waters"],
     ["/species", "Species"],
     ["/rigs", "Rig Setups"],
-    ["/reports", "Saved Reports"],
+    ["/reports", "Smart Trip Export"],
     ["/data-tools", "Data Tools"],
-    ["/app-health", "App Health"],
-    ["/admin", "Admin"],
-    ["/exports", "Export"]
+    ["/app-health", "App Health"]
   ];
 
   const MENU_ID = "aiGlobalMenuPanel";

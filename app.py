@@ -14,6 +14,15 @@ from intelligence.scoring import overall_score, time_blocks, rating, hourly_bite
 
 app = Flask(__name__)
 
+# --- Angler Intel IL v4.4.3 App Health backup routes ---
+try:
+    from angler_health_backup_v443 import register_health_backup_routes_v443
+    register_health_backup_routes_v443(app)
+except Exception as exc:
+    print(f"[angler-intel v4.4.3 health backups disabled] {exc}")
+# --- end v4.4.3 App Health backup routes ---
+
+
 # --- Angler Intel IL v4.4 smart recommendation routes ---
 try:
     from angler_recommendations_v44 import register_recommendation_routes_v44

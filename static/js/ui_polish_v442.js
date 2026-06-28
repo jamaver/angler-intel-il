@@ -7,11 +7,9 @@
     "/waters": "Browse the local Illinois waters database and open waterbody-specific fishing intel.",
     "/species": "Manage common freshwater fish and optional species used by the recommendation engine.",
     "/rigs": "Practical rigging guides by fish, lure type, line, and conditions.",
-    "/reports": "Create and view saved offline fishing reports on this Raspberry Pi.",
+    "/reports": "Smart Trip Export: create and view saved offline trip reports on this Raspberry Pi.",
     "/data-tools": "Validate and inspect app data before upgrades or recommendation changes.",
-    "/app-health": "Check files, routes, backups, reports, and general app health.",
-    "/admin": "Local maintenance tools for service status, backups, reports, and logs.",
-    "/exports": "Export user data, backups, catches, favorites, and app data."
+    "/app-health": "Check app health, backups, files, routes, reports, and maintenance status."
   };
 
   function currentSection() {
@@ -46,7 +44,7 @@
 
     const badge = document.createElement("span");
     badge.className = "ai-version-badge-v442";
-    badge.textContent = "v4.4.2";
+    badge.textContent = "v4.4.3";
 
     const top = nav.querySelector(".ai-menu-top");
     if (top) top.appendChild(badge);

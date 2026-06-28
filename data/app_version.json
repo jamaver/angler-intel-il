@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel IL",
-  "version": "v4.4.2",
-  "updated": "2026-06-27T18:29:56",
+  "version": "v4.4.3-standalone",
+  "updated": "2026-06-27T19:16:58",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -15,7 +15,9 @@
     "cleanup_readiness": "v4.3.1",
     "smart_recommendations": "v4.4",
     "polish_hamburger_nav": "v4.4.1",
-    "final_ui_qc_polish": "v4.4.2"
+    "final_ui_qc_polish": "v4.4.2",
+    "standalone_polish": "v4.4.3",
+    "app_health_backups": "v4.4.3"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -25,6 +27,9 @@
     "v4.4.1 adds responsive hamburger navigation for crowded pages.",
     "v4.4.1 adds Smart Recommendations to dashboard section controls.",
     "v4.4.2 adds final page descriptions and a reusable QC script before SQLite.",
-    "v4.4.2 confirms Smart Picks, hamburger navigation, and dashboard section controls before the v4.5 data-layer upgrade."
+    "v4.4.2 confirms Smart Picks, hamburger navigation, and dashboard section controls before the v4.5 data-layer upgrade.",
+    "v4.4.3 hides Admin and Export from the normal navigation for a cleaner standalone version.",
+    "v4.4.3 moves backup creation/list/download tools into App Health.",
+    "v4.4.3 keeps Admin and Export routes available directly but removes them from the normal app menu."
   ]
 }
