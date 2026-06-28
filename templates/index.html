@@ -12,7 +12,6 @@
   <a class="ai-main-tab" href="/waters">Local Waters</a>
   <a class="ai-main-tab" href="/reports">Saved Reports</a>
   <a class="ai-main-tab" href="/app-health">App Health</a>
-  <a class="ai-main-tab" href="/admin">Admin</a>
 </nav>
 <!-- end v4.0.1 main navigation tabs -->
 
@@ -102,7 +101,10 @@
       </div>
 
       <div id="catchLog" class="catch-log"></div>
-    </section>
+    
+{% include "_sqlite_health_card.html" %}
+{% include "_backup_health_card.html" %}
+</section>
   </div>
 
 <script src="/static/js/app.js"></script>

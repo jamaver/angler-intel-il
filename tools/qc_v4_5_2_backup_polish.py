@@ -67,6 +67,18 @@ else:
     except Exception as exc:
         errors.append(f"backup_index.json invalid JSON: {exc}")
 
+
+backup_card_text = (APP_ROOT / "templates" / "_backup_health_card.html").read_text(encoding="utf-8")
+if backup_card_text.count('{% include "_backup_health_card.html" %}') > 0:
+    errors.append("templates/_backup_health_card.html must not include itself")
+
+index_text = (APP_ROOT / "templates" / "index.html").read_text(encoding="utf-8")
+if '{% include "_backup_health_card.html" %}' not in index_text:
+    errors.append("templates/index.html missing backup health card include")
+
+if 'href="/admin"' in index_text:
+    errors.append("Normal navigation should not expose Admin")
+
 if errors:
     print("QC FAILED: v4.5.2 Backup Polish")
     for error in errors:
