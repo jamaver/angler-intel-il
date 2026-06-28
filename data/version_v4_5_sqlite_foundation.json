@@ -1,0 +1,7 @@
+{
+  "version": "v4.5-sqlite-foundation",
+  "previous_stable": "v4.4.3-standalone-pre-sqlite",
+  "json_source_of_truth": true,
+  "sqlite_role": "mirror/foundation only",
+  "installed_at": "2026-06-27T20:17:04-05:00"
+}
