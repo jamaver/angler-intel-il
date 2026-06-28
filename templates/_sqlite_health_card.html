@@ -1,0 +1,85 @@
+<section class="card sqlite-health-card" id="sqlite-health-card">
+  <h2>SQLite Foundation</h2>
+  <p class="muted">
+    SQLite is currently a mirror/read-only foundation. JSON remains the source of truth.
+  </p>
+
+  {% if sqlite_health %}
+    <div class="health-grid">
+      <div>
+        <strong>Status</strong><br>
+        {% if sqlite_health.ok %}
+          <span class="status-good">Healthy</span>
+        {% else %}
+          <span class="status-warn">Needs attention</span>
+        {% endif %}
+      </div>
+
+      <div>
+        <strong>Database</strong><br>
+        <span>{{ sqlite_health.database or "Not available" }}</span>
+      </div>
+
+      <div>
+        <strong>Integrity</strong><br>
+        <span>{{ sqlite_health.integrity_check or "Unknown" }}</span>
+      </div>
+
+      <div>
+        <strong>Journal</strong><br>
+        <span>{{ sqlite_health.journal_mode or "Unknown" }}</span>
+      </div>
+    </div>
+
+    {% if sqlite_health.table_counts %}
+      <details class="health-details">
+        <summary>SQLite table counts</summary>
+        <ul>
+          {% for table, count in sqlite_health.table_counts.items() %}
+            <li>{{ table }}: {{ count }}</li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+
+    {% if sqlite_health.sources %}
+      <details class="health-details">
+        <summary>Mirrored JSON sources</summary>
+        <ul>
+          {% for source in sqlite_health.sources %}
+            <li>
+              {{ source.logical_name }}:
+              {{ source.row_count }} rows,
+              source={{ source.source_of_truth }},
+              loaded={{ source.last_loaded_at }}
+            </li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+
+    {% if sqlite_health.warnings %}
+      <details class="health-details">
+        <summary>SQLite warnings</summary>
+        <ul>
+          {% for warning in sqlite_health.warnings %}
+            <li>{{ warning }}</li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+
+    {% if sqlite_health.errors %}
+      <details class="health-details">
+        <summary>SQLite errors</summary>
+        <ul>
+          {% for error in sqlite_health.errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+  {% else %}
+    <p class="status-warn">SQLite health data unavailable.</p>
+  {% endif %}
+</section>

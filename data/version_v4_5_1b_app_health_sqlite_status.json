@@ -1,0 +1,10 @@
+{
+  "version": "v4.5.1b-app-health-sqlite-status",
+  "previous": "v4.5.1a-sqlite-diagnostics",
+  "json_source_of_truth": true,
+  "sqlite_role": "mirror/read-only foundation",
+  "admin_expanded": false,
+  "admin_menu_restored": false,
+  "app_health_maintenance_hub": true,
+  "installed_at": "2026-06-27T20:29:36-05:00"
+}

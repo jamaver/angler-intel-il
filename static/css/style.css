@@ -991,3 +991,37 @@ button {
   font-weight: 800;
 }
 /* end Angler Intel IL v4.4.3 App Health backup panel */
+
+/* v4.5.1b SQLite Foundation card in App Health */
+.sqlite-health-card {
+  margin-top: 1rem;
+}
+
+.sqlite-health-card .muted {
+  opacity: 0.78;
+}
+
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin: 0.75rem 0;
+}
+
+.health-grid > div {
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.status-good {
+  font-weight: 700;
+}
+
+.status-warn {
+  font-weight: 700;
+}
+
+.health-details {
+  margin-top: 0.5rem;
+}

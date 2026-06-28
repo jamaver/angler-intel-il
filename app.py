@@ -11,6 +11,7 @@ from intelligence.waters import detect_water, infer_area_type
 from intelligence.species import SPECIES, score_species
 from intelligence.lures import choose_lure
 from intelligence.scoring import overall_score, time_blocks, rating, hourly_bite_forecast
+from intelligence.app_health_sqlite import get_sqlite_health_for_app
 
 app = Flask(__name__)
 
@@ -528,3 +529,18 @@ def health():
 if __name__ == "__main__":
     print(f"Starting Angler Intel {APP_VERSION}...")
     app.run(host="0.0.0.0", port=5000)
+
+
+def app_health_sqlite_status():
+    """Small read-only SQLite status payload for App Health."""
+    try:
+        return get_sqlite_health_for_app()
+    except Exception as exc:
+        return {
+            "ok": False,
+            "available": False,
+            "summary": "SQLite status unavailable",
+            "json_source_of_truth": True,
+            "sqlite_role": "mirror/read-only foundation",
+            "errors": [str(exc)],
+        }
