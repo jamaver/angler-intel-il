@@ -10,16 +10,14 @@ if str(APP_ROOT) not in sys.path:
 
 from tools.sqlite_diagnostics import collect_diagnostics
 
-
 d = collect_diagnostics()
 
 if not d.get("ok"):
-    print("QC FAILED: v4.5.1a SQLite diagnostics")
-    for err in d.get("errors", []):
-        print(f" - {err}")
+    print("QC FAILED: v4.5.1a SQLite Diagnostics")
+    for error in d.get("errors", []):
+        print(f" - {error}")
     raise SystemExit(1)
 
-print("QC PASSED: v4.5.1a SQLite diagnostics")
-print(f"Database: {d['database']}")
-print(f"Size: {d['database_size_bytes']} bytes")
+print("QC PASSED: v4.5.1a SQLite Diagnostics")
 print("JSON remains source of truth.")
+print("SQLite remains mirror/read-only foundation.")
