@@ -1276,19 +1276,28 @@ button {
 
 /* Local Waters readability guard */
 .local-waters-page {
-  background: #f4fbf6;
-  color: #102417;
+  background: #0b1710;
+  color: #f4fff6;
 }
 
-.local-waters-page .card,
-.local-waters-page .water {
-  background: #ffffff !important;
+.local-waters-page .card {
+  background: #f8fff9 !important;
   color: #102417 !important;
-  border-color: #d4ead9;
+  border-color: rgba(166, 232, 182, 0.35);
+}
+
+.local-waters-page .water {
+  background: #102417 !important;
+  color: #f4fff6 !important;
+  border: 1px solid rgba(166, 232, 182, 0.35);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
 }
 
 .local-waters-page .water h3,
-.local-waters-page .water p,
+.local-waters-page .water p {
+  color: #f4fff6;
+}
+
 .local-waters-page .card h1,
 .local-waters-page .card h2,
 .local-waters-page .card h3 {
@@ -1297,6 +1306,10 @@ button {
 
 .local-waters-page .muted {
   color: #4f6b58 !important;
+}
+
+.local-waters-page .water .muted {
+  color: #c7d8cc !important;
 }
 
 .local-waters-page .tag {
@@ -1314,8 +1327,12 @@ button {
 }
 
 .local-waters-page a {
-  color: #176c35;
+  color: #7ee49a;
   font-weight: 800;
+}
+
+.local-waters-page .card a {
+  color: #176c35;
 }
 
 @media (max-width: 860px) {
