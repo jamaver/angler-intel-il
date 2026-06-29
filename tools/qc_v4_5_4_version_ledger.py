@@ -70,8 +70,16 @@ if int(version_health.get("marker_count", 0)) < 1:
     errors.append("version_health did not find version markers")
 
 latest = version_health.get("latest") or {}
-if latest.get("version") != "v4.5.4-app-health-version-ledger":
-    errors.append("version_health latest marker is not v4.5.4")
+if not latest.get("version"):
+    errors.append("version_health latest marker is missing version")
+
+recent_versions = [
+    item.get("version")
+    for item in version_health.get("recent", [])
+    if isinstance(item, dict)
+]
+if "v4.5.4-app-health-version-ledger" not in recent_versions:
+    errors.append("version_health recent markers do not include v4.5.4")
 
 app_text = read("app.py")
 health_text = read("angler_health_v39.py")

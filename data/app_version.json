@@ -1,7 +1,7 @@
 {
-  "app_name": "Angler Intel IL",
-  "version": "v4.4.3-standalone",
-  "updated": "2026-06-27T19:16:58",
+  "app_name": "Angler Intel",
+  "version": "v4.6-smart-intelligence",
+  "updated": "2026-06-29T07:06:31-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -17,7 +17,10 @@
     "polish_hamburger_nav": "v4.4.1",
     "final_ui_qc_polish": "v4.4.2",
     "standalone_polish": "v4.4.3",
-    "app_health_backups": "v4.4.3"
+    "app_health_backups": "v4.4.3",
+    "sqlite_foundation": "v4.5",
+    "app_health_version_ledger": "v4.5.4",
+    "smart_intelligence": "v4.6"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -30,6 +33,8 @@
     "v4.4.2 confirms Smart Picks, hamburger navigation, and dashboard section controls before the v4.5 data-layer upgrade.",
     "v4.4.3 hides Admin and Export from the normal navigation for a cleaner standalone version.",
     "v4.4.3 moves backup creation/list/download tools into App Health.",
-    "v4.4.3 keeps Admin and Export routes available directly but removes them from the normal app menu."
+    "v4.4.3 keeps Admin and Export routes available directly but removes them from the normal app menu.",
+    "v4.6 generalizes the visible app identity beyond Illinois while keeping the existing starter waters dataset.",
+    "v4.6 adds a Smart Intelligence dashboard layer that blends weather, wind, pressure, cloud cover, season, water type, species, lure guidance, and catch-history signal."
   ]
 }

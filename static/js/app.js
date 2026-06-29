@@ -212,6 +212,37 @@ function renderInsights(insights) {
   `;
 }
 
+function renderSmartIntelligence(intel) {
+  if (!intel || !intel.ok) {
+    return `<div class="small">Smart intelligence is unavailable for this search.</div>`;
+  }
+
+  const labels = (intel.condition_labels || []).map(c => `<span class="mini">${c}</span>`).join("");
+  const recommendations = (intel.recommendations || []).map(r => `
+    <div class="intel-recommendation">
+      <b>${r.label}: ${r.value}</b>
+      <div class="small">${r.why || ""}</div>
+    </div>
+  `).join("");
+  const strategy = (intel.strategy || []).map(item => `<li>${item}</li>`).join("");
+  const nextActions = (intel.next_actions || []).map(item => `<li>${item}</li>`).join("");
+
+  return `
+    <h3>${intel.headline || "Fishing pattern"}</h3>
+    <p>${intel.summary || ""}</p>
+    <div class="intel-signal-row">${labels}</div>
+    <div class="small"><b>Clarity signal:</b> ${intel.clarity_signal?.label || "unknown"}</div>
+    <div class="intel-grid">${recommendations}</div>
+    <details class="intel-details">
+      <summary>Strategy and next actions</summary>
+      <h4>Strategy</h4>
+      <ul>${strategy}</ul>
+      <h4>Next actions</h4>
+      <ul>${nextActions}</ul>
+    </details>
+  `;
+}
+
 function render(data) {
   const loc = data.location || {};
   currentZip = loc.zip || currentZip;
@@ -252,6 +283,8 @@ function render(data) {
   } else {
     setHTML("bestBet", `<div class="small">Best Bet unavailable.</div>`);
   }
+
+  setHTML("smartIntelligence", renderSmartIntelligence(data.smart_intelligence));
 
   setHTML("conditions", `
     🌡 ${data.weather?.temp ?? "?"}°F<br>

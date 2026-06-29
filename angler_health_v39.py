@@ -370,7 +370,7 @@ def _render_health_html(payload: dict[str, Any]) -> str:
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Angler Intel IL - App Health</title>
+  <title>Angler Intel - App Health</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {{
@@ -452,9 +452,8 @@ def _render_health_html(payload: dict[str, Any]) -> str:
   <a class="ai-main-tab" href="/waters">Local Waters</a>
   <a class="ai-main-tab" href="/reports">Saved Reports</a>
   <a class="ai-main-tab active" href="/app-health">App Health</a>
-  <a class="ai-main-tab" href="/exports">Export</a>
 </nav>
-  <h1>Angler Intel IL App Health</h1>
+  <h1>Angler Intel App Health</h1>
   <p>v3.9 diagnostics and cleanup readiness check.</p>
 
   <div class="card">
@@ -520,7 +519,6 @@ def _render_health_html(payload: dict[str, Any]) -> str:
 
   <p>
     <a href="/">Dashboard</a> |
-    <a href="/exports">Backup & Export</a> |
     <a href="/reports">Saved Reports</a>
   </p>
   <script src="/static/js/global_nav_v433.js"></script>

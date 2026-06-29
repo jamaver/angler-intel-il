@@ -1,5 +1,5 @@
 /*
-  Angler Intel IL v4.2
+  Angler Intel v4.2
   Dashboard Local Waters Bridge
 
   Adds a reliable local waters panel to the main dashboard using /api/waters.
@@ -81,7 +81,7 @@
       <div class="ai-local-waters-head">
         <div>
           <h2>Reliable Local Waters</h2>
-          <p class="muted">v4.2 uses the local Illinois waters database first. OpenStreetMap can still run separately.</p>
+          <p class="muted">v4.2 uses the local starter waters database first. OpenStreetMap can still run separately for broader ZIP searches.</p>
         </div>
         <div class="ai-local-waters-controls">
           <label>

@@ -40,7 +40,7 @@
     const brand = document.createElement("a");
     brand.className = "ai-menu-brand";
     brand.href = "/";
-    brand.textContent = "🎣 Angler Intel IL";
+    brand.textContent = "🎣 Angler Intel";
 
     const button = document.createElement("button");
     button.id = BUTTON_ID;

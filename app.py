@@ -11,6 +11,7 @@ from intelligence.waters import detect_water, infer_area_type
 from intelligence.species import SPECIES, score_species
 from intelligence.lures import choose_lure
 from intelligence.scoring import overall_score, time_blocks, rating, hourly_bite_forecast
+from intelligence.smart_intelligence import build_smart_intelligence
 from intelligence.app_health_sqlite import get_sqlite_health_for_app
 from intelligence.app_health_backup import get_backup_health_for_app
 from intelligence.app_health_versions import get_version_health_for_app
@@ -98,7 +99,7 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "3.6-best-bet-fish-images-analytics"
+APP_VERSION = "v4.6-smart-intelligence"
 
 DATA_DIR = Path("data")
 FAVORITES_FILE = DATA_DIR / "favorites.json"
@@ -110,7 +111,7 @@ def ensure_data():
 
     if not FAVORITES_FILE.exists():
         FAVORITES_FILE.write_text(json.dumps([
-            {"name": "Oswego Area", "zip": "60543"}
+            {"name": "Home Area", "zip": "60543"}
         ], indent=2))
 
     if not CATCHES_FILE.exists():
@@ -386,16 +387,28 @@ def build_intel(zip_code):
             "wind": round(max_wind)
         })
 
+    weather_summary = {
+        "temp": round(temp_f, 1),
+        "wind": round(wind_mph, 1),
+        "pressure": round(pressure_inhg, 2),
+        "cloud": cloud
+    }
+    insights = catch_insights(zip_code)
+    smart_intelligence = build_smart_intelligence(
+        zip_code=zip_code,
+        location=loc,
+        weather=weather_summary,
+        area_type=area_type,
+        best_bet=best_bet,
+        best_time=best_block,
+        catch_insights=insights,
+    )
+
     return {
         "version": APP_VERSION,
         "generated_at": datetime.now().strftime("%b %d, %Y %I:%M %p"),
         "location": loc,
-        "weather": {
-            "temp": round(temp_f, 1),
-            "wind": round(wind_mph, 1),
-            "pressure": round(pressure_inhg, 2),
-            "cloud": cloud
-        },
+        "weather": weather_summary,
         "overall": {
             "score": base,
             "rating": rating(base)
@@ -410,7 +423,8 @@ def build_intel(zip_code):
         "waters": waters,
         "area_type": area_type,
         "forecast": forecast,
-        "catch_insights": catch_insights(zip_code)
+        "catch_insights": insights,
+        "smart_intelligence": smart_intelligence
     }
 
 

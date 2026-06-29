@@ -131,7 +131,7 @@ def _page_shell(title: str, active: str, body: str) -> str:
 <html>
 <head>
   <meta charset="utf-8">
-  <title>{_esc(title)} - Angler Intel IL</title>
+  <title>{_esc(title)} - Angler Intel</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="/static/css/style.css">
   <style>

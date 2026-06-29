@@ -170,7 +170,7 @@ def _filter_rank_waters(
     return {
         "ok": True,
         "version": "v4.0",
-        "source": "local-illinois-waters",
+        "source": "local-starter-waters",
         "zip": zip_code,
         "origin": {"lat": coords[0], "lon": coords[1]} if coords else None,
         "radius_miles": radius,
@@ -195,7 +195,7 @@ def _render_waters_page() -> str:
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Angler Intel IL - Local Waters</title>
+  <title>Angler Intel - Local Waters</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
@@ -264,11 +264,9 @@ def _render_waters_page() -> str:
   <a class="ai-main-tab active" href="/waters">Local Waters</a>
   <a class="ai-main-tab" href="/reports">Saved Reports</a>
   <a class="ai-main-tab" href="/app-health">App Health</a>
-  <a class="ai-main-tab" href="/admin">Admin</a>
-  <a class="ai-main-tab" href="/exports">Export</a>
 </nav>
-  <h1>Local Illinois Waters</h1>
-  <p class="muted">v4.0 local waters foundation. This uses a Pi-local database instead of depending only on live OpenStreetMap.</p>
+  <h1>Local Waters</h1>
+  <p class="muted">v4.0 local waters foundation. This uses a Pi-local starter database plus broader ZIP-based OpenStreetMap detection.</p>
 
   <div class="card">
     <h2>Search waters</h2>
@@ -293,8 +291,7 @@ def _render_waters_page() -> str:
 
   <p>
     <a href="/">Dashboard</a> |
-    <a href="/app-health">App Health</a> |
-    <a href="/admin">Admin</a>
+    <a href="/app-health">App Health</a>
   </p>
 
 <script>
@@ -383,7 +380,7 @@ def _render_water_detail(water: dict[str, Any]) -> str:
 <html>
 <head>
   <meta charset="utf-8">
-  <title>{_esc(water.get("name"))} - Angler Intel IL</title>
+  <title>{_esc(water.get("name"))} - Angler Intel</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {{
@@ -504,7 +501,7 @@ def register_local_waters_routes_v40(app):
         return jsonify({
             "ok": True,
             "version": "v4.0",
-            "source": "local-illinois-waters",
+            "source": "local-starter-waters",
             "count": len(waters),
             "waters": waters,
             "database": {

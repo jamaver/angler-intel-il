@@ -192,7 +192,7 @@ def _render_report_html(report_meta: dict[str, Any], payload: dict[str, Any]) ->
 <html>
 <head>
   <meta charset="utf-8">
-  <title>{html.escape(title)} - Angler Intel IL</title>
+  <title>{html.escape(title)} - Angler Intel</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {{
@@ -249,12 +249,10 @@ def _render_report_html(report_meta: dict[str, Any], payload: dict[str, Any]) ->
   <a class="ai-main-tab" href="/waters">Local Waters</a>
   <a class="ai-main-tab active" href="/reports">Saved Reports</a>
   <a class="ai-main-tab" href="/app-health">App Health</a>
-  <a class="ai-main-tab" href="/admin">Admin</a>
-  <a class="ai-main-tab" href="/exports">Export</a>
 </nav>
   <div class="top">
     <h1>{html.escape(title)}</h1>
-    <p class="muted">Saved by Angler Intel IL v3.8</p>
+    <p class="muted">Saved by Angler Intel v3.8</p>
     <p><strong>Created:</strong> {html.escape(created)}</p>
     <p><strong>ZIP:</strong> {html.escape(str(zip_code or "N/A"))}</p>
     <p class="no-print">
@@ -379,7 +377,7 @@ def register_report_routes_v38(app):
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Angler Intel IL - Saved Reports</title>
+  <title>Angler Intel - Saved Reports</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="/static/css/style.css">
   <style>
@@ -507,8 +505,6 @@ def register_report_routes_v38(app):
     <a class="ai-main-tab" href="/waters">Local Waters</a>
     <a class="ai-main-tab active" href="/reports">Saved Reports</a>
     <a class="ai-main-tab" href="/app-health">App Health</a>
-    <a class="ai-main-tab" href="/admin">Admin</a>
-    <a class="ai-main-tab" href="/exports">Export</a>
   </nav>
 
   <h1 class="page-title">Saved Offline Reports</h1>
@@ -542,7 +538,7 @@ def register_report_routes_v38(app):
 
   <p>
     <a href="/">Back to dashboard</a> |
-    <a href="/exports">Backup & Export</a>
+    <a href="/app-health">App Health</a>
   </p>
 
 <script>

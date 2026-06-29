@@ -506,7 +506,7 @@ def _recommendations_page() -> str:
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Angler Intel IL - Smart Recommendations</title>
+  <title>Angler Intel - Smart Recommendations</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="/static/css/style.css">
   <style>
@@ -580,10 +580,7 @@ def _recommendations_page() -> str:
     <a class="ai-main-tab" href="/rigs">Rig Setups</a>
     <a class="ai-main-tab active" href="/recommendations">Smart Picks</a>
     <a class="ai-main-tab" href="/reports">Saved Reports</a>
-    <a class="ai-main-tab" href="/data-tools">Data Tools</a>
     <a class="ai-main-tab" href="/app-health">App Health</a>
-    <a class="ai-main-tab" href="/admin">Admin</a>
-    <a class="ai-main-tab" href="/exports">Export</a>
   </nav>
 
   <h1>Smart Recommendations</h1>

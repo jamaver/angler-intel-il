@@ -4,7 +4,7 @@
   const DESCRIPTIONS = {
     "/": "Dashboard overview with forecasts, local waters, rig setups, and smart fishing picks.",
     "/recommendations": "Best water and rig recommendations based on active species, local waters, season, and distance.",
-    "/waters": "Browse the local Illinois waters database and open waterbody-specific fishing intel.",
+    "/waters": "Browse the local starter waters database and open waterbody-specific fishing intel.",
     "/species": "Manage common freshwater fish and optional species used by the recommendation engine.",
     "/rigs": "Practical rigging guides by fish, lure type, line, and conditions.",
     "/reports": "Smart Trip Export: create and view saved offline trip reports on this Raspberry Pi.",
