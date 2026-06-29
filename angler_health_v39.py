@@ -14,6 +14,7 @@ try:
     from intelligence.app_health_intelligence import get_smart_intelligence_health_for_app
     from intelligence.app_health_map_data import get_map_data_health_for_app
     from intelligence.app_health_sqlite import get_sqlite_health_for_app
+    from intelligence.app_health_sqlite_authority import get_sqlite_authority_health_for_app
     from intelligence.app_health_sqlite_transition import get_sqlite_transition_health_for_app
     from intelligence.app_health_versions import get_version_health_for_app
 except Exception:
@@ -21,6 +22,7 @@ except Exception:
     get_smart_intelligence_health_for_app = None
     get_map_data_health_for_app = None
     get_sqlite_health_for_app = None
+    get_sqlite_authority_health_for_app = None
     get_sqlite_transition_health_for_app = None
     get_version_health_for_app = None
 
@@ -327,6 +329,21 @@ def build_health_payload(app) -> dict[str, Any]:
                 "errors": [str(exc)],
             }
 
+    if get_sqlite_authority_health_for_app is not None:
+        try:
+            payload["sqlite_authority_health"] = get_sqlite_authority_health_for_app()
+        except Exception as exc:
+            payload["sqlite_authority_health"] = {
+                "ok": False,
+                "summary": "SQLite authority migration preflight unavailable",
+                "ready_for_authority_migration": False,
+                "authority_flipped": False,
+                "current_authority": "json",
+                "json_source_of_truth": True,
+                "sqlite_role": "mirror/read-only foundation until explicit migration",
+                "errors": [str(exc)],
+            }
+
     if get_map_data_health_for_app is not None:
         try:
             payload["map_data_health"] = get_map_data_health_for_app()
@@ -415,6 +432,10 @@ def _render_health_html(payload: dict[str, Any]) -> str:
     sqlite_transition_card = render_template(
         "_sqlite_transition_health_card.html",
         sqlite_transition_health=payload.get("sqlite_transition_health"),
+    )
+    sqlite_authority_card = render_template(
+        "_sqlite_authority_health_card.html",
+        sqlite_authority_health=payload.get("sqlite_authority_health"),
     )
     map_data_card = render_template(
         "_map_data_health_card.html",
@@ -566,6 +587,8 @@ def _render_health_html(payload: dict[str, Any]) -> str:
   {intelligence_card}
 
   {sqlite_transition_card}
+
+  {sqlite_authority_card}
 
   {map_data_card}
 

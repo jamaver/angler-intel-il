@@ -1142,6 +1142,12 @@ button {
   margin-top: 1rem;
 }
 
+/* v5.0 SQLite authority migration preflight card in App Health */
+.sqlite-authority-health-card {
+  margin-top: 1rem;
+  border-color: rgba(14, 165, 233, 0.42);
+}
+
 /* v4.8 Map data readiness card in App Health */
 .map-data-health-card {
   margin-top: 1rem;

@@ -103,7 +103,7 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v4.9.1-ui-snapshot-polish"
+APP_VERSION = "v5.0-sqlite-authority-migration"
 
 DATA_DIR = Path("data")
 FAVORITES_FILE = DATA_DIR / "favorites.json"

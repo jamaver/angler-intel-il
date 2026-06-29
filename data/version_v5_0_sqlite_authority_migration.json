@@ -1,0 +1,15 @@
+{
+  "version": "v5.0-sqlite-authority-migration",
+  "previous": "v4.9.1-ui-snapshot-polish",
+  "json_source_of_truth": true,
+  "sqlite_role": "mirror/read-only foundation until explicit migration",
+  "authority_flipped": false,
+  "backup_proven": true,
+  "export_proven": true,
+  "rollback_proven": true,
+  "migration_mode": "preflight-proof",
+  "app_health_maintenance_hub": true,
+  "admin_expanded": false,
+  "admin_menu_restored": false,
+  "installed_at": "2026-06-29T08:29:32-05:00"
+}

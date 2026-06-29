@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel",
-  "version": "v4.9.1-ui-snapshot-polish",
-  "updated": "2026-06-29T07:48:58-05:00",
+  "version": "v5.0-sqlite-authority-migration",
+  "updated": "2026-06-29T08:29:32-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -25,7 +25,8 @@
     "sqlite_authority_transition_plan": "v4.7",
     "map_data_readiness": "v4.8",
     "map_dashboard_prototype": "v4.9",
-    "ui_snapshot_polish": "v4.9.1"
+    "ui_snapshot_polish": "v4.9.1",
+    "sqlite_authority_migration": "v5.0"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -45,6 +46,7 @@
     "v4.7 adds a SQLite authority transition plan and App Health readiness card while keeping JSON as current authority.",
     "v4.8 adds map data readiness checks and a read-only map data endpoint for staged map dashboard work.",
     "v4.9 adds a self-hosted map dashboard prototype using local map data without external map tile dependency.",
-    "v4.9.1 cleans the main dashboard UI, upgrades Trip Snapshot, and removes the redundant Export Current Page action."
+    "v4.9.1 cleans the main dashboard UI, upgrades Trip Snapshot, and removes the redundant Export Current Page action.",
+    "v5.0 adds a SQLite authority migration preflight that proves backup, export, and rollback gates while keeping JSON as current authority until an explicit migration flips it."
   ]
 }

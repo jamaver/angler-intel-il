@@ -1,0 +1,70 @@
+<section class="card sqlite-authority-health-card" id="sqlite-authority-health-card">
+  <h2>SQLite Authority Migration</h2>
+  <p class="muted">
+    v5.0 preflight proves backup, export, and rollback before any authority switch.
+  </p>
+
+  {% if sqlite_authority_health %}
+    <div class="health-grid">
+      <div>
+        <strong>Status</strong><br>
+        {% if sqlite_authority_health.ready_for_authority_migration %}
+          <span class="status-good">Preflight proven</span>
+        {% else %}
+          <span class="status-warn">Blocked</span>
+        {% endif %}
+      </div>
+
+      <div>
+        <strong>Current authority</strong><br>
+        <span>{{ sqlite_authority_health.current_authority }}</span>
+      </div>
+
+      <div>
+        <strong>Authority switched</strong><br>
+        <span>{{ "Yes" if sqlite_authority_health.authority_flipped else "No" }}</span>
+      </div>
+
+      <div>
+        <strong>SQLite role</strong><br>
+        <span>{{ sqlite_authority_health.sqlite_role }}</span>
+      </div>
+    </div>
+
+    <details class="health-details" open>
+      <summary>Preflight gates</summary>
+      <ul>
+        {% for gate in sqlite_authority_health.gates %}
+          <li>
+            <strong>{{ gate.name }}:</strong>
+            {{ "PASS" if gate.ok else "FAIL" }} - {{ gate.summary }}
+          </li>
+        {% endfor %}
+      </ul>
+    </details>
+
+    {% if sqlite_authority_health.warnings %}
+      <details class="health-details">
+        <summary>Warnings</summary>
+        <ul>
+          {% for warning in sqlite_authority_health.warnings %}
+            <li>{{ warning }}</li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+
+    {% if sqlite_authority_health.errors %}
+      <details class="health-details">
+        <summary>Errors</summary>
+        <ul>
+          {% for error in sqlite_authority_health.errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+  {% else %}
+    <p class="status-warn">SQLite authority migration preflight unavailable.</p>
+  {% endif %}
+</section>
