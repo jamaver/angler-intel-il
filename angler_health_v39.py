@@ -7,7 +7,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from flask import jsonify
+from flask import jsonify, render_template
+
+try:
+    from intelligence.app_health_backup import get_backup_health_for_app
+    from intelligence.app_health_sqlite import get_sqlite_health_for_app
+except Exception:
+    get_backup_health_for_app = None
+    get_sqlite_health_for_app = None
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -223,7 +230,7 @@ def build_health_payload(app) -> dict[str, Any]:
     reports_json = sorted(REPORTS_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True) if REPORTS_DIR.exists() else []
     reports_html = sorted(REPORTS_DIR.glob("*.html"), key=lambda p: p.stat().st_mtime, reverse=True) if REPORTS_DIR.exists() else []
 
-    return {
+    payload = {
         "ok": status == "ok",
         "status": status,
         "version": "v3.9",
@@ -249,6 +256,33 @@ def build_health_payload(app) -> dict[str, Any]:
             "report_html": reports_html[0].name if reports_html else None,
         },
     }
+
+    if get_sqlite_health_for_app is not None:
+        try:
+            payload["sqlite_health"] = get_sqlite_health_for_app()
+        except Exception as exc:
+            payload["sqlite_health"] = {
+                "ok": False,
+                "available": False,
+                "summary": "SQLite status unavailable",
+                "json_source_of_truth": True,
+                "sqlite_role": "mirror/read-only foundation",
+                "errors": [str(exc)],
+            }
+
+    if get_backup_health_for_app is not None:
+        try:
+            payload["backup_health"] = get_backup_health_for_app()
+        except Exception as exc:
+            payload["backup_health"] = {
+                "ok": False,
+                "available": False,
+                "summary": "Backup status unavailable",
+                "errors": [str(exc)],
+                "json_source_of_truth": True,
+            }
+
+    return payload
 
 
 def _html_escape(value: Any) -> str:
@@ -305,6 +339,14 @@ def _render_health_html(payload: dict[str, Any]) -> str:
         issue_html = "<ul>" + "".join(f"<li>{_html_escape(x)}</li>" for x in issues) + "</ul>"
 
     raw_json = json.dumps(payload, indent=2, ensure_ascii=False)
+    sqlite_card = render_template(
+        "_sqlite_health_card.html",
+        sqlite_health=payload.get("sqlite_health"),
+    )
+    backup_card = render_template(
+        "_backup_health_card.html",
+        backup_health=payload.get("backup_health"),
+    )
 
     return f"""<!doctype html>
 <html>
@@ -392,7 +434,6 @@ def _render_health_html(payload: dict[str, Any]) -> str:
   <a class="ai-main-tab" href="/waters">Local Waters</a>
   <a class="ai-main-tab" href="/reports">Saved Reports</a>
   <a class="ai-main-tab active" href="/app-health">App Health</a>
-  <a class="ai-main-tab" href="/admin">Admin</a>
   <a class="ai-main-tab" href="/exports">Export</a>
 </nav>
   <h1>Angler Intel IL App Health</h1>
@@ -447,6 +488,10 @@ def _render_health_html(payload: dict[str, Any]) -> str:
       <tbody>{''.join(route_rows)}</tbody>
     </table>
   </div>
+
+  {backup_card}
+
+  {sqlite_card}
 
   <details class="card">
     <summary>Raw health JSON</summary>

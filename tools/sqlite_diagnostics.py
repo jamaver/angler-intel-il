@@ -27,6 +27,18 @@ def now_utc() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
+def json_item_count(payload: object) -> int:
+    if isinstance(payload, list):
+        return len(payload)
+    if isinstance(payload, dict):
+        for key in ("items", "records", "catches", "favorites", "waters", "waterbodies", "reports", "data"):
+            value = payload.get(key)
+            if isinstance(value, list):
+                return len(value)
+        return 1 if payload else 0
+    return 1 if payload is not None else 0
+
+
 def collect_diagnostics() -> dict:
     result = {
         "diagnostics_version": "v4.5.1a",
@@ -120,18 +132,28 @@ def collect_diagnostics() -> dict:
                 payload = json.loads(path.read_text(encoding="utf-8"))
                 info["valid_json"] = True
                 info["top_level_type"] = type(payload).__name__
-                if isinstance(payload, list):
-                    info["item_count_estimate"] = len(payload)
-                elif isinstance(payload, dict):
-                    info["item_count_estimate"] = len(payload)
-                else:
-                    info["item_count_estimate"] = 1
+                info["item_count_estimate"] = json_item_count(payload)
             except Exception as exc:
                 info["valid_json"] = False
                 info["error"] = str(exc)
                 result["errors"].append(f"{rel} is invalid JSON: {exc}")
 
         result["json_files"][rel] = info
+
+    json_by_path = result["json_files"]
+    for source in result.get("sources", []):
+        source_path = source.get("path")
+        json_info = json_by_path.get(source_path)
+        if not json_info or json_info.get("item_count_estimate") is None:
+            continue
+
+        expected_count = int(json_info["item_count_estimate"])
+        actual_count = int(source.get("row_count", -1))
+        if actual_count != expected_count:
+            result["errors"].append(
+                f"{source.get('logical_name')} mirror row_count {actual_count} "
+                f"does not match JSON count {expected_count}"
+            )
 
     result["foundation_status"] = status()
     result["ok"] = len(result["errors"]) == 0

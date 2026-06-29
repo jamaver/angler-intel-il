@@ -73,8 +73,12 @@ if backup_card_text.count('{% include "_backup_health_card.html" %}') > 0:
     errors.append("templates/_backup_health_card.html must not include itself")
 
 index_text = (APP_ROOT / "templates" / "index.html").read_text(encoding="utf-8")
-if '{% include "_backup_health_card.html" %}' not in index_text:
-    errors.append("templates/index.html missing backup health card include")
+health_text = (APP_ROOT / "angler_health_v39.py").read_text(encoding="utf-8")
+if (
+    '{% include "_backup_health_card.html" %}' not in index_text
+    and "_backup_health_card.html" not in health_text
+):
+    errors.append("backup health card is not wired into dashboard or App Health")
 
 if 'href="/admin"' in index_text:
     errors.append("Normal navigation should not expose Admin")

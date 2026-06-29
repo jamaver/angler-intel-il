@@ -3,10 +3,8 @@ from __future__ import annotations
 from typing import Any
 
 try:
-    from intelligence.sqlite_foundation import initialize_and_mirror
     from tools.sqlite_diagnostics import collect_diagnostics
 except Exception:  # defensive import safety for Flask startup
-    initialize_and_mirror = None
     collect_diagnostics = None
 
 

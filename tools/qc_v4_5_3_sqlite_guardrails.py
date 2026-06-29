@@ -85,6 +85,10 @@ for required in (
 index = read("templates/index.html")
 if 'href="/admin"' in index:
     errors.append("Normal navigation should not expose Admin")
+if '{% include "_sqlite_health_card.html" %}' in index:
+    errors.append("SQLite maintenance card should live in App Health, not the dashboard")
+if '{% include "_backup_health_card.html" %}' in index:
+    errors.append("Backup maintenance card should live in App Health, not the dashboard")
 
 app_text = read("app.py")
 if "get_sqlite_health_for_app" not in app_text:
@@ -92,6 +96,14 @@ if "get_sqlite_health_for_app" not in app_text:
 
 if re.search(r"sqlite3\s*\.\s*connect|from\s+sqlite3\s+import", app_text):
     errors.append("app.py should not connect to SQLite directly")
+
+health_text = read("angler_health_v39.py")
+if 'href="/admin"' in health_text:
+    errors.append("App Health navigation should not expose Admin")
+if "_sqlite_health_card.html" not in health_text:
+    errors.append("App Health should render the SQLite maintenance card")
+if "_backup_health_card.html" not in health_text:
+    errors.append("App Health should render the backup maintenance card")
 
 if DB_REL not in gitignore:
     errors.append("Runtime SQLite database is not ignored")
@@ -167,6 +179,8 @@ if "mirror/read-only foundation" not in sqlite_helper:
     errors.append("SQLite App Health helper must state mirror/read-only foundation")
 if "Read-only SQLite health summary" not in sqlite_helper:
     errors.append("SQLite App Health helper should remain read-only")
+if "initialize_and_mirror" in sqlite_helper:
+    errors.append("SQLite App Health helper must not import or call mirror initialization")
 
 foundation = read("intelligence/sqlite_foundation.py")
 if "source_of_truth='json'" not in foundation and "source_of_truth TEXT NOT NULL DEFAULT 'json'" not in foundation:
