@@ -278,7 +278,7 @@ def _render_waters_page() -> str:
     <button onclick="loadAllWaters()">Show all starter waters</button>
   </div>
 
-  <div class="card">
+  <div class="card waters-results-card">
     <h2>Results</h2>
     <div id="summary" class="muted">Search to load waters.</div>
     <div id="results" class="grid"></div>

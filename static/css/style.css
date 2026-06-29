@@ -1286,8 +1286,26 @@ button {
   border-color: rgba(166, 232, 182, 0.35);
 }
 
-.local-waters-page .water {
+.local-waters-page .waters-results-card {
   background: #102417 !important;
+  color: #f4fff6 !important;
+  border-color: rgba(166, 232, 182, 0.35);
+}
+
+.local-waters-page .waters-results-card h2,
+.local-waters-page .waters-results-card #summary {
+  color: #f4fff6 !important;
+}
+
+.local-waters-page #results {
+  margin-top: 0.85rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: #0b1710;
+}
+
+.local-waters-page .water {
+  background: #152f21 !important;
   color: #f4fff6 !important;
   border: 1px solid rgba(166, 232, 182, 0.35);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
