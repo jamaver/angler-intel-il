@@ -1,0 +1,14 @@
+{
+  "version": "v4.9-map-dashboard-prototype",
+  "previous": "v4.8-map-data-readiness",
+  "json_source_of_truth": true,
+  "sqlite_role": "mirror/read-only foundation",
+  "map_dashboard_added": true,
+  "external_map_tiles": false,
+  "sqlite_authority_allowed_after_migration": true,
+  "authority_switch_allowed_now": false,
+  "admin_expanded": false,
+  "admin_menu_restored": false,
+  "app_health_maintenance_hub": true,
+  "installed_at": "2026-06-29T07:39:13-05:00"
+}

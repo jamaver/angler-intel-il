@@ -103,7 +103,7 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v4.8-map-data-readiness"
+APP_VERSION = "v4.9-map-dashboard-prototype"
 
 DATA_DIR = Path("data")
 FAVORITES_FILE = DATA_DIR / "favorites.json"
@@ -483,6 +483,11 @@ def build_intel(zip_code):
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/map")
+def map_dashboard():
+    return render_template("map.html")
 
 
 @app.route("/snapshot")

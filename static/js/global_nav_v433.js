@@ -3,6 +3,7 @@
 
   const NAV_ITEMS = [
     ["/", "Dashboard"],
+    ["/map", "Map"],
     ["/recommendations", "Smart Picks"],
     ["/waters", "Local Waters"],
     ["/species", "Species"],

@@ -1087,3 +1087,140 @@ button {
 .map-data-health-card {
   margin-top: 1rem;
 }
+
+/* v4.9 self-hosted map dashboard prototype */
+.map-app {
+  max-width: 1180px;
+}
+
+.map-toolbar {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: end;
+}
+
+.map-toolbar label {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 180px;
+}
+
+.map-toolbar select {
+  padding: 0.75rem;
+  border-radius: 12px;
+  border: 1px solid #334155;
+}
+
+.map-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 0.8fr);
+  gap: 1rem;
+}
+
+.map-panel,
+.map-detail-card {
+  min-height: 420px;
+}
+
+.map-canvas {
+  position: relative;
+  min-height: 520px;
+  margin-top: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 14px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 25% 25%, rgba(34, 197, 94, 0.18), transparent 28%),
+    radial-gradient(circle at 70% 65%, rgba(56, 189, 248, 0.16), transparent 30%),
+    #0b1728;
+}
+
+.map-grid-line {
+  position: absolute;
+  background: rgba(226, 232, 240, 0.12);
+  pointer-events: none;
+}
+
+.map-grid-line.vertical {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.map-grid-line.horizontal {
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+.map-grid-line.one {
+  left: 33%;
+  top: 33%;
+}
+
+.map-grid-line.two {
+  left: 66%;
+  top: 66%;
+}
+
+.map-marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 0.8rem;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.map-marker.moving {
+  background: #38bdf8;
+  color: #082f49;
+}
+
+.map-marker.pond {
+  background: #22c55e;
+  color: #052e16;
+}
+
+.map-marker.reservoir {
+  background: #f59e0b;
+  color: #451a03;
+}
+
+.map-marker.lake {
+  background: #a78bfa;
+  color: #1e1b4b;
+}
+
+.map-marker.selected {
+  outline: 4px solid rgba(255, 255, 255, 0.45);
+}
+
+.map-chip {
+  display: inline-block;
+  margin: 0.15rem;
+  padding: 0.25rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.14);
+}
+
+.map-chip.habitat {
+  background: rgba(56, 189, 248, 0.14);
+}
+
+@media (max-width: 860px) {
+  .map-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .map-canvas {
+    min-height: 420px;
+  }
+}

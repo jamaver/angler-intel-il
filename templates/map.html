@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head>
+  <title>Angler Intel Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <nav class="ai-main-tabs" aria-label="Angler Intel navigation">
+    <a class="ai-main-tab" href="/">Dashboard</a>
+    <a class="ai-main-tab active" href="/map">Map</a>
+    <a class="ai-main-tab" href="/recommendations">Smart Picks</a>
+    <a class="ai-main-tab" href="/waters">Local Waters</a>
+    <a class="ai-main-tab" href="/reports">Saved Reports</a>
+    <a class="ai-main-tab" href="/app-health">App Health</a>
+  </nav>
+
+  <main class="app map-app">
+    <header>
+      <h1>Fishing Intelligence Map</h1>
+      <p>Prototype map view for local waters, species, habitat, and future trip intelligence.</p>
+    </header>
+
+    <section class="card map-toolbar">
+      <label>
+        Species filter
+        <select id="mapSpeciesFilter">
+          <option value="">All species</option>
+        </select>
+      </label>
+      <label>
+        Water type
+        <select id="mapTypeFilter">
+          <option value="">All types</option>
+        </select>
+      </label>
+      <button id="mapResetButton" type="button">Reset</button>
+    </section>
+
+    <section class="map-layout">
+      <div class="card map-panel">
+        <div id="mapStatus" class="small">Loading map data...</div>
+        <div id="mapCanvas" class="map-canvas" role="img" aria-label="Prototype fishing intelligence map"></div>
+      </div>
+
+      <aside class="card map-detail-card">
+        <h2>Water Intel</h2>
+        <div id="mapDetails" class="small">Select a water marker.</div>
+      </aside>
+    </section>
+  </main>
+
+  <script src="/static/js/map_dashboard_v49.js"></script>
+  <script src="/static/js/global_nav_v433.js"></script>
+  <script src="/static/js/ui_polish_v442.js"></script>
+</body>
+</html>
