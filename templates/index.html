@@ -15,37 +15,40 @@
 </nav>
 <!-- end v4.0.1 main navigation tabs -->
 
-  <div class="app">
-    <header>
-      <h1>🎣 Angler Intel</h1>
-      <p>Smart fishing intelligence for local waters, weather, species, lures, and trip planning</p>
+  <div class="app dashboard-shell">
+    <header class="dashboard-hero">
+      <div>
+        <h1>Angler Intel</h1>
+        <p>Smart fishing intelligence for local waters, weather, species, lures, and trip planning</p>
+      </div>
     </header>
 
-    <form id="searchForm" class="search">
-      <input id="zipInput" name="zip" value="60543" placeholder="Enter ZIP code">
-      <button type="submit">Search</button>
-    </form>
-
-    <section class="card">
-      <h2>⭐ Favorites</h2>
-      <div id="favorites" class="favorites"></div>
+    <section class="card control-panel">
+      <form id="searchForm" class="search">
+        <input id="zipInput" name="zip" value="60543" placeholder="Enter ZIP code">
+        <button type="submit">Search</button>
+      </form>
 
       <div class="favorite-add">
         <input id="favoriteName" placeholder="Favorite name">
-        <button onclick="saveFavorite()" type="button">Save Current ZIP</button>
+        <button onclick="saveFavorite()" type="button">Save ZIP</button>
       </div>
+
+      <div id="favorites" class="favorites"></div>
     </section>
 
     <section id="status" class="card">Loading...</section>
 
-    <section class="card best-bet-card">
-      <h2>⭐ Best Bet Today</h2>
-      <div id="bestBet"></div>
-    </section>
+    <section class="dashboard-primary">
+      <section class="card best-bet-card">
+        <h2>Best Bet Today</h2>
+        <div id="bestBet"></div>
+      </section>
 
-    <section class="card smart-intelligence-card">
-      <h2>Smart Intelligence</h2>
-      <div id="smartIntelligence"></div>
+      <section class="card smart-intelligence-card">
+        <h2>Smart Intelligence</h2>
+        <div id="smartIntelligence"></div>
+      </section>
     </section>
 
     <section class="grid">
@@ -91,12 +94,12 @@
     </section>
 
     <section class="card">
-      <h2>📊 Personal Catch Insights</h2>
+      <h2>Personal Catch Insights</h2>
       <div id="catchInsights"></div>
     </section>
 
     <section class="card">
-      <h2>🎣 Catch Log</h2>
+      <h2>Catch Log</h2>
 
       <div class="catch-form">
         <select id="catchSpecies"></select>

@@ -4,41 +4,91 @@
   <title>Angler Intel Trip Snapshot</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
+    :root {
+      color-scheme: light;
+      --ink: #102417;
+      --muted: #52635a;
+      --line: #d6e3da;
+      --panel: #ffffff;
+      --soft: #f3faf5;
+      --accent: #1f8f45;
+      --accent-dark: #145c2b;
+    }
+
     body {
       font-family: Arial, sans-serif;
       margin: 0;
-      padding: 18px;
-      background: #f8fafc;
-      color: #0f172a;
+      padding: 20px;
+      background: #eef6f0;
+      color: var(--ink);
     }
 
     .snapshot {
-      max-width: 850px;
+      max-width: 980px;
       margin: auto;
     }
 
+    .snapshot-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1rem;
+      align-items: end;
+      padding: 20px 0 10px;
+    }
+
     h1 {
-      margin-bottom: 0;
+      margin: 0 0 6px;
+      font-size: 34px;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 20px;
+    }
+
+    h3 {
+      margin: 0.4rem 0;
     }
 
     .muted {
-      color: #64748b;
+      color: var(--muted);
       margin-top: 4px;
     }
 
     .card {
-      background: white;
-      border: 1px solid #cbd5e1;
-      border-radius: 16px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
       padding: 16px;
       margin: 14px 0;
       break-inside: avoid;
+      box-shadow: 0 8px 22px rgba(16, 36, 23, 0.08);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 14px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(180px, 260px) 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .metric {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px;
     }
 
     .score {
       font-size: 32px;
       font-weight: bold;
-      color: #16a34a;
+      color: var(--accent);
     }
 
     table {
@@ -48,31 +98,85 @@
     }
 
     th, td {
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid var(--line);
       text-align: left;
       padding: 8px;
+      vertical-align: top;
     }
 
     .actions {
       display: flex;
       gap: 10px;
       margin: 14px 0;
+      justify-content: flex-end;
     }
 
     button {
       padding: 12px 16px;
       border: 0;
-      border-radius: 12px;
-      background: #16a34a;
+      border-radius: 10px;
+      background: var(--accent);
       color: white;
       font-weight: bold;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #dcefe2;
+      color: var(--accent-dark);
     }
 
     .fish {
       width: 100%;
-      max-width: 400px;
+      max-width: 260px;
       display: block;
       margin: 8px 0;
+      border-radius: 12px;
+      background: #f8fafc;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    .pill {
+      display: inline-block;
+      background: #e6f5eb;
+      border: 1px solid #b9ddc5;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .notes-box {
+      min-height: 110px;
+      border: 1px dashed #a8b8ad;
+      border-radius: 10px;
+      padding: 12px;
+      background: #fbfdfb;
+    }
+
+    ul {
+      padding-left: 1.2rem;
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 12px;
+      }
+
+      .snapshot-header,
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        justify-content: flex-start;
+      }
     }
 
     @media print {
@@ -82,54 +186,90 @@
 
       body {
         background: white;
+        padding: 0;
+      }
+
+      .card {
+        box-shadow: none;
       }
     }
   </style>
 </head>
 <body>
   <div class="snapshot">
-    <h1>🎣 Angler Intel Trip Snapshot</h1>
-    <p class="muted">Generated {{ data.generated_at }}</p>
+    <div class="snapshot-header">
+      <div>
+        <h1>Trip Snapshot</h1>
+        <p class="muted">Generated {{ data.generated_at }} · Angler Intel {{ data.version }}</p>
+      </div>
 
-    <div class="actions">
-      <button onclick="window.print()">Save / Export PDF</button>
-      <button onclick="history.back()">Back</button>
+      <div class="actions">
+        <button onclick="window.print()">Print / Save PDF</button>
+        <button class="secondary" onclick="history.back()">Back</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>{{ data.location.city }}, {{ data.location.state }}</h2>
+        <p class="muted">ZIP {{ data.location.zip }} · {{ data.area_type }} pattern</p>
+        <div class="score">{{ data.overall.score }}/100</div>
+        <p>{{ data.overall.rating }}</p>
+      </div>
+
+      <div class="card">
+        <h2>Conditions</h2>
+        <p>Temperature: {{ data.weather.temp }}°F</p>
+        <p>Wind: {{ data.weather.wind }} mph</p>
+        <p>Pressure: {{ data.weather.pressure }} inHg</p>
+        <p>Cloud Cover: {{ data.weather.cloud }}%</p>
+        {% if data.weather.fallback %}
+        <p class="muted">Fallback weather estimate in use.</p>
+        {% endif %}
+      </div>
     </div>
 
     <div class="card">
-      <h2>{{ data.location.city }}, {{ data.location.state }}</h2>
-      <p>ZIP: {{ data.location.zip }}</p>
-      <div class="score">{{ data.overall.score }}/100</div>
-      <p>{{ data.overall.rating }}</p>
-      <p>Detected water type: {{ data.area_type }}</p>
-    </div>
+      <h2>Best Bet Today</h2>
+      <div class="hero-grid">
+        <img class="fish" src="{{ data.best_bet.fish_image }}" alt="{{ data.best_bet.species }}">
+        <div>
+          <h3>{{ data.best_bet.species }} — {{ data.best_bet.species_score }}%</h3>
+          <p><b>Best Window:</b> {{ data.best_bet.time_label }} · {{ data.best_bet.time_range }}</p>
+          {% if data.best_bet.best_hour %}
+          <p><b>Best Hour:</b> {{ data.best_bet.best_hour }}</p>
+          {% endif %}
+          <p><b>Throw:</b> {{ data.best_bet.lure_name }}</p>
+          <p><b>Retrieve:</b> {{ data.best_bet.speed }} · <b>Size:</b> {{ data.best_bet.size }}</p>
+          <div class="pill-row">
+            {% for color in data.best_bet.colors %}
+            <span class="pill">{{ color }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
 
-    <div class="card">
-      <h2>⭐ Best Bet Today</h2>
-      <img class="fish" src="{{ data.best_bet.fish_image }}">
-      <h3>{{ data.best_bet.species }} — {{ data.best_bet.species_score }}%</h3>
-      <p><b>Best Window:</b> {{ data.best_bet.time_label }} · {{ data.best_bet.time_range }}</p>
-      {% if data.best_bet.best_hour %}
-      <p><b>Best Hour:</b> {{ data.best_bet.best_hour }}</p>
+      {% if data.best_bet.reasons %}
+      <h3>Why</h3>
+      <ul>{% for reason in data.best_bet.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
       {% endif %}
-      <p><b>Throw:</b> {{ data.best_bet.lure_name }}</p>
-      <p><b>Retrieve:</b> {{ data.best_bet.speed }}</p>
-      <p><b>Size:</b> {{ data.best_bet.size }}</p>
-      <p><b>Colors:</b> {{ data.best_bet.colors | join(", ") }}</p>
+    </div>
 
+    <div class="card">
+      <h2>Smart Intelligence</h2>
+      <h3>{{ data.smart_intelligence.headline }}</h3>
+      <p>{{ data.smart_intelligence.summary }}</p>
+      <div class="pill-row">
+        {% for label in data.smart_intelligence.condition_labels %}
+        <span class="pill">{{ label }}</span>
+        {% endfor %}
+      </div>
+      <p><b>Clarity signal:</b> {{ data.smart_intelligence.clarity_signal.label }}</p>
       <ul>
-        {% for reason in data.best_bet.reasons %}
-        <li>{{ reason }}</li>
+        {% for item in data.smart_intelligence.strategy %}
+        <li>{{ item }}</li>
         {% endfor %}
       </ul>
-    </div>
-
-    <div class="card">
-      <h2>Conditions</h2>
-      <p>Temperature: {{ data.weather.temp }}°F</p>
-      <p>Wind: {{ data.weather.wind }} mph</p>
-      <p>Pressure: {{ data.weather.pressure }} inHg</p>
-      <p>Cloud Cover: {{ data.weather.cloud }}%</p>
     </div>
 
     <div class="card">
@@ -191,8 +331,11 @@
     </div>
 
     <div class="card">
-      <h2>Notes</h2>
-      <p>Pack based on the Best Bet, top lure, and best time window. Save this PDF before leaving your local network.</p>
+      <h2>Trip Notes</h2>
+      <div class="notes-box">
+        <p class="muted">Write launch plan, water clarity, first lure, backup lure, access notes, and post-trip catch details here.</p>
+      </div>
+      <p class="muted">Use the Catch Log after the trip so future intelligence can learn from results.</p>
     </div>
   </div>
 </body>

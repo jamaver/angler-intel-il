@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel",
-  "version": "v4.9-map-dashboard-prototype",
-  "updated": "2026-06-29T07:39:13-05:00",
+  "version": "v4.9.1-ui-snapshot-polish",
+  "updated": "2026-06-29T07:48:58-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -24,7 +24,8 @@
     "smart_intelligence_hardening": "v4.6.1",
     "sqlite_authority_transition_plan": "v4.7",
     "map_data_readiness": "v4.8",
-    "map_dashboard_prototype": "v4.9"
+    "map_dashboard_prototype": "v4.9",
+    "ui_snapshot_polish": "v4.9.1"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -43,6 +44,7 @@
     "v4.6.1 hardens Smart Intelligence for missing weather inputs and declares the updated direction toward map-driven intelligence and deliberate SQLite authority migration with rollback tools.",
     "v4.7 adds a SQLite authority transition plan and App Health readiness card while keeping JSON as current authority.",
     "v4.8 adds map data readiness checks and a read-only map data endpoint for staged map dashboard work.",
-    "v4.9 adds a self-hosted map dashboard prototype using local map data without external map tile dependency."
+    "v4.9 adds a self-hosted map dashboard prototype using local map data without external map tile dependency.",
+    "v4.9.1 cleans the main dashboard UI, upgrades Trip Snapshot, and removes the redundant Export Current Page action."
   ]
 }

@@ -11,13 +11,26 @@ body {
   padding: 14px;
 }
 
+.dashboard-shell {
+  display: grid;
+  gap: 12px;
+}
+
 header {
-  padding: 12px 4px;
+  padding: 18px 4px 8px;
+}
+
+.dashboard-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: end;
 }
 
 h1 {
   margin: 0;
-  font-size: 30px;
+  font-size: 34px;
+  letter-spacing: 0;
 }
 
 h2 {
@@ -27,7 +40,7 @@ h2 {
 .search {
   display: flex;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 0;
 }
 
 input {
@@ -50,10 +63,22 @@ button {
 
 .card {
   background: #152238;
-  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 14px;
   padding: 16px;
   margin: 12px 0;
   box-shadow: 0 8px 20px rgba(0,0,0,.25);
+}
+
+.control-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-primary {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 12px;
 }
 
 .grid {
@@ -101,6 +126,10 @@ button {
 
 @media (max-width: 700px) {
   .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-primary {
     grid-template-columns: 1fr;
   }
 
@@ -288,6 +317,26 @@ button {
   margin-top: 12px;
 }
 
+.status-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 1rem;
+  align-items: center;
+}
+
+.status-layout h2 {
+  margin-bottom: 0.25rem;
+}
+
+.status-score {
+  text-align: right;
+}
+
+.status-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .danger {
   background: #ef4444;
   color: white;
@@ -296,6 +345,16 @@ button {
 @media (max-width: 700px) {
   .favorite-add {
     grid-template-columns: 1fr;
+  }
+
+  .status-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .status-score,
+  .status-actions {
+    text-align: left;
+    justify-content: flex-start;
   }
 }
 

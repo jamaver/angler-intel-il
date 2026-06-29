@@ -1,0 +1,13 @@
+{
+  "version": "v4.9.1-ui-snapshot-polish",
+  "previous": "v4.9-map-dashboard-prototype",
+  "json_source_of_truth": true,
+  "sqlite_role": "mirror/read-only foundation",
+  "admin_expanded": false,
+  "admin_menu_restored": false,
+  "app_health_maintenance_hub": true,
+  "ui_polished": true,
+  "trip_snapshot_upgraded": true,
+  "export_current_page_removed": true,
+  "installed_at": "2026-06-29T07:48:58-05:00"
+}

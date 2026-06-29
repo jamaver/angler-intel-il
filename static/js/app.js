@@ -28,10 +28,6 @@ function formatHour(hour) {
   return `${h} ${suffix}`;
 }
 
-function exportPDF() {
-  window.print();
-}
-
 function openSnapshot() {
   window.open(`/snapshot?zip=${encodeURIComponent(currentZip)}`, "_blank");
 }
@@ -250,13 +246,20 @@ function render(data) {
   if (zipInput) zipInput.value = currentZip;
 
   setHTML("status", `
-    <h2>${loc.city || "Unknown"}, ${loc.state || ""}</h2>
-    <div class="score">${data.overall?.score ?? "?"}/100</div>
-    <div>${data.overall?.rating ?? ""}</div>
-    <div class="small">Detected water type: ${data.area_type || "unknown"}</div>
-    <div class="small">Generated: ${data.generated_at || ""}</div>
-    <button class="secondary" onclick="exportPDF()">Export Current Page</button>
-    <button class="secondary" onclick="openSnapshot()">Trip Snapshot PDF</button>
+    <div class="status-layout">
+      <div>
+        <h2>${loc.city || "Unknown"}, ${loc.state || ""}</h2>
+        <div class="small">ZIP ${loc.zip || currentZip} · ${data.area_type || "unknown"} water pattern</div>
+        <div class="small">Generated: ${data.generated_at || ""}</div>
+      </div>
+      <div class="status-score">
+        <div class="score">${data.overall?.score ?? "?"}/100</div>
+        <div>${data.overall?.rating ?? ""}</div>
+      </div>
+      <div class="status-actions">
+        <button class="secondary" onclick="openSnapshot()">Trip Snapshot</button>
+      </div>
+    </div>
   `);
 
   const best = data.best_bet;

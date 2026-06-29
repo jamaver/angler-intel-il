@@ -103,7 +103,7 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v4.9-map-dashboard-prototype"
+APP_VERSION = "v4.9.1-ui-snapshot-polish"
 
 DATA_DIR = Path("data")
 FAVORITES_FILE = DATA_DIR / "favorites.json"
