@@ -17,6 +17,8 @@ from intelligence.app_health_backup import get_backup_health_for_app
 from intelligence.app_health_versions import get_version_health_for_app
 from intelligence.app_health_intelligence import get_smart_intelligence_health_for_app
 from intelligence.app_health_sqlite_transition import get_sqlite_transition_health_for_app
+from intelligence.app_health_map_data import get_map_data_health_for_app
+from intelligence.map_data import get_map_data_readiness
 
 app = Flask(__name__)
 
@@ -101,7 +103,7 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v4.7-sqlite-authority-transition-plan"
+APP_VERSION = "v4.8-map-data-readiness"
 
 DATA_DIR = Path("data")
 FAVORITES_FILE = DATA_DIR / "favorites.json"
@@ -667,3 +669,33 @@ def app_health_sqlite_transition_status():
             "sqlite_role": "mirror/read-only foundation",
             "errors": [str(exc)],
         }
+
+
+def app_health_map_data_status():
+    """Small read-only map data readiness payload for App Health."""
+    try:
+        return get_map_data_health_for_app()
+    except Exception as exc:
+        return {
+            "ok": False,
+            "summary": "Map data readiness unavailable",
+            "json_source_of_truth": True,
+            "sqlite_role": "mirror/read-only foundation",
+            "errors": [str(exc)],
+        }
+
+
+@app.route("/api/map-data")
+def api_map_data():
+    """Read-only map data endpoint for staged map dashboard work."""
+    readiness = get_map_data_readiness()
+    return jsonify({
+        "ok": bool(readiness.get("ok")),
+        "version": readiness.get("version"),
+        "json_source_of_truth": True,
+        "sqlite_role": "mirror/read-only foundation",
+        "record_count": readiness.get("record_count", 0),
+        "bounds": readiness.get("bounds"),
+        "warnings": readiness.get("warnings", []),
+        "waters": readiness.get("records", []),
+    })

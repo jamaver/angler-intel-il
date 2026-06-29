@@ -1082,3 +1082,8 @@ button {
 .sqlite-transition-health-card {
   margin-top: 1rem;
 }
+
+/* v4.8 Map data readiness card in App Health */
+.map-data-health-card {
+  margin-top: 1rem;
+}

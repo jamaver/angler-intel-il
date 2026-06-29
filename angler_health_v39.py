@@ -12,12 +12,14 @@ from flask import jsonify, render_template
 try:
     from intelligence.app_health_backup import get_backup_health_for_app
     from intelligence.app_health_intelligence import get_smart_intelligence_health_for_app
+    from intelligence.app_health_map_data import get_map_data_health_for_app
     from intelligence.app_health_sqlite import get_sqlite_health_for_app
     from intelligence.app_health_sqlite_transition import get_sqlite_transition_health_for_app
     from intelligence.app_health_versions import get_version_health_for_app
 except Exception:
     get_backup_health_for_app = None
     get_smart_intelligence_health_for_app = None
+    get_map_data_health_for_app = None
     get_sqlite_health_for_app = None
     get_sqlite_transition_health_for_app = None
     get_version_health_for_app = None
@@ -325,6 +327,18 @@ def build_health_payload(app) -> dict[str, Any]:
                 "errors": [str(exc)],
             }
 
+    if get_map_data_health_for_app is not None:
+        try:
+            payload["map_data_health"] = get_map_data_health_for_app()
+        except Exception as exc:
+            payload["map_data_health"] = {
+                "ok": False,
+                "summary": "Map data readiness unavailable",
+                "json_source_of_truth": True,
+                "sqlite_role": "mirror/read-only foundation",
+                "errors": [str(exc)],
+            }
+
     return payload
 
 
@@ -401,6 +415,10 @@ def _render_health_html(payload: dict[str, Any]) -> str:
     sqlite_transition_card = render_template(
         "_sqlite_transition_health_card.html",
         sqlite_transition_health=payload.get("sqlite_transition_health"),
+    )
+    map_data_card = render_template(
+        "_map_data_health_card.html",
+        map_data_health=payload.get("map_data_health"),
     )
 
     return f"""<!doctype html>
@@ -548,6 +566,8 @@ def _render_health_html(payload: dict[str, Any]) -> str:
   {intelligence_card}
 
   {sqlite_transition_card}
+
+  {map_data_card}
 
   {backup_card}
 

@@ -1,0 +1,57 @@
+<section class="card map-data-health-card" id="map-data-health-card">
+  <h2>Map Data Readiness</h2>
+  <p class="muted">
+    v4.8 validates local water records for a staged map-driven dashboard.
+  </p>
+
+  {% if map_data_health %}
+    <div class="health-grid">
+      <div>
+        <strong>Status</strong><br>
+        {% if map_data_health.ok %}
+          <span class="status-good">Ready</span>
+        {% else %}
+          <span class="status-warn">Needs attention</span>
+        {% endif %}
+      </div>
+
+      <div>
+        <strong>Map records</strong><br>
+        <span>{{ map_data_health.record_count }}</span>
+      </div>
+
+      <div>
+        <strong>Source</strong><br>
+        <span>{{ map_data_health.source_path }}</span>
+      </div>
+
+      <div>
+        <strong>Authority</strong><br>
+        <span>JSON now; SQLite transition planned</span>
+      </div>
+    </div>
+
+    {% if map_data_health.bounds %}
+      <details class="health-details">
+        <summary>Map bounds</summary>
+        <ul>
+          <li>Latitude: {{ map_data_health.bounds.min_lat }} to {{ map_data_health.bounds.max_lat }}</li>
+          <li>Longitude: {{ map_data_health.bounds.min_lon }} to {{ map_data_health.bounds.max_lon }}</li>
+        </ul>
+      </details>
+    {% endif %}
+
+    {% if map_data_health.warnings %}
+      <details class="health-details">
+        <summary>Map data warnings</summary>
+        <ul>
+          {% for warning in map_data_health.warnings %}
+            <li>{{ warning }}</li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+  {% else %}
+    <p class="status-warn">Map data readiness unavailable.</p>
+  {% endif %}
+</section>

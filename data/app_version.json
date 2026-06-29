@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel",
-  "version": "v4.7-sqlite-authority-transition-plan",
-  "updated": "2026-06-29T07:34:43-05:00",
+  "version": "v4.8-map-data-readiness",
+  "updated": "2026-06-29T07:36:50-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -22,7 +22,8 @@
     "app_health_version_ledger": "v4.5.4",
     "smart_intelligence": "v4.6",
     "smart_intelligence_hardening": "v4.6.1",
-    "sqlite_authority_transition_plan": "v4.7"
+    "sqlite_authority_transition_plan": "v4.7",
+    "map_data_readiness": "v4.8"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -39,6 +40,7 @@
     "v4.6 generalizes the visible app identity beyond Illinois while keeping the existing starter waters dataset.",
     "v4.6 adds a Smart Intelligence dashboard layer that blends weather, wind, pressure, cloud cover, season, water type, species, lure guidance, and catch-history signal.",
     "v4.6.1 hardens Smart Intelligence for missing weather inputs and declares the updated direction toward map-driven intelligence and deliberate SQLite authority migration with rollback tools.",
-    "v4.7 adds a SQLite authority transition plan and App Health readiness card while keeping JSON as current authority."
+    "v4.7 adds a SQLite authority transition plan and App Health readiness card while keeping JSON as current authority.",
+    "v4.8 adds map data readiness checks and a read-only map data endpoint for staged map dashboard work."
   ]
 }
