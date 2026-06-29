@@ -13,6 +13,7 @@ from intelligence.lures import choose_lure
 from intelligence.scoring import overall_score, time_blocks, rating, hourly_bite_forecast
 from intelligence.app_health_sqlite import get_sqlite_health_for_app
 from intelligence.app_health_backup import get_backup_health_for_app
+from intelligence.app_health_versions import get_version_health_for_app
 
 app = Flask(__name__)
 
@@ -558,4 +559,18 @@ def app_health_backup_status():
             "summary": "Backup status unavailable",
             "errors": [str(exc)],
             "json_source_of_truth": True,
+        }
+
+
+def app_health_version_status():
+    """Small read-only version ledger payload for App Health."""
+    try:
+        return get_version_health_for_app()
+    except Exception as exc:
+        return {
+            "ok": False,
+            "summary": "Version ledger unavailable",
+            "json_source_of_truth": True,
+            "sqlite_role": "mirror/read-only foundation",
+            "errors": [str(exc)],
         }

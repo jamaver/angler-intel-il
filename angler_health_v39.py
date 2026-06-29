@@ -12,9 +12,11 @@ from flask import jsonify, render_template
 try:
     from intelligence.app_health_backup import get_backup_health_for_app
     from intelligence.app_health_sqlite import get_sqlite_health_for_app
+    from intelligence.app_health_versions import get_version_health_for_app
 except Exception:
     get_backup_health_for_app = None
     get_sqlite_health_for_app = None
+    get_version_health_for_app = None
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -282,6 +284,18 @@ def build_health_payload(app) -> dict[str, Any]:
                 "json_source_of_truth": True,
             }
 
+    if get_version_health_for_app is not None:
+        try:
+            payload["version_health"] = get_version_health_for_app()
+        except Exception as exc:
+            payload["version_health"] = {
+                "ok": False,
+                "summary": "Version ledger unavailable",
+                "json_source_of_truth": True,
+                "sqlite_role": "mirror/read-only foundation",
+                "errors": [str(exc)],
+            }
+
     return payload
 
 
@@ -346,6 +360,10 @@ def _render_health_html(payload: dict[str, Any]) -> str:
     backup_card = render_template(
         "_backup_health_card.html",
         backup_health=payload.get("backup_health"),
+    )
+    version_card = render_template(
+        "_version_health_card.html",
+        version_health=payload.get("version_health"),
     )
 
     return f"""<!doctype html>
@@ -488,6 +506,8 @@ def _render_health_html(payload: dict[str, Any]) -> str:
       <tbody>{''.join(route_rows)}</tbody>
     </table>
   </div>
+
+  {version_card}
 
   {backup_card}
 

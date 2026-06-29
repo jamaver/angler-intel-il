@@ -1,0 +1,83 @@
+<section class="card version-health-card" id="version-health-card">
+  <h2>Version Ledger</h2>
+  <p class="muted">
+    Installed version markers for App Health maintenance visibility.
+  </p>
+
+  {% if version_health %}
+    <div class="health-grid">
+      <div>
+        <strong>Status</strong><br>
+        {% if version_health.ok %}
+          <span class="status-good">Ledger available</span>
+        {% else %}
+          <span class="status-warn">Needs attention</span>
+        {% endif %}
+      </div>
+
+      <div>
+        <strong>Latest</strong><br>
+        <span>{{ version_health.latest.version if version_health.latest else "Unknown" }}</span>
+      </div>
+
+      <div>
+        <strong>Installed</strong><br>
+        <span>{{ version_health.latest.installed_at if version_health.latest else "Unknown" }}</span>
+      </div>
+
+      <div>
+        <strong>Markers</strong><br>
+        <span>{{ version_health.marker_count }}</span>
+      </div>
+
+      <div>
+        <strong>Source of truth</strong><br>
+        <span>JSON</span>
+      </div>
+
+      <div>
+        <strong>SQLite role</strong><br>
+        <span>{{ version_health.sqlite_role }}</span>
+      </div>
+    </div>
+
+    {% if version_health.recent %}
+      <details class="health-details">
+        <summary>Recent version history</summary>
+        <ul>
+          {% for item in version_health.recent %}
+            <li>
+              {{ item.version }} -
+              {{ item.installed_at or "mtime fallback" }} -
+              <code>{{ item.file }}</code>
+            </li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+
+    {% if version_health.warnings %}
+      <details class="health-details">
+        <summary>Version ledger warnings</summary>
+        <ul>
+          {% for warning in version_health.warnings %}
+            <li>{{ warning }}</li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+
+    {% if version_health.errors %}
+      <details class="health-details">
+        <summary>Version ledger errors</summary>
+        <ul>
+          {% for error in version_health.errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+  {% else %}
+    <p class="status-warn">Version health data unavailable.</p>
+  {% endif %}
+</section>

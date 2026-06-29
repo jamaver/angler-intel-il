@@ -1034,3 +1034,12 @@ button {
 .backup-health-card code {
   word-break: break-word;
 }
+
+/* v4.5.4 Version Ledger card in App Health */
+.version-health-card {
+  margin-top: 1rem;
+}
+
+.version-health-card code {
+  word-break: break-word;
+}
