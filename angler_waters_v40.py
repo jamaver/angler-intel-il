@@ -258,7 +258,7 @@ def _render_waters_page() -> str:
   </style>
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body>
+<body class="local-waters-page">
   <nav class="ai-main-tabs" aria-label="Angler Intel navigation">
   <a class="ai-main-tab" href="/">Dashboard</a>
   <a class="ai-main-tab active" href="/waters">Local Waters</a>
@@ -416,7 +416,7 @@ def _render_water_detail(water: dict[str, Any]) -> str:
     a {{ color: #0b5d2a; }}
   </style>
 </head>
-<body>
+<body class="local-waters-page">
   <h1>{_esc(water.get("name"))}</h1>
   <p class="muted">{_esc(water.get("type"))} · {_esc(water.get("city"))} · {_esc(water.get("county"))}</p>
 

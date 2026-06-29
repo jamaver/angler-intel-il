@@ -1274,6 +1274,50 @@ button {
   background: rgba(56, 189, 248, 0.14);
 }
 
+/* Local Waters readability guard */
+.local-waters-page {
+  background: #f4fbf6;
+  color: #102417;
+}
+
+.local-waters-page .card,
+.local-waters-page .water {
+  background: #ffffff !important;
+  color: #102417 !important;
+  border-color: #d4ead9;
+}
+
+.local-waters-page .water h3,
+.local-waters-page .water p,
+.local-waters-page .card h1,
+.local-waters-page .card h2,
+.local-waters-page .card h3 {
+  color: #102417;
+}
+
+.local-waters-page .muted {
+  color: #4f6b58 !important;
+}
+
+.local-waters-page .tag {
+  background: #e9f8ee;
+  color: #102417;
+  border-color: #b9ddc5;
+}
+
+.local-waters-page input,
+.local-waters-page select,
+.local-waters-page button {
+  background: #f8fff9;
+  color: #102417;
+  border: 1px solid #8fbea0;
+}
+
+.local-waters-page a {
+  color: #176c35;
+  font-weight: 800;
+}
+
 @media (max-width: 860px) {
   .map-layout {
     grid-template-columns: 1fr;
