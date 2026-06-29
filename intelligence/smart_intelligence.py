@@ -4,6 +4,15 @@ from datetime import datetime
 from typing import Any
 
 
+TRANSITION_DIRECTION = {
+    "stage": "v4.6.1-hardening",
+    "role": "transitional-intelligence-layer",
+    "map_dashboard_planned": True,
+    "sqlite_authority_allowed_after_migration": True,
+    "requires_rollback_tools_before_sqlite_authority": True,
+}
+
+
 def season_for_month(month: int | None = None) -> str:
     month = month or datetime.now().month
     if month in (12, 1, 2):
@@ -26,7 +35,21 @@ def time_of_day_for_hour(hour: int | None = None) -> str:
     return "night"
 
 
-def clarity_signal(wind_mph: float, cloud_cover: float, area_type: str) -> dict[str, str]:
+def _safe_float(value: Any) -> float | None:
+    try:
+        if value is None or value == "":
+            return None
+        return float(value)
+    except Exception:
+        return None
+
+
+def clarity_signal(wind_mph: float | None, cloud_cover: float | None, area_type: str) -> dict[str, str]:
+    if wind_mph is None or cloud_cover is None:
+        return {
+            "label": "clarity unknown",
+            "basis": "Weather inputs are incomplete, so actual water clarity must be verified on site.",
+        }
     if wind_mph >= 18:
         return {
             "label": "stained or wind-broken water likely",
@@ -72,36 +95,65 @@ def _catch_history_signal(catch_insights: dict[str, Any], zip_code: str, species
     }
 
 
-def _condition_labels(temp_f: float, wind_mph: float, pressure_inhg: float, cloud_cover: float) -> list[str]:
+def _condition_labels(
+    temp_f: float | None,
+    wind_mph: float | None,
+    pressure_inhg: float | None,
+    cloud_cover: float | None,
+) -> list[str]:
     labels: list[str] = []
 
-    if temp_f < 50:
+    if temp_f is None:
+        labels.append("temperature unknown")
+    elif temp_f < 50:
         labels.append("cold-water pattern")
     elif temp_f > 82:
         labels.append("warm-water pattern")
     else:
         labels.append("moderate temperature")
 
-    if 5 <= wind_mph <= 15:
+    if wind_mph is None:
+        labels.append("wind unknown")
+    elif 5 <= wind_mph <= 15:
         labels.append("productive wind")
     elif wind_mph > 20:
         labels.append("heavy wind")
     else:
         labels.append("light wind")
 
-    if pressure_inhg < 29.9:
+    if pressure_inhg is None:
+        labels.append("pressure unknown")
+    elif pressure_inhg < 29.9:
         labels.append("lower pressure")
     elif pressure_inhg > 30.25:
         labels.append("high pressure")
     else:
         labels.append("stable pressure")
 
-    if cloud_cover >= 60:
+    if cloud_cover is None:
+        labels.append("cloud cover unknown")
+    elif cloud_cover >= 60:
         labels.append("cloud cover")
     elif cloud_cover <= 25:
         labels.append("bright sky")
 
     return labels
+
+
+def _input_quality(weather: dict[str, Any], best_bet: dict[str, Any], best_time: dict[str, Any]) -> dict[str, Any]:
+    required_weather = ("temp", "wind", "pressure", "cloud")
+    missing = [key for key in required_weather if _safe_float(weather.get(key)) is None]
+    if not best_bet:
+        missing.append("best_bet")
+    if not best_time:
+        missing.append("best_time")
+
+    return {
+        "ok": not missing,
+        "missing": missing,
+        "source": weather.get("source", "live") if isinstance(weather, dict) else "unknown",
+        "fallback": bool(weather.get("fallback")) if isinstance(weather, dict) else True,
+    }
 
 
 def build_smart_intelligence(
@@ -121,10 +173,10 @@ def build_smart_intelligence(
     not write data, does not use SQLite as authority, and does not replace Smart
     Picks.
     """
-    temp_f = float(weather.get("temp") or 0)
-    wind_mph = float(weather.get("wind") or 0)
-    pressure_inhg = float(weather.get("pressure") or 0)
-    cloud_cover = float(weather.get("cloud") or 0)
+    temp_f = _safe_float(weather.get("temp"))
+    wind_mph = _safe_float(weather.get("wind"))
+    pressure_inhg = _safe_float(weather.get("pressure"))
+    cloud_cover = _safe_float(weather.get("cloud"))
     season = season_for_month()
     daypart = time_of_day_for_hour()
     species = str(best_bet.get("species") or "target species")
@@ -133,22 +185,29 @@ def build_smart_intelligence(
     clarity = clarity_signal(wind_mph, cloud_cover, water_type)
     catch_signal = _catch_history_signal(catch_insights, zip_code, species)
     labels = _condition_labels(temp_f, wind_mph, pressure_inhg, cloud_cover)
+    input_quality = _input_quality(weather, best_bet, best_time)
 
     strategy = []
     strategy.append(f"Start with {species} during the {best_time.get('label', daypart).lower()} window.")
     strategy.append(f"Fish {water_type} edges first, then adjust based on water clarity and bait activity.")
 
-    if wind_mph > 20:
+    if wind_mph is None:
+        strategy.append("Weather feed is incomplete, so verify wind and water conditions before committing to a pattern.")
+    elif wind_mph > 20:
         strategy.append("Use heavier or more compact presentations and favor protected banks.")
     elif 5 <= wind_mph <= 15:
         strategy.append("Check wind-blown banks, points, and current breaks before dead-calm areas.")
 
-    if pressure_inhg > 30.25:
+    if pressure_inhg is None:
+        strategy.append("Pressure is unavailable, so let visible fish activity and recent local catches drive adjustments.")
+    elif pressure_inhg > 30.25:
         strategy.append("Slow down after the first pass; high pressure often rewards finesse or precise casts.")
     elif pressure_inhg < 29.9:
         strategy.append("Cover water confidently while lower pressure keeps fish more willing to move.")
 
-    if cloud_cover >= 60:
+    if cloud_cover is None:
+        strategy.append("Cloud cover is unavailable, so carry both natural and higher-contrast color options.")
+    elif cloud_cover >= 60:
         strategy.append("Keep moving baits in play longer because cloud cover can extend shallow feeding.")
     elif cloud_cover <= 25:
         strategy.append("Use natural colors, shade, depth changes, and longer casts in bright conditions.")
@@ -179,9 +238,12 @@ def build_smart_intelligence(
     return {
         "ok": True,
         "version": "v4.6-smart-intelligence",
+        "hardened_version": "v4.6.1-smart-intelligence-hardening",
         "scope": "national-zip-weather-with-local-water-context",
         "json_source_of_truth": True,
         "sqlite_role": "mirror/read-only foundation",
+        "transition_direction": TRANSITION_DIRECTION,
+        "input_quality": input_quality,
         "location_label": ", ".join(
             part for part in (location.get("city"), location.get("state")) if part
         ),

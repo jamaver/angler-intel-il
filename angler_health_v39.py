@@ -11,10 +11,12 @@ from flask import jsonify, render_template
 
 try:
     from intelligence.app_health_backup import get_backup_health_for_app
+    from intelligence.app_health_intelligence import get_smart_intelligence_health_for_app
     from intelligence.app_health_sqlite import get_sqlite_health_for_app
     from intelligence.app_health_versions import get_version_health_for_app
 except Exception:
     get_backup_health_for_app = None
+    get_smart_intelligence_health_for_app = None
     get_sqlite_health_for_app = None
     get_version_health_for_app = None
 
@@ -296,6 +298,18 @@ def build_health_payload(app) -> dict[str, Any]:
                 "errors": [str(exc)],
             }
 
+    if get_smart_intelligence_health_for_app is not None:
+        try:
+            payload["intelligence_health"] = get_smart_intelligence_health_for_app()
+        except Exception as exc:
+            payload["intelligence_health"] = {
+                "ok": False,
+                "summary": "Smart Intelligence readiness unavailable",
+                "json_source_of_truth": True,
+                "sqlite_role": "mirror/read-only foundation",
+                "errors": [str(exc)],
+            }
+
     return payload
 
 
@@ -364,6 +378,10 @@ def _render_health_html(payload: dict[str, Any]) -> str:
     version_card = render_template(
         "_version_health_card.html",
         version_health=payload.get("version_health"),
+    )
+    intelligence_card = render_template(
+        "_smart_intelligence_health_card.html",
+        intelligence_health=payload.get("intelligence_health"),
     )
 
     return f"""<!doctype html>
@@ -507,6 +525,8 @@ def _render_health_html(payload: dict[str, Any]) -> str:
   </div>
 
   {version_card}
+
+  {intelligence_card}
 
   {backup_card}
 

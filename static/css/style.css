@@ -1072,3 +1072,8 @@ button {
 .intel-details {
   margin-top: 0.85rem;
 }
+
+/* v4.6.1 Smart Intelligence readiness in App Health */
+.smart-intelligence-health-card {
+  margin-top: 1rem;
+}

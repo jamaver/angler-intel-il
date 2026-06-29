@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid
 from collections import Counter
 
@@ -15,6 +15,7 @@ from intelligence.smart_intelligence import build_smart_intelligence
 from intelligence.app_health_sqlite import get_sqlite_health_for_app
 from intelligence.app_health_backup import get_backup_health_for_app
 from intelligence.app_health_versions import get_version_health_for_app
+from intelligence.app_health_intelligence import get_smart_intelligence_health_for_app
 
 app = Flask(__name__)
 
@@ -99,7 +100,7 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v4.6-smart-intelligence"
+APP_VERSION = "v4.6.1-smart-intelligence-hardening"
 
 DATA_DIR = Path("data")
 FAVORITES_FILE = DATA_DIR / "favorites.json"
@@ -222,6 +223,43 @@ def catch_insights(zip_code):
     }
 
 
+def fallback_weather_payload():
+    """Pi-safe weather fallback used only when the live weather feed is unavailable."""
+    today = datetime.now().date()
+    hourly_times = [
+        f"{today.isoformat()}T{hour:02d}:00"
+        for hour in range(24)
+    ]
+    daily_times = [
+        (today + timedelta(days=idx)).isoformat()
+        for idx in range(7)
+    ]
+
+    return {
+        "source": "fallback",
+        "fallback": True,
+        "current": {
+            "temperature_2m": 18.3,
+            "wind_speed_10m": 12.9,
+            "pressure_msl": 1015.9,
+            "cloud_cover": 50,
+        },
+        "hourly": {
+            "time": hourly_times,
+            "temperature_2m": [18.3 for _ in hourly_times],
+            "wind_speed_10m": [12.9 for _ in hourly_times],
+            "pressure_msl": [1015.9 for _ in hourly_times],
+            "cloud_cover": [50 for _ in hourly_times],
+        },
+        "daily": {
+            "time": daily_times,
+            "temperature_2m_max": [22.2 for _ in daily_times],
+            "temperature_2m_min": [13.9 for _ in daily_times],
+            "wind_speed_10m_max": [16.1 for _ in daily_times],
+        },
+    }
+
+
 def build_best_bet(species_ranked, best_time, best_hour, base_score, temp_f, wind_mph, pressure_inhg, area_type, zip_code):
     top = species_ranked[0]
 
@@ -305,7 +343,15 @@ def build_intel(zip_code):
     if not loc:
         return None
 
-    weather = get_weather(loc["lat"], loc["lon"])
+    weather_error = None
+    try:
+        weather = get_weather(loc["lat"], loc["lon"])
+        weather["source"] = weather.get("source", "open-meteo")
+        weather["fallback"] = False
+    except Exception as exc:
+        weather_error = str(exc)
+        weather = fallback_weather_payload()
+
     current = weather["current"]
 
     temp_f = f_temp(current["temperature_2m"])
@@ -391,7 +437,10 @@ def build_intel(zip_code):
         "temp": round(temp_f, 1),
         "wind": round(wind_mph, 1),
         "pressure": round(pressure_inhg, 2),
-        "cloud": cloud
+        "cloud": cloud,
+        "source": weather.get("source", "unknown"),
+        "fallback": bool(weather.get("fallback")),
+        "error": weather_error,
     }
     insights = catch_insights(zip_code)
     smart_intelligence = build_smart_intelligence(
@@ -584,6 +633,20 @@ def app_health_version_status():
         return {
             "ok": False,
             "summary": "Version ledger unavailable",
+            "json_source_of_truth": True,
+            "sqlite_role": "mirror/read-only foundation",
+            "errors": [str(exc)],
+        }
+
+
+def app_health_intelligence_status():
+    """Small read-only Smart Intelligence readiness payload for App Health."""
+    try:
+        return get_smart_intelligence_health_for_app()
+    except Exception as exc:
+        return {
+            "ok": False,
+            "summary": "Smart Intelligence readiness unavailable",
             "json_source_of_truth": True,
             "sqlite_role": "mirror/read-only foundation",
             "errors": [str(exc)],

@@ -1,0 +1,14 @@
+{
+  "version": "v4.6.1-smart-intelligence-hardening",
+  "previous": "v4.6-smart-intelligence-upgrade",
+  "json_source_of_truth": true,
+  "sqlite_role": "mirror/read-only foundation",
+  "sqlite_authority_allowed_after_migration": true,
+  "rollback_required_before_sqlite_authority": true,
+  "map_dashboard_planned": true,
+  "admin_expanded": false,
+  "admin_menu_restored": false,
+  "app_health_maintenance_hub": true,
+  "smart_intelligence_hardened": true,
+  "installed_at": "2026-06-29T07:25:20-05:00"
+}

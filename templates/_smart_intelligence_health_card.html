@@ -1,0 +1,67 @@
+<section class="card smart-intelligence-health-card" id="smart-intelligence-health-card">
+  <h2>Smart Intelligence Readiness</h2>
+  <p class="muted">
+    Transitional intelligence layer readiness for map-driven fishing intelligence and future SQLite authority migration.
+  </p>
+
+  {% if intelligence_health %}
+    <div class="health-grid">
+      <div>
+        <strong>Status</strong><br>
+        {% if intelligence_health.ok %}
+          <span class="status-good">Ready</span>
+        {% else %}
+          <span class="status-warn">Needs attention</span>
+        {% endif %}
+      </div>
+
+      <div>
+        <strong>Version</strong><br>
+        <span>{{ intelligence_health.version or "Unknown" }}</span>
+      </div>
+
+      <div>
+        <strong>Source of truth</strong><br>
+        <span>JSON current; SQLite transition planned</span>
+      </div>
+
+      <div>
+        <strong>Map direction</strong><br>
+        <span>{{ "Planned" if intelligence_health.transition_direction.map_dashboard_planned else "Not declared" }}</span>
+      </div>
+    </div>
+
+    <details class="health-details">
+      <summary>Transition guardrails</summary>
+      <ul>
+        <li>SQLite authority allowed only after deliberate migration and rollback tools.</li>
+        <li>Map dashboard is desired, but not introduced in this hardening release.</li>
+        <li>App Health remains the maintenance hub.</li>
+      </ul>
+    </details>
+
+    {% if intelligence_health.warnings %}
+      <details class="health-details">
+        <summary>Smart Intelligence warnings</summary>
+        <ul>
+          {% for warning in intelligence_health.warnings %}
+            <li>{{ warning }}</li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+
+    {% if intelligence_health.errors %}
+      <details class="health-details">
+        <summary>Smart Intelligence errors</summary>
+        <ul>
+          {% for error in intelligence_health.errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+  {% else %}
+    <p class="status-warn">Smart Intelligence readiness data unavailable.</p>
+  {% endif %}
+</section>

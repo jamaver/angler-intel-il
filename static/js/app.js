@@ -290,7 +290,8 @@ function render(data) {
     🌡 ${data.weather?.temp ?? "?"}°F<br>
     💨 ${data.weather?.wind ?? "?"} mph<br>
     📉 ${data.weather?.pressure ?? "?"} inHg<br>
-    ☁️ ${data.weather?.cloud ?? "?"}% cloud cover
+    ☁️ ${data.weather?.cloud ?? "?"}% cloud cover<br>
+    <span class="small">${data.weather?.fallback ? "Fallback weather estimate in use" : "Live weather feed"}</span>
   `);
 
   setHTML("bestTime", `
