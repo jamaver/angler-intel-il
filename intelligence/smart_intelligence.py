@@ -13,6 +13,28 @@ TRANSITION_DIRECTION = {
 }
 
 
+def _safe_mapping(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
+def _safe_sequence(value: Any) -> list[Any]:
+    return value if isinstance(value, list) else []
+
+
+def _safe_text(value: Any, default: str) -> str:
+    text = str(value).strip() if value is not None else ""
+    return text or default
+
+
+def _safe_int(value: Any, default: int = 0) -> int:
+    try:
+        if value is None or value == "":
+            return default
+        return int(float(value))
+    except Exception:
+        return default
+
+
 def season_for_month(month: int | None = None) -> str:
     month = month or datetime.now().month
     if month in (12, 1, 2):
@@ -39,59 +61,95 @@ def _safe_float(value: Any) -> float | None:
     try:
         if value is None or value == "":
             return None
-        return float(value)
+        n = float(value)
+        if n != n:
+            return None
+        return n
     except Exception:
         return None
 
 
-def clarity_signal(wind_mph: float | None, cloud_cover: float | None, area_type: str) -> dict[str, str]:
+def clarity_signal(wind_mph: float | None, cloud_cover: float | None, area_type: str) -> dict[str, Any]:
     if wind_mph is None or cloud_cover is None:
         return {
             "label": "clarity unknown",
             "basis": "Weather inputs are incomplete, so actual water clarity must be verified on site.",
+            "inferred": False,
         }
+
     if wind_mph >= 18:
         return {
             "label": "stained or wind-broken water likely",
             "basis": "Wind can reduce visibility and push bait toward wind-blown banks.",
+            "inferred": True,
         }
+
     if wind_mph <= 6 and cloud_cover < 35 and area_type in ("lake", "pond", "reservoir"):
         return {
             "label": "clearer, calmer presentation likely",
             "basis": "Low wind and bright skies usually call for cleaner profiles and longer casts.",
+            "inferred": True,
         }
+
     return {
         "label": "mixed clarity signal",
         "basis": "No direct clarity reading is available, so lure color should be adjusted on site.",
+        "inferred": True,
     }
 
 
-def _catch_history_signal(catch_insights: dict[str, Any], zip_code: str, species: str) -> dict[str, Any]:
-    total = int(catch_insights.get("total") or 0)
-    local_total = int(catch_insights.get("local_total") or 0)
-    top_species = catch_insights.get("top_species") or []
+def _catch_history_signal(catch_insights: dict[str, Any] | None, zip_code: str, species: str) -> dict[str, Any]:
+    insights = _safe_mapping(catch_insights)
+    total = max(_safe_int(insights.get("total")), 0)
+    local_total = max(_safe_int(insights.get("local_total")), 0)
+    top_species = _safe_sequence(insights.get("top_species"))
     known_species = [
         item.get("name")
         for item in top_species
         if isinstance(item, dict) and item.get("name")
     ]
 
+    if local_total >= 5:
+        strength = "strong"
+    elif local_total >= 2:
+        strength = "moderate"
+    elif local_total == 1:
+        strength = "light"
+    elif total >= 5:
+        strength = "moderate"
+    elif total > 0:
+        strength = "light"
+    else:
+        strength = "none"
+
     if local_total > 0:
-        return {
-            "level": "local",
-            "summary": f"{local_total} catch log entry(s) already exist for ZIP {zip_code}.",
-            "weight": "Use local catch history as a tie-breaker when choosing species and lure.",
-        }
-    if total > 0:
-        return {
-            "level": "personal",
-            "summary": f"{total} total catch log entry(s) are available across saved trips.",
-            "weight": "Use your broader catch patterns, but verify them against current water type.",
-        }
+        summary = f"{local_total} catch log entry(s) already exist for ZIP {zip_code}."
+        weight = "Use local catch history as a tie-breaker, but do not let a tiny sample overpower current conditions."
+        level = "local"
+    elif total > 0:
+        summary = f"{total} total catch log entry(s) are available across saved trips."
+        weight = "Use broader catch patterns as a weak signal and keep current water conditions in front."
+        level = "personal"
+    else:
+        summary = f"No catch history yet for {species}."
+        weight = "Current weather, season, water type, and species behavior carry the recommendation."
+        level = "starter"
+
+    if local_total > 0 and local_total < 3:
+        weight = "There is some local history, but the sample is small enough that current conditions should dominate."
+    elif total > 0 and local_total == 0 and total < 5:
+        weight = "There is some catch history, but the sample is small enough that it should only nudge the decision."
+
     return {
-        "level": "starter",
-        "summary": f"No catch history yet for {species}.",
-        "weight": "Current weather, season, water type, and species behavior carry the recommendation.",
+        "level": level,
+        "summary": summary,
+        "weight": weight,
+        "strength": strength,
+        "sample_size": {
+            "total": total,
+            "local": local_total,
+        },
+        "known_species": known_species[:5],
     }
 
 
@@ -140,7 +198,12 @@ def _condition_labels(
     return labels
 
 
-def _input_quality(weather: dict[str, Any], best_bet: dict[str, Any], best_time: dict[str, Any]) -> dict[str, Any]:
+def _input_quality(weather: dict[str, Any] | None, best_bet: dict[str, Any] | None, best_time: dict[str, Any] | None) -> dict[str, Any]:
+    original_weather = weather if isinstance(weather, dict) else {}
+    weather = _safe_mapping(weather)
+    best_bet = _safe_mapping(best_bet)
+    best_time = _safe_mapping(best_time)
+
     required_weather = ("temp", "wind", "pressure", "cloud")
     missing = [key for key in required_weather if _safe_float(weather.get(key)) is None]
     if not best_bet:
@@ -151,47 +214,197 @@ def _input_quality(weather: dict[str, Any], best_bet: dict[str, Any], best_time:
     return {
         "ok": not missing,
         "missing": missing,
-        "source": weather.get("source", "live") if isinstance(weather, dict) else "unknown",
-        "fallback": bool(weather.get("fallback")) if isinstance(weather, dict) else True,
+        "source": original_weather.get("source", "unknown") if original_weather else "unknown",
+        "fallback": bool(original_weather.get("fallback")) if original_weather else True,
     }
 
 
-def build_smart_intelligence(
-    *,
-    zip_code: str,
-    location: dict[str, Any],
-    weather: dict[str, Any],
-    area_type: str,
-    best_bet: dict[str, Any],
-    best_time: dict[str, Any],
-    catch_insights: dict[str, Any],
+def _confidence_summary(
+    input_quality: dict[str, Any],
+    catch_signal: dict[str, Any],
+    clarity: dict[str, Any],
 ) -> dict[str, Any]:
-    """
-    Deterministic fishing-intelligence summary for the dashboard.
+    missing = list(input_quality.get("missing") or [])
+    score = 54
 
-    This is a recommendation layer built from existing JSON/API inputs. It does
-    not write data, does not use SQLite as authority, and does not replace Smart
-    Picks.
-    """
-    temp_f = _safe_float(weather.get("temp"))
-    wind_mph = _safe_float(weather.get("wind"))
-    pressure_inhg = _safe_float(weather.get("pressure"))
-    cloud_cover = _safe_float(weather.get("cloud"))
-    season = season_for_month()
-    daypart = time_of_day_for_hour()
-    species = str(best_bet.get("species") or "target species")
-    lure = str(best_bet.get("lure_name") or "confidence lure")
-    water_type = area_type or "nearby water"
-    clarity = clarity_signal(wind_mph, cloud_cover, water_type)
-    catch_signal = _catch_history_signal(catch_insights, zip_code, species)
-    labels = _condition_labels(temp_f, wind_mph, pressure_inhg, cloud_cover)
-    input_quality = _input_quality(weather, best_bet, best_time)
+    if missing:
+        score -= min(15, 3 * len(missing))
+    else:
+        score += 12
 
-    strategy = []
-    strategy.append(f"Start with {species} during the {best_time.get('label', daypart).lower()} window.")
-    strategy.append(f"Fish {water_type} edges first, then adjust based on water clarity and bait activity.")
+    strength = str(catch_signal.get("strength") or "none")
+    if strength == "strong":
+        score += 10
+    elif strength == "moderate":
+        score += 6
+    elif strength == "light":
+        score += 3
+
+    if clarity.get("inferred"):
+        score += 4
+
+    if input_quality.get("fallback"):
+        score -= 2
+
+    score = max(0, min(100, int(round(score))))
+    if score >= 75:
+        level = "high"
+    elif score >= 55:
+        level = "moderate"
+    else:
+        level = "low"
+
+    if missing:
+        basis = f"Missing {', '.join(missing[:3])} reduces certainty, so this stays conservative."
+    elif strength in ("strong", "moderate"):
+        basis = "Weather, timing, and catch history are aligned well enough for a confident read."
+    else:
+        basis = "Weather and seasonal signals are present, but catch history is still thin."
+
+    return {
+        "score": score,
+        "level": level,
+        "label": level.title(),
+        "basis": basis,
+        "missing_inputs": missing[:5],
+    }
+
+
+def _signal_lists(
+    temp_f: float | None,
+    wind_mph: float | None,
+    pressure_inhg: float | None,
+    cloud_cover: float | None,
+    catch_signal: dict[str, Any],
+) -> tuple[list[str], list[str]]:
+    positive: list[str] = []
+    caution: list[str] = []
+
+    if temp_f is None:
+        caution.append("Water temperature is missing from the feed.")
+    elif 55 <= temp_f <= 75:
+        positive.append("Water temperature is in a productive range.")
+    elif temp_f < 50:
+        caution.append("Cold water usually slows bait and calls for a slower presentation.")
+    else:
+        caution.append("Warm water may push fish shallow or toward shade.")
 
     if wind_mph is None:
+        caution.append("Wind is missing from the feed.")
+    elif 5 <= wind_mph <= 15:
+        positive.append("Wind is in the productive range.")
+    elif wind_mph > 20:
+        caution.append("Heavy wind may require protected banks and heavier baits.")
+    else:
+        positive.append("Light wind keeps presentation control simple.")
+
+    if pressure_inhg is None:
+        caution.append("Pressure is missing from the feed.")
+    elif pressure_inhg < 29.9:
+        positive.append("Lower pressure can keep fish moving.")
+    elif pressure_inhg > 30.25:
+        caution.append("High pressure may slow the bite.")
+    else:
+        positive.append("Stable pressure leaves the pattern flexible.")
+
+    if cloud_cover is None:
+        caution.append("Cloud cover is missing from the feed.")
+    elif cloud_cover >= 60:
+        positive.append("Cloud cover can extend shallow feeding windows.")
+    elif cloud_cover <= 25:
+        caution.append("Bright sky can reward natural colors and shade lines.")
+    else:
+        positive.append("Mixed cloud cover gives room for multiple presentations.")
+
+    strength = str(catch_signal.get("strength") or "none")
+    if strength in ("strong", "moderate"):
+        positive.append("Catch history is strong enough to help break ties.")
+    elif strength == "light":
+        caution.append("Catch history exists, but the sample is small.")
+    else:
+        caution.append("No catch history yet; current conditions should drive the first pass.")
+
+    return positive[:4], caution[:4]
+
+
+def _build_explanation_lines(
+    *,
+    confidence: dict[str, Any],
+    clarity: dict[str, Any],
+    catch_signal: dict[str, Any],
+    water_type: str,
+    species: str,
+) -> list[str]:
+    lines = [
+        confidence["basis"],
+        clarity["basis"],
+        catch_signal["weight"],
+        f"Targeting {species} on {water_type} keeps the recommendation tied to water type and season.",
+    ]
+    return lines
+
+
+def _base_payload(
+    *,
+    ok: bool,
+    error: str | None,
+    zip_code: str,
+    location: dict[str, Any] | None,
+    weather: dict[str, Any] | None,
+    area_type: str,
+    best_bet: dict[str, Any] | None,
+    best_time: dict[str, Any] | None,
+    catch_insights: dict[str, Any] | None,
+) -> dict[str, Any]:
+    safe_location = _safe_mapping(location)
+    safe_weather = _safe_mapping(weather)
+    safe_best_bet = _safe_mapping(best_bet)
+    safe_best_time = _safe_mapping(best_time)
+    safe_catch_insights = _safe_mapping(catch_insights)
+
+    temp_f = _safe_float(safe_weather.get("temp"))
+    wind_mph = _safe_float(safe_weather.get("wind"))
+    pressure_inhg = _safe_float(safe_weather.get("pressure"))
+    cloud_cover = _safe_float(safe_weather.get("cloud"))
+    season = season_for_month()
+    daypart = time_of_day_for_hour()
+    species = _safe_text(safe_best_bet.get("species"), "Target species")
+    lure = _safe_text(safe_best_bet.get("lure_name"), "general-purpose lure")
+    water_type = _safe_text(area_type, "nearby water")
+    best_time_label = _safe_text(safe_best_time.get("label"), daypart.title())
+    catch_signal = _catch_history_signal(safe_catch_insights, zip_code, species)
+    clarity = clarity_signal(wind_mph, cloud_cover, water_type)
+    labels = _condition_labels(temp_f, wind_mph, pressure_inhg, cloud_cover)
+    input_quality = _input_quality(safe_weather, safe_best_bet, safe_best_time)
+    confidence = _confidence_summary(input_quality, catch_signal, clarity)
+    positive_signals, caution_signals = _signal_lists(
+        temp_f,
+        wind_mph,
+        pressure_inhg,
+        cloud_cover,
+        catch_signal,
+    )
+
+    if safe_location.get("city") or safe_location.get("state"):
+        location_label = ", ".join(
+            part
+            for part in (safe_location.get("city"), safe_location.get("state"))
+            if part
+        )
+    else:
+        location_label = f"ZIP {zip_code}" if zip_code else "Unknown location"
+
+    species_score_value = safe_best_bet.get("species_score")
+    species_score_text = species_score_value if species_score_value not in (None, "") else "unknown"
+
+    strategy = [
+        f"Start with {species} during the {best_time_label.lower()} window.",
+        f"Fish {water_type} edges first, then adjust based on water clarity and bait activity.",
+    ]
+
+    if input_quality["missing"]:
+        strategy.append("Weather inputs are incomplete, so verify wind, pressure, and clarity on site before committing.")
+    elif wind_mph is None:
         strategy.append("Weather feed is incomplete, so verify wind and water conditions before committing to a pattern.")
     elif wind_mph > 20:
         strategy.append("Use heavier or more compact presentations and favor protected banks.")
@@ -216,17 +429,22 @@ def build_smart_intelligence(
         {
             "label": "Primary target",
             "value": species,
-            "why": f"Top species score is {best_bet.get('species_score')} with {season} and {water_type} context.",
+            "why": f"Top species score is {species_score_text} with {season} and {water_type} context.",
         },
         {
             "label": "Primary lure",
             "value": lure,
-            "why": best_bet.get("why") or "Chosen from the existing lure plan for the top species.",
+            "why": safe_best_bet.get("why") or "Chosen from the existing lure plan for the top species.",
         },
         {
             "label": "Water approach",
             "value": water_type,
             "why": clarity["basis"],
+        },
+        {
+            "label": "Confidence",
+            "value": confidence["label"],
+            "why": confidence["basis"],
         },
         {
             "label": "Catch history",
@@ -235,8 +453,21 @@ def build_smart_intelligence(
         },
     ]
 
-    return {
-        "ok": True,
+    explanation = _build_explanation_lines(
+        confidence=confidence,
+        clarity=clarity,
+        catch_signal=catch_signal,
+        water_type=water_type,
+        species=species,
+    )
+
+    if positive_signals:
+        explanation.insert(1, positive_signals[0])
+    if caution_signals:
+        explanation.append(caution_signals[0])
+
+    payload: dict[str, Any] = {
+        "ok": ok,
         "version": "v4.6-smart-intelligence",
         "hardened_version": "v4.6.1-smart-intelligence-hardening",
         "scope": "national-zip-weather-with-local-water-context",
@@ -244,9 +475,7 @@ def build_smart_intelligence(
         "sqlite_role": "mirror/read-only foundation",
         "transition_direction": TRANSITION_DIRECTION,
         "input_quality": input_quality,
-        "location_label": ", ".join(
-            part for part in (location.get("city"), location.get("state")) if part
-        ),
+        "location_label": location_label,
         "season": season,
         "time_of_day": daypart,
         "condition_labels": labels,
@@ -254,8 +483,12 @@ def build_smart_intelligence(
         "headline": f"{season.title()} {water_type} pattern for {species}",
         "summary": (
             f"Target {species} with {lure}. The recommendation blends weather, wind, "
-            f"pressure, cloud cover, season, water type, lure fit, and catch-history signal."
+            f"pressure, cloud cover, season, water type, lure fit, confidence, and catch-history signal."
         ),
+        "confidence": confidence,
+        "explanation": explanation,
+        "positive_signals": positive_signals,
+        "caution_signals": caution_signals,
         "strategy": strategy,
         "recommendations": recommendations,
         "catch_history": catch_signal,
@@ -265,3 +498,91 @@ def build_smart_intelligence(
             "Adjust lure color on site when actual water clarity differs from the inferred signal.",
         ],
     }
+
+    if error:
+        payload["errors"] = [error]
+    return payload
+
+
+def build_smart_intelligence(
+    *,
+    zip_code: str,
+    location: dict[str, Any] | None,
+    weather: dict[str, Any] | None,
+    area_type: str,
+    best_bet: dict[str, Any] | None,
+    best_time: dict[str, Any] | None,
+    catch_insights: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """
+    Deterministic fishing-intelligence summary for the dashboard.
+
+    This is a recommendation layer built from existing JSON/API inputs. It does
+    not write data, does not use SQLite as authority, and does not replace Smart
+    Picks.
+    """
+    return _base_payload(
+        ok=True,
+        error=None,
+        zip_code=zip_code,
+        location=location,
+        weather=weather,
+        area_type=area_type,
+        best_bet=best_bet,
+        best_time=best_time,
+        catch_insights=catch_insights,
+    )
+
+
+def build_smart_intelligence_fallback(
+    *,
+    zip_code: str,
+    location: dict[str, Any] | None,
+    weather: dict[str, Any] | None,
+    area_type: str,
+    best_bet: dict[str, Any] | None,
+    best_time: dict[str, Any] | None,
+    catch_insights: dict[str, Any] | None,
+    error: str | None = None,
+) -> dict[str, Any]:
+    """Return a conservative payload when the main smart-intelligence build fails."""
+    payload = _base_payload(
+        ok=False,
+        error=error or "Smart Intelligence fallback engaged after a build error.",
+        zip_code=zip_code,
+        location=location,
+        weather=weather,
+        area_type=area_type,
+        best_bet=best_bet,
+        best_time=best_time,
+        catch_insights=catch_insights,
+    )
+    payload["confidence"] = {
+        "score": 0,
+        "level": "low",
+        "label": "Low",
+        "basis": "Fallback intelligence was used because the main builder hit an error.",
+        "missing_inputs": payload.get("input_quality", {}).get("missing", []),
+    }
+    payload["summary"] = (
+        "Smart Intelligence fallback is active. Use the rest of the dashboard and "
+        "local conditions while the intelligence path is rechecked."
+    )
+    payload["headline"] = "Smart Intelligence fallback"
+    payload["positive_signals"] = []
+    payload["caution_signals"] = [
+        "The intelligence build failed and the fallback payload is being used.",
+    ]
+    payload["explanation"] = [
+        payload["confidence"]["basis"],
+        "Refresh the search after the data path is verified.",
+    ]
+    payload["strategy"] = [
+        "Use the rest of the dashboard and local conditions as the source of truth for now.",
+        "Refresh weather and re-open the waterbody once the signal path is stable.",
+    ]
+    payload["next_actions"] = [
+        "Check the service logs for the intelligence error.",
+        "Retry the search after the data feed is restored.",
+    ]
+    return payload

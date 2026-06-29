@@ -10,5 +10,9 @@
   "admin_menu_restored": false,
   "app_health_maintenance_hub": true,
   "smart_intelligence_hardened": true,
-  "installed_at": "2026-06-29T07:25:20-05:00"
+  "confidence_fields_added": true,
+  "explanation_fields_added": true,
+  "empty_input_qc_added": true,
+  "api_intel_fallback_added": true,
+  "installed_at": "2026-06-29T18:11:46-05:00"
 }

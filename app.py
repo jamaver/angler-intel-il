@@ -11,7 +11,7 @@ from intelligence.waters import detect_water, infer_area_type
 from intelligence.species import SPECIES, score_species
 from intelligence.lures import choose_lure
 from intelligence.scoring import overall_score, time_blocks, rating, hourly_bite_forecast
-from intelligence.smart_intelligence import build_smart_intelligence
+from intelligence.smart_intelligence import build_smart_intelligence, build_smart_intelligence_fallback
 from intelligence.app_health_sqlite import get_sqlite_health_for_app
 from intelligence.app_health_backup import get_backup_health_for_app
 from intelligence.app_health_versions import get_version_health_for_app
@@ -103,7 +103,7 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v5.0-sqlite-authority-migration"
+APP_VERSION = "v4.7-sqlite-authority-transition-plan"
 
 DATA_DIR = Path("data")
 FAVORITES_FILE = DATA_DIR / "favorites.json"
@@ -264,22 +264,50 @@ def fallback_weather_payload():
 
 
 def build_best_bet(species_ranked, best_time, best_hour, base_score, temp_f, wind_mph, pressure_inhg, area_type, zip_code):
-    top = species_ranked[0]
+    if not species_ranked:
+        safe_best_time = best_time if isinstance(best_time, dict) else {}
+        safe_best_hour = best_hour if isinstance(best_hour, dict) else {}
+        return {
+            "species": "Target Species",
+            "species_score": 0,
+            "fish_image": "/static/fish/largemouth_bass.svg",
+            "time_label": safe_best_time.get("label") or "Any time",
+            "time_range": safe_best_time.get("time") or "Any time",
+            "best_hour": format_hour_label(safe_best_hour.get("hour")) if safe_best_hour else None,
+            "lure_name": "General-purpose lure",
+            "lure_image": "/static/lures/worm.svg",
+            "speed": "Slow speed",
+            "size": "3-5 in",
+            "colors": ["Natural", "White"],
+            "why": "Species intelligence is unavailable, so use a simple general-purpose pattern.",
+            "reasons": [
+                "Species guidance is unavailable for this search.",
+                "Use a simple bait and let local conditions drive the first adjustment.",
+            ],
+        }
 
-    cards = top["lures"].get("cards", {})
+    top = species_ranked[0]
+    safe_best_time = best_time if isinstance(best_time, dict) else {}
+    safe_best_hour = best_hour if isinstance(best_hour, dict) else {}
+    lures = top.get("lures") if isinstance(top.get("lures"), dict) else {}
+    top_name = top.get("name", "Target Species")
+    top_score = top.get("score", 0)
+    top_image = top.get("fish_image", "/static/fish/largemouth_bass.svg")
+
+    cards = lures.get("cards", {})
     best_lure = None
 
     if cards:
-        if best_time["label"] == "Morning":
+        if safe_best_time.get("label") == "Morning":
             best_lure = cards.get("morning")
-        elif best_time["label"] == "Midday":
+        elif safe_best_time.get("label") == "Midday":
             best_lure = cards.get("midday")
         else:
             best_lure = cards.get("evening")
 
     if not best_lure:
         best_lure = {
-            "name": top["lures"].get("evening", "Spinnerbait"),
+            "name": lures.get("evening", "Spinnerbait"),
             "image": "/static/lures/spinnerbait.svg",
             "speed": "Medium speed",
             "size": "3/8 oz",
@@ -296,14 +324,14 @@ def build_best_bet(species_ranked, best_time, best_hour, base_score, temp_f, win
     else:
         reasons.append("Conditions are workable, but fish may be selective.")
 
-    if 5 <= wind_mph <= 15:
+    if wind_mph is not None and 5 <= wind_mph <= 15:
         reasons.append("Wind is in the productive range for shallow feeding activity.")
-    elif wind_mph > 20:
+    elif wind_mph is not None and wind_mph > 20:
         reasons.append("Wind is high, so protected banks and heavier presentations are better.")
 
-    if pressure_inhg < 29.9:
+    if pressure_inhg is not None and pressure_inhg < 29.9:
         reasons.append("Lower pressure can encourage feeding movement.")
-    elif pressure_inhg > 30.25:
+    elif pressure_inhg is not None and pressure_inhg > 30.25:
         reasons.append("Higher pressure may slow the bite; finesse presentations may help.")
 
     if area_type == "pond":
@@ -316,19 +344,19 @@ def build_best_bet(species_ranked, best_time, best_hour, base_score, temp_f, win
     catches = load_catches()
     matching = [
         c for c in catches
-        if c.get("zip") == zip_code and c.get("species") == top["name"]
+        if c.get("zip") == zip_code and c.get("species") == top_name
     ]
 
     if matching:
-        reasons.append(f"Your catch log already has {len(matching)} local catch record(s) for {top['name']}.")
+        reasons.append(f"Your catch log already has {len(matching)} local catch record(s) for {top_name}.")
 
     return {
-        "species": top["name"],
-        "species_score": top["score"],
-        "fish_image": top["fish_image"],
-        "time_label": best_time["label"],
-        "time_range": best_time["time"],
-        "best_hour": format_hour_label(best_hour["hour"]) if best_hour else None,
+        "species": top_name,
+        "species_score": top_score,
+        "fish_image": top_image,
+        "time_label": safe_best_time.get("label") or "Any time",
+        "time_range": safe_best_time.get("time") or "Any time",
+        "best_hour": format_hour_label(safe_best_hour.get("hour")) if safe_best_hour else None,
         "lure_name": best_lure["name"],
         "lure_image": best_lure["image"],
         "speed": best_lure["speed"],
@@ -355,7 +383,14 @@ def build_intel(zip_code):
         weather_error = str(exc)
         weather = fallback_weather_payload()
 
-    current = weather["current"]
+    current = weather.get("current", {}) if isinstance(weather, dict) else {}
+    required_weather_keys = ("temperature_2m", "wind_speed_10m", "pressure_msl", "cloud_cover")
+    if not isinstance(current, dict) or any(key not in current or current.get(key) is None for key in required_weather_keys):
+        if weather_error is None:
+            weather_error = "Live weather payload was incomplete, so fallback weather was used."
+        weather = fallback_weather_payload()
+        weather["error"] = weather_error
+        current = weather["current"]
 
     temp_f = f_temp(current["temperature_2m"])
     wind_mph = mph(current["wind_speed_10m"])
@@ -367,7 +402,11 @@ def build_intel(zip_code):
 
     base = overall_score(temp_f, wind_mph, pressure_inhg, cloud)
     blocks = time_blocks(base, temp_f, wind_mph)
-    best_block = max(blocks, key=lambda x: x["score"])
+    best_block = max(blocks, key=lambda x: x["score"]) if blocks else {
+        "label": "Any time",
+        "time": "Any time",
+        "score": base,
+    }
 
     hourly = hourly_bite_forecast(
         weather.get("hourly", {}),
@@ -417,7 +456,23 @@ def build_intel(zip_code):
         zip_code
     )
 
-    daily = weather.get("daily", {})
+    daily = weather.get("daily", {}) if isinstance(weather, dict) else {}
+    required_daily_keys = ("time", "temperature_2m_max", "temperature_2m_min", "wind_speed_10m_max")
+    if not isinstance(daily, dict) or any(
+        key not in daily or not isinstance(daily.get(key), list) or not daily.get(key)
+        for key in required_daily_keys
+    ):
+        if weather_error is None:
+            weather_error = "Live weather forecast payload was incomplete, so fallback weather was used."
+        weather = fallback_weather_payload()
+        weather["error"] = weather_error
+        current = weather["current"]
+        temp_f = f_temp(current["temperature_2m"])
+        wind_mph = mph(current["wind_speed_10m"])
+        pressure_inhg = inhg(current["pressure_msl"])
+        cloud = current.get("cloud_cover", 0)
+        daily = weather["daily"]
+
     forecast = []
 
     for i, date in enumerate(daily.get("time", [])[:7]):
@@ -446,15 +501,27 @@ def build_intel(zip_code):
         "error": weather_error,
     }
     insights = catch_insights(zip_code)
-    smart_intelligence = build_smart_intelligence(
-        zip_code=zip_code,
-        location=loc,
-        weather=weather_summary,
-        area_type=area_type,
-        best_bet=best_bet,
-        best_time=best_block,
-        catch_insights=insights,
-    )
+    try:
+        smart_intelligence = build_smart_intelligence(
+            zip_code=zip_code,
+            location=loc,
+            weather=weather_summary,
+            area_type=area_type,
+            best_bet=best_bet,
+            best_time=best_block,
+            catch_insights=insights,
+        )
+    except Exception as exc:
+        smart_intelligence = build_smart_intelligence_fallback(
+            zip_code=zip_code,
+            location=loc,
+            weather=weather_summary,
+            area_type=area_type,
+            best_bet=best_bet,
+            best_time=best_block,
+            catch_insights=insights,
+            error=str(exc),
+        )
 
     return {
         "version": APP_VERSION,

@@ -14,6 +14,12 @@ function setHTML(id, html) {
   if (node) node.innerHTML = html;
 }
 
+function asList(value) {
+  if (Array.isArray(value)) return value.filter(item => item !== null && item !== undefined && item !== "");
+  if (value === null || value === undefined || value === "") return [];
+  return [value];
+}
+
 if (form) {
   form.addEventListener("submit", e => {
     e.preventDefault();
@@ -209,26 +215,79 @@ function renderInsights(insights) {
 }
 
 function renderSmartIntelligence(intel) {
-  if (!intel || !intel.ok) {
+  if (!intel) {
     return `<div class="small">Smart intelligence is unavailable for this search.</div>`;
   }
 
-  const labels = (intel.condition_labels || []).map(c => `<span class="mini">${c}</span>`).join("");
-  const recommendations = (intel.recommendations || []).map(r => `
+  const confidence = intel.confidence || {};
+  const confidenceLabel = confidence.label || confidence.level || (intel.ok ? "Moderate" : "Low");
+  const confidenceScore = confidence.score ?? confidence.value;
+  const confidenceBasis = confidence.basis || confidence.explanation || "";
+  const explanation = asList(intel.explanation);
+  const positives = asList(intel.positive_signals);
+  const cautions = asList(intel.caution_signals);
+  const labels = asList(intel.condition_labels).map(c => `<span class="mini">${c}</span>`).join("");
+  const recommendations = asList(intel.recommendations).map(r => `
     <div class="intel-recommendation">
       <b>${r.label}: ${r.value}</b>
       <div class="small">${r.why || ""}</div>
     </div>
   `).join("");
-  const strategy = (intel.strategy || []).map(item => `<li>${item}</li>`).join("");
-  const nextActions = (intel.next_actions || []).map(item => `<li>${item}</li>`).join("");
+  const strategy = asList(intel.strategy).map(item => `<li>${item}</li>`).join("");
+  const nextActions = asList(intel.next_actions).map(item => `<li>${item}</li>`).join("");
+  const warnings = asList(intel.warnings).map(item => `<li>${item}</li>`).join("");
+  const errors = asList(intel.errors).map(item => `<li>${item}</li>`).join("");
+  const inputQuality = intel.input_quality || {};
+  const missingInputs = asList(confidence.missing_inputs || inputQuality.missing);
+  const catchHistory = intel.catch_history || {};
+  const sampleSize = catchHistory.sample_size || {};
+  const catchMeta = [];
+  if (sampleSize.local !== undefined || sampleSize.total !== undefined) {
+    catchMeta.push(`Sample ${sampleSize.local || 0}/${sampleSize.total || 0}`);
+  }
+  if (catchHistory.strength) {
+    catchMeta.push(`Strength: ${catchHistory.strength}`);
+  }
 
   return `
     <h3>${intel.headline || "Fishing pattern"}</h3>
     <p>${intel.summary || ""}</p>
+    ${intel.ok === false ? `<div class="status-warn">Fallback intelligence is active.</div>` : ""}
     <div class="intel-signal-row">${labels}</div>
-    <div class="small"><b>Clarity signal:</b> ${intel.clarity_signal?.label || "unknown"}</div>
+    <div class="intel-grid">
+      <div class="intel-recommendation">
+        <b>Confidence</b>
+        <div class="score">${confidenceScore ?? "?"}</div>
+        <div class="small">${confidenceLabel}</div>
+        <div class="small">${confidenceBasis}</div>
+      </div>
+
+      <div class="intel-recommendation">
+        <b>Clarity</b>
+        <div class="small">${intel.clarity_signal?.label || "unknown"}</div>
+        <div class="small">${intel.clarity_signal?.basis || "No clarity basis available."}</div>
+      </div>
+
+      <div class="intel-recommendation">
+        <b>Catch history</b>
+        <div class="small">${catchHistory.summary || "No catch history yet."}</div>
+        <div class="small">${catchMeta.join(" · ") || "Sample size is zero."}</div>
+      </div>
+
+      <div class="intel-recommendation">
+        <b>Input quality</b>
+        <div class="small">${inputQuality.ok ? "All key inputs present." : `Missing: ${missingInputs.join(", ") || "unknown"}`}</div>
+        <div class="small">Source: ${inputQuality.source || "unknown"}${inputQuality.fallback ? " · fallback" : ""}</div>
+      </div>
+    </div>
+
+    ${positives.length ? `<h4>Positive signals</h4><div class="intel-signal-row">${positives.map(item => `<span class="mini">${item}</span>`).join("")}</div>` : ""}
+    ${cautions.length ? `<h4>Caution signals</h4><div class="intel-signal-row">${cautions.map(item => `<span class="mini">${item}</span>`).join("")}</div>` : ""}
     <div class="intel-grid">${recommendations}</div>
+    ${explanation.length ? `<details class="intel-details">
+      <summary>Explanation</summary>
+      <ul>${explanation.map(item => `<li>${item}</li>`).join("")}</ul>
+    </details>` : ""}
     <details class="intel-details">
       <summary>Strategy and next actions</summary>
       <h4>Strategy</h4>
@@ -236,6 +295,14 @@ function renderSmartIntelligence(intel) {
       <h4>Next actions</h4>
       <ul>${nextActions}</ul>
     </details>
+    ${warnings ? `<details class="intel-details">
+      <summary>Warnings</summary>
+      <ul>${warnings}</ul>
+    </details>` : ""}
+    ${errors ? `<details class="intel-details">
+      <summary>Errors</summary>
+      <ul>${errors}</ul>
+    </details>` : ""}
   `;
 }
 

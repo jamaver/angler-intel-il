@@ -51,6 +51,14 @@ else:
             errors.append("v4.6.1 marker should require rollback before SQLite authority")
         if marker.get("map_dashboard_planned") is not True:
             errors.append("v4.6.1 marker should declare map dashboard direction")
+        if marker.get("confidence_fields_added") is not True:
+            errors.append("v4.6.1 marker should record confidence fields added")
+        if marker.get("explanation_fields_added") is not True:
+            errors.append("v4.6.1 marker should record explanation fields added")
+        if marker.get("empty_input_qc_added") is not True:
+            errors.append("v4.6.1 marker should record empty-input QC")
+        if marker.get("api_intel_fallback_added") is not True:
+            errors.append("v4.6.1 marker should record API fallback support")
     except Exception as exc:
         errors.append(f"v4.6.1 marker invalid JSON: {exc}")
 
@@ -78,6 +86,55 @@ if sample.get("ok") is not True:
 if not sample.get("input_quality", {}).get("missing"):
     errors.append("Smart Intelligence should report missing input quality fields")
 
+if sample.get("input_quality", {}).get("fallback") is not True:
+    errors.append("Smart Intelligence should mark empty weather inputs as fallback")
+
+if not isinstance(sample.get("confidence"), dict):
+    errors.append("Smart Intelligence should expose a confidence payload")
+
+if not isinstance(sample.get("explanation"), list) or not sample.get("explanation"):
+    errors.append("Smart Intelligence should expose an explanation list")
+
+if not isinstance(sample.get("positive_signals"), list):
+    errors.append("Smart Intelligence should expose positive signals")
+
+if not isinstance(sample.get("caution_signals"), list):
+    errors.append("Smart Intelligence should expose caution signals")
+
+if sample.get("catch_history", {}).get("sample_size", {}).get("total") != 0:
+    errors.append("Smart Intelligence should treat empty catch history as zero sample size")
+
+if sample.get("clarity_signal", {}).get("inferred") is not False:
+    errors.append("Smart Intelligence should label missing-weather clarity as not inferred")
+
+minimal = build_smart_intelligence(
+    zip_code="60543",
+    location=None,
+    weather=None,
+    area_type="",
+    best_bet=None,
+    best_time=None,
+    catch_insights=None,
+)
+
+if minimal.get("ok") is not True:
+    errors.append("Smart Intelligence should tolerate minimal empty inputs")
+
+if not isinstance(minimal.get("confidence"), dict) or minimal["confidence"].get("level") not in {"low", "moderate", "high"}:
+    errors.append("Smart Intelligence should emit a confidence level for minimal inputs")
+
+if not isinstance(minimal.get("explanation"), list) or not minimal.get("explanation"):
+    errors.append("Smart Intelligence should explain minimal-input fallback behavior")
+
+if minimal.get("clarity_signal", {}).get("inferred") is not False:
+    errors.append("Smart Intelligence should mark missing minimal clarity as not inferred")
+
+if minimal.get("catch_history", {}).get("sample_size", {}).get("total") != 0:
+    errors.append("Smart Intelligence should keep minimal catch history at zero sample size")
+
+if minimal.get("input_quality", {}).get("fallback") is not True:
+    errors.append("Smart Intelligence should mark minimal inputs as fallback")
+
 direction = sample.get("transition_direction", {})
 if direction.get("map_dashboard_planned") is not True:
     errors.append("Smart Intelligence should declare map-driven dashboard direction")
@@ -99,6 +156,10 @@ if "intelligence_health" not in health_text:
     errors.append("App Health does not wire Smart Intelligence readiness")
 if "_smart_intelligence_health_card.html" not in health_text:
     errors.append("App Health does not render Smart Intelligence readiness card")
+
+app_text = read("app.py")
+if "build_smart_intelligence_fallback" not in app_text:
+    errors.append("app.py does not use the smart intelligence fallback path")
 
 card = APP_ROOT / "templates" / "_smart_intelligence_health_card.html"
 if not card.exists():
@@ -126,6 +187,18 @@ normal_page_text = "\n".join(
 )
 if 'href="/admin"' in normal_page_text:
     errors.append("Normal navigation should not expose Admin")
+
+js_text = read("static/js/app.js")
+for fragment in (
+    "intel.confidence",
+    "intel.explanation",
+    "positive_signals",
+    "caution_signals",
+    "input_quality",
+    "catch_history",
+):
+    if fragment not in js_text:
+        errors.append(f"Dashboard renderer is missing defensive field access for {fragment}")
 
 if errors:
     print("QC FAILED: v4.6.1 Smart Intelligence Hardening")
