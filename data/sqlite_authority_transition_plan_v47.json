@@ -1,0 +1,26 @@
+{
+  "version": "v4.7-sqlite-authority-transition-plan",
+  "current_authority": "json",
+  "target_authority": "sqlite-after-deliberate-migration",
+  "sqlite_current_role": "mirror/read-only foundation",
+  "authority_switch_allowed_now": false,
+  "required_before_authority_switch": [
+    "Fresh full backup created and listed in App Health",
+    "SQLite integrity check passes",
+    "JSON-to-SQLite mirror freshness passes",
+    "SQLite-to-JSON export tool exists",
+    "Rollback restore workflow is documented and tested",
+    "QC blocks partial authority migration",
+    "App Health migration readiness card is green"
+  ],
+  "rollback_plan": [
+    "Keep JSON files as source of truth until migration commit",
+    "Create full app backup before migration",
+    "Export SQLite rows back to JSON-compatible snapshots",
+    "Restore backup archive if migration validation fails",
+    "Restart service only after QC passes"
+  ],
+  "map_dashboard_dependency": "Map dashboard can use JSON and SQLite mirror reads before SQLite authority migration.",
+  "admin_navigation": "Admin remains hidden from normal navigation.",
+  "app_health_maintenance_hub": true
+}

@@ -1077,3 +1077,8 @@ button {
 .smart-intelligence-health-card {
   margin-top: 1rem;
 }
+
+/* v4.7 SQLite authority transition card in App Health */
+.sqlite-transition-health-card {
+  margin-top: 1rem;
+}
