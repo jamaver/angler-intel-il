@@ -13,3 +13,5 @@ data/admin_token.txt
 data/favorites.json
 data/catches.json
 data/reports_index.json
+data/angler_intel.sqlite3
+data/angler_intel.sqlite3-*
