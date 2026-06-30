@@ -12,6 +12,7 @@ DATA_DIR = BASE_DIR / "data"
 SPECIES_PATH = DATA_DIR / "species_profiles_v43.json"
 RIGS_PATH = DATA_DIR / "lure_rig_setups_v43.json"
 WATERS_PATH = DATA_DIR / "illinois_waters.json"
+MANUAL_WATERS_PATH = DATA_DIR / "manual_waters.json"
 SETTINGS_PATH = DATA_DIR / "species_settings_v431.json"
 VERSION_PATH = DATA_DIR / "app_version.json"
 
@@ -80,6 +81,7 @@ def validate() -> dict[str, Any]:
     exists_species, species, err_species = read_json(SPECIES_PATH)
     exists_rigs, rigs, err_rigs = read_json(RIGS_PATH)
     exists_waters, waters, err_waters = read_json(WATERS_PATH)
+    exists_manual_waters, manual_waters, err_manual_waters = read_json(MANUAL_WATERS_PATH)
     exists_settings, settings, err_settings = read_json(SETTINGS_PATH)
     exists_version, version, err_version = read_json(VERSION_PATH)
 
@@ -101,6 +103,12 @@ def validate() -> dict[str, Any]:
             "exists": exists_waters,
             "valid": err_waters is None,
             "error": err_waters,
+        },
+        "manual_waters": {
+            "path": str(MANUAL_WATERS_PATH),
+            "exists": exists_manual_waters,
+            "valid": err_manual_waters is None,
+            "error": err_manual_waters,
         },
         "species_settings": {
             "path": str(SETTINGS_PATH),
@@ -124,9 +132,7 @@ def validate() -> dict[str, Any]:
 
     species_ids = ids(species)
     rig_ids = ids(rigs)
-    water_ids = ids(waters)
-
-    for label, data in [("species", species), ("rigs", rigs), ("waters", waters)]:
+    for label, data in [("species", species), ("rigs", rigs), ("waters", waters), ("manual_waters", manual_waters)]:
         dupes = duplicate_ids(data)
         if dupes:
             issues.append(f"{label} has duplicate IDs: {', '.join(dupes)}")
@@ -179,6 +185,21 @@ def validate() -> dict[str, Any]:
                 if sid not in species_ids:
                     warnings.append(f"water {wid} references unknown species id: {sid}")
 
+    if isinstance(manual_waters, list):
+        for water in manual_waters:
+            if not isinstance(water, dict):
+                issues.append("manual_waters list contains non-object item")
+                continue
+
+            wid = water.get("id", "unknown")
+            for key in ("id", "name", "type", "lat", "lon"):
+                if key not in water:
+                    issues.append(f"manual water {wid} missing {key}")
+
+            for sid in water.get("species_ids", []):
+                if sid not in species_ids:
+                    warnings.append(f"manual water {wid} references unknown species id: {sid}")
+
     return {
         "ok": not issues,
         "issues": issues,
@@ -187,6 +208,7 @@ def validate() -> dict[str, Any]:
             "species": len(species) if isinstance(species, list) else 0,
             "rigs": len(rigs) if isinstance(rigs, list) else 0,
             "waters": len(waters) if isinstance(waters, list) else 0,
+            "manual_waters": len(manual_waters) if isinstance(manual_waters, list) else 0,
             "active_species": len(settings.get("active_species", [])) if isinstance(settings, dict) and isinstance(settings.get("active_species"), list) else 0,
         },
         "files": files,

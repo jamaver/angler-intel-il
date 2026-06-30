@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel",
-  "version": "v4.7-sqlite-authority-transition-plan",
-  "updated": "2026-06-29T18:40:03-05:00",
+  "version": "v4.9.2-map-context-custom-waterbodies",
+  "updated": "2026-06-29T20:37:40-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -26,6 +26,7 @@
     "map_data_readiness": "v4.8",
     "map_dashboard_prototype": "v4.9",
     "ui_snapshot_polish": "v4.9.1",
+    "map_context_custom_waterbodies": "v4.9.2",
     "sqlite_authority_migration": "planned v5.0"
   },
   "notes": [
@@ -47,6 +48,7 @@
     "v4.8 adds map data readiness checks and a read-only map data endpoint for staged map dashboard work.",
     "v4.9 adds a self-hosted map dashboard prototype using local map data without external map tile dependency.",
     "v4.9.1 cleans the main dashboard UI, upgrades Trip Snapshot, and removes the redundant Export Current Page action.",
-    "v4.7 is the active release label for the SQLite authority transition-plan step; v5.0 remains the future migration gate."
+    "v4.9.2 adds real basemap tiles, hybrid satellite view, and manual waterbody entry backed by a custom JSON registry.",
+    "v4.9.2 is the active release label while SQLite authority remains intentionally deferred to v5.0."
   ]
 }

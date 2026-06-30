@@ -34,12 +34,17 @@ def get_map_data_health_for_app() -> dict[str, Any]:
 
     return {
         "ok": bool(readiness.get("ok")),
-        "summary": "Map data ready for prototype" if readiness.get("ok") else "Map data needs attention",
+        "summary": "Map data ready for live map" if readiness.get("ok") else "Map data needs attention",
         "json_source_of_truth": True,
         "sqlite_role": "mirror/read-only foundation",
         "map_dashboard_planned": True,
+        "map_dashboard_live": True,
+        "manual_waterbody_entry_enabled": True,
         "record_count": readiness.get("record_count", 0),
+        "base_count": readiness.get("base_count", 0),
+        "custom_count": readiness.get("custom_count", 0),
         "source_path": readiness.get("source_path"),
+        "custom_source_path": readiness.get("custom_source_path"),
         "bounds": readiness.get("bounds"),
         "missing_coords": readiness.get("missing_coords", []),
         "missing_species_ids": readiness.get("missing_species_ids", []),

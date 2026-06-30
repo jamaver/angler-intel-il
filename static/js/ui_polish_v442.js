@@ -4,7 +4,8 @@
   const DESCRIPTIONS = {
     "/": "Dashboard overview with forecasts, local waters, rig setups, and smart fishing picks.",
     "/recommendations": "Best water and rig recommendations based on active species, local waters, season, and distance.",
-    "/waters": "Browse the local starter waters database and open waterbody-specific fishing intel.",
+    "/waters": "Browse the starter and manual waters catalog and open waterbody-specific fishing intel.",
+    "/map": "Map-first fishing intelligence with satellite, hybrid, and street basemaps plus manual waterbody entry.",
     "/species": "Manage common freshwater fish and optional species used by the recommendation engine.",
     "/rigs": "Practical rigging guides by fish, lure type, line, and conditions.",
     "/reports": "Smart Trip Export: create and view saved offline trip reports on this Raspberry Pi.",
@@ -42,8 +43,8 @@
     const nav = document.querySelector(".ai-main-tabs");
     if (!nav || nav.querySelector(".ai-version-badge-v442")) return;
 
-    const CURRENT_VERSION = "v4.7";
-    const CURRENT_RELEASE = "v4.7-sqlite-authority-transition-plan";
+    const CURRENT_VERSION = "v4.9.2";
+    const CURRENT_RELEASE = "v4.9.2-map-context-custom-waterbodies";
 
     const badge = document.createElement("span");
     badge.className = "ai-version-badge-v442";

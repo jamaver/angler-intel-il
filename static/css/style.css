@@ -1186,9 +1186,51 @@ button {
   margin-top: 1rem;
 }
 
-/* v4.9 self-hosted map dashboard prototype */
+/* v4.9.2 map context and custom waterbodies */
 .map-app {
-  max-width: 1180px;
+  max-width: 1240px;
+}
+
+.map-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-end;
+  padding: 18px 4px 8px;
+}
+
+.map-hero-stats {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.map-stat {
+  min-width: 98px;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  background: #102f49;
+  color: #e6f4ff;
+  border: 1px solid rgba(125, 211, 252, 0.24);
+  text-align: center;
+}
+
+.map-stat span {
+  display: block;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.map-stat label {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .map-toolbar {
@@ -1200,7 +1242,7 @@ button {
 
 .map-toolbar label {
   display: grid;
-  gap: 0.25rem;
+  gap: 0.3rem;
   min-width: 180px;
 }
 
@@ -1208,97 +1250,200 @@ button {
   padding: 0.75rem;
   border-radius: 12px;
   border: 1px solid #334155;
+  background: #f8fff9;
+  color: #102417;
 }
 
 .map-layout {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(260px, 0.8fr);
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.95fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.map-main-column,
+.map-sidebar {
+  display: grid;
   gap: 1rem;
 }
 
 .map-panel,
-.map-detail-card {
-  min-height: 420px;
+.map-detail-card,
+.map-add-card,
+.map-help-card {
+  min-height: initial;
+}
+
+.map-panel-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.map-panel-head h2 {
+  margin-bottom: 0.25rem;
+}
+
+.map-layer-label {
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  background: #1f2937;
+  color: #e2e8f0;
+  font-weight: 700;
+  font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 .map-canvas {
   position: relative;
-  min-height: 520px;
+  min-height: 600px;
+  height: clamp(440px, 68vh, 760px);
   margin-top: 0.75rem;
   border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: 14px;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 25% 25%, rgba(34, 197, 94, 0.18), transparent 28%),
-    radial-gradient(circle at 70% 65%, rgba(56, 189, 248, 0.16), transparent 30%),
-    #0b1728;
+  background: #0b1728;
 }
 
-.map-grid-line {
-  position: absolute;
-  background: rgba(226, 232, 240, 0.12);
-  pointer-events: none;
+.map-canvas.leaflet-container {
+  font: inherit;
 }
 
-.map-grid-line.vertical {
-  top: 0;
-  bottom: 0;
-  width: 1px;
+.map-canvas .leaflet-control-attribution {
+  font-size: 11px;
 }
 
-.map-grid-line.horizontal {
-  left: 0;
-  right: 0;
-  height: 1px;
+.map-canvas .leaflet-popup-content-wrapper {
+  border-radius: 12px;
 }
 
-.map-grid-line.one {
-  left: 33%;
-  top: 33%;
+.map-canvas .leaflet-popup-content {
+  margin: 10px 12px;
+  color: #102417;
 }
 
-.map-grid-line.two {
-  left: 66%;
-  top: 66%;
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
 }
 
-.map-marker {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  width: 2rem;
-  height: 2rem;
+.legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.6rem;
   border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.85);
-  display: grid;
-  place-items: center;
-  padding: 0;
-  font-size: 0.8rem;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+  font-size: 12px;
+  font-weight: 700;
+  color: #102417;
+  background: #f4fff6;
+  border: 1px solid rgba(143, 190, 160, 0.55);
+}
+
+.legend-lake {
+  border-color: rgba(37, 99, 235, 0.45);
+}
+
+.legend-river {
+  border-color: rgba(14, 165, 233, 0.45);
+}
+
+.legend-pond {
+  border-color: rgba(34, 197, 94, 0.45);
+}
+
+.legend-reservoir {
+  border-color: rgba(245, 158, 11, 0.45);
+}
+
+.legend-manual {
+  border-color: rgba(239, 68, 68, 0.45);
+}
+
+.legend-favorite {
+  border-color: rgba(202, 138, 4, 0.45);
+}
+
+.legend-trout {
+  border-color: rgba(8, 145, 178, 0.45);
+}
+
+.map-add-card summary {
   cursor: pointer;
+  font-weight: 800;
 }
 
-.map-marker.moving {
-  background: #38bdf8;
-  color: #082f49;
+.map-add-form {
+  margin-top: 0.9rem;
+  display: grid;
+  gap: 0.75rem;
 }
 
-.map-marker.pond {
-  background: #22c55e;
-  color: #052e16;
+.map-add-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
 }
 
-.map-marker.reservoir {
-  background: #f59e0b;
-  color: #451a03;
+.map-add-grid label {
+  display: grid;
+  gap: 0.25rem;
 }
 
-.map-marker.lake {
-  background: #a78bfa;
-  color: #1e1b4b;
+.map-add-grid input,
+.map-add-grid textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 12px;
+  border: 1px solid #334155;
+  background: #f8fff9;
+  color: #102417;
+  font: inherit;
 }
 
-.map-marker.selected {
-  outline: 4px solid rgba(255, 255, 255, 0.45);
+.map-add-grid textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.map-wide {
+  grid-column: 1 / -1;
+}
+
+.map-check {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+}
+
+.map-check input {
+  width: auto;
+}
+
+.map-add-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.secondary-button {
+  background: #e2e8f0;
+  color: #102417;
+}
+
+.error-text {
+  color: #fecaca;
+}
+
+.map-detail-card h2,
+.map-help-card h2 {
+  margin-bottom: 0.5rem;
 }
 
 .map-chip {
@@ -1311,6 +1456,158 @@ button {
 
 .map-chip.habitat {
   background: rgba(56, 189, 248, 0.14);
+}
+
+.tag-manual {
+  background: #fee2e2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.tag-favorite {
+  background: #fef3c7;
+  border-color: #fcd34d;
+  color: #92400e;
+}
+
+.tag-trout {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+.tag-history {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #166534;
+}
+
+.tag-confidence {
+  background: #e0f2fe;
+  border-color: #7dd3fc;
+  color: #075985;
+}
+
+.tag-source {
+  background: #ede9fe;
+  border-color: #c4b5fd;
+  color: #5b21b6;
+}
+
+.water-pin {
+  position: relative;
+  width: 44px;
+  height: 60px;
+  transform-origin: center bottom;
+  cursor: pointer;
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.34));
+}
+
+.water-pin.selected {
+  transform: scale(1.08);
+}
+
+.water-pin svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.water-pin .pin-badges {
+  position: absolute;
+  right: -4px;
+  top: -4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pin-badge {
+  min-width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(16, 36, 23, 0.14);
+  background: #ffffff;
+  color: #102417;
+  font-size: 10px;
+  font-weight: 900;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.pin-badge.favorite {
+  background: #fef08a;
+  color: #713f12;
+}
+
+.pin-badge.trout {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.pin-badge.manual {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.pin-badge.history {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.water-pin.lake {
+  --pin-color: #2563eb;
+}
+
+.water-pin.river {
+  --pin-color: #06b6d4;
+}
+
+.water-pin.pond {
+  --pin-color: #16a34a;
+}
+
+.water-pin.reservoir {
+  --pin-color: #f59e0b;
+}
+
+.water-pin.other {
+  --pin-color: #8b5cf6;
+}
+
+.water-pin.manual {
+  --pin-color: #ef4444;
+}
+
+.water-pin svg .pin-shell {
+  fill: var(--pin-color);
+  stroke: rgba(255, 255, 255, 0.88);
+  stroke-width: 1.8;
+}
+
+.water-pin svg .pin-window {
+  fill: rgba(255, 255, 255, 0.95);
+}
+
+.water-pin svg .pin-wave {
+  fill: none;
+  stroke: rgba(16, 36, 23, 0.9);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.water-pin svg .pin-wave.light {
+  stroke: rgba(255, 255, 255, 0.96);
+}
+
+.water-pin svg .pin-star {
+  fill: rgba(202, 138, 4, 0.98);
+}
+
+.water-pin svg .pin-fish {
+  fill: rgba(8, 145, 178, 0.98);
 }
 
 /* Local Waters readability guard */
@@ -1401,7 +1698,21 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .map-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .map-hero-stats {
+    justify-content: flex-start;
+  }
+
   .map-canvas {
     min-height: 420px;
+    height: 58vh;
+  }
+
+  .map-add-grid {
+    grid-template-columns: 1fr;
   }
 }

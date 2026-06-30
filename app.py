@@ -19,6 +19,7 @@ from intelligence.app_health_intelligence import get_smart_intelligence_health_f
 from intelligence.app_health_sqlite_transition import get_sqlite_transition_health_for_app
 from intelligence.app_health_map_data import get_map_data_health_for_app
 from intelligence.map_data import get_map_data_readiness
+from intelligence.water_registry import append_custom_water_record, load_water_catalog
 
 app = Flask(__name__)
 
@@ -103,7 +104,7 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v4.7-sqlite-authority-transition-plan"
+APP_VERSION = "v4.9.2-map-context-custom-waterbodies"
 app.config["APP_VERSION"] = APP_VERSION
 
 
@@ -669,6 +670,32 @@ def api_delete_catch(catch_id):
     return jsonify(catches)
 
 
+@app.route("/api/waters/custom", methods=["POST"])
+def api_add_custom_water():
+    payload = request.get_json(silent=True) or {}
+
+    try:
+        water = append_custom_water_record(payload)
+    except ValueError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
+    except Exception as exc:
+        return jsonify({"ok": False, "error": f"Could not save waterbody: {exc}"}), 500
+
+    catalog = load_water_catalog()
+
+    return jsonify({
+        "ok": True,
+        "version": APP_VERSION,
+        "water": water,
+        "custom_count": catalog.get("custom_count", 0),
+        "total_waters": catalog.get("total_count", 0),
+        "database": {
+            "path": catalog.get("source_path"),
+            "custom_path": catalog.get("custom_source_path"),
+        },
+    }), 201
+
+
 @app.route("/health")
 def health():
     return {
@@ -687,8 +714,13 @@ def api_map_data():
         "json_source_of_truth": True,
         "sqlite_role": "mirror/read-only foundation",
         "record_count": readiness.get("record_count", 0),
+        "base_count": readiness.get("base_count", 0),
+        "custom_count": readiness.get("custom_count", 0),
+        "manual_waterbody_entry_enabled": readiness.get("manual_waterbody_entry_enabled", True),
         "bounds": readiness.get("bounds"),
         "warnings": readiness.get("warnings", []),
+        "source_path": readiness.get("source_path"),
+        "custom_source_path": readiness.get("custom_source_path"),
         "waters": readiness.get("records", []),
     })
 

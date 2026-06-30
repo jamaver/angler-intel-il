@@ -3,6 +3,7 @@
 <head>
   <title>Angler Intel Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
@@ -16,13 +17,34 @@
   </nav>
 
   <main class="app map-app">
-    <header>
-      <h1>Fishing Intelligence Map</h1>
-      <p>Prototype map view for local waters, species, habitat, and future trip intelligence.</p>
-      <p class="release-line">Current release: {{ app_version }}</p>
+    <header class="map-hero">
+      <div>
+        <h1>Fishing Intelligence Map</h1>
+        <p>Real basemaps, local waters, and manual waterbody entry for the map-first dashboard.</p>
+        <p class="release-line">Current release: {{ app_version }}</p>
+      </div>
+      <div class="map-hero-stats" aria-label="Map summary">
+        <div class="map-stat">
+          <span id="mapWaterCount">0</span>
+          <label>Waters</label>
+        </div>
+        <div class="map-stat">
+          <span id="mapCustomCount">0</span>
+          <label>Manual</label>
+        </div>
+      </div>
     </header>
 
     <section class="card map-toolbar">
+      <label>
+        Basemap
+        <select id="mapBaseLayer">
+          <option value="hybrid">Hybrid satellite</option>
+          <option value="satellite">Satellite</option>
+          <option value="street">Street</option>
+          <option value="terrain">Terrain</option>
+        </select>
+      </label>
       <label>
         Species filter
         <select id="mapSpeciesFilter">
@@ -35,24 +57,123 @@
           <option value="">All types</option>
         </select>
       </label>
-      <button id="mapResetButton" type="button">Reset</button>
+      <button id="mapResetButton" type="button" class="secondary-button">Reset</button>
     </section>
 
     <section class="map-layout">
-      <div class="card map-panel">
-        <div id="mapStatus" class="small">Loading map data...</div>
-        <div id="mapCanvas" class="map-canvas" role="img" aria-label="Prototype fishing intelligence map"></div>
+      <div class="map-main-column">
+        <section class="card map-panel">
+          <div class="map-panel-head">
+            <div>
+              <h2>Map</h2>
+              <p id="mapStatus" class="small">Loading map data...</p>
+            </div>
+            <div id="mapLayerLabel" class="map-layer-label">Hybrid satellite</div>
+          </div>
+          <div id="mapCanvas" class="map-canvas" role="application" aria-label="Fishing intelligence map"></div>
+          <div class="map-legend" aria-label="Map legend">
+            <span class="legend-chip legend-lake">Lake</span>
+            <span class="legend-chip legend-river">River / Creek</span>
+            <span class="legend-chip legend-pond">Pond</span>
+            <span class="legend-chip legend-reservoir">Reservoir</span>
+            <span class="legend-chip legend-manual">Manual</span>
+            <span class="legend-chip legend-favorite">Favorite</span>
+            <span class="legend-chip legend-trout">Stocked trout</span>
+          </div>
+        </section>
+
+        <details class="card map-add-card" open>
+          <summary>Add waterbody</summary>
+          <p class="small">Save a waterbody that is not in the starter catalog. It will persist in a local JSON sidecar and appear on the map after saving.</p>
+          <form id="mapAddForm" class="map-add-form">
+            <div class="map-add-grid">
+              <label>
+                Name
+                <input id="mapWaterName" name="name" type="text" placeholder="Fox River backwater">
+              </label>
+              <label>
+                Type
+                <input id="mapWaterType" name="type" type="text" list="mapTypeOptions" placeholder="lake, river, pond">
+              </label>
+              <label>
+                Latitude
+                <input id="mapWaterLat" name="lat" type="number" step="0.000001" placeholder="41.7">
+              </label>
+              <label>
+                Longitude
+                <input id="mapWaterLon" name="lon" type="number" step="0.000001" placeholder="-88.3">
+              </label>
+              <label>
+                City
+                <input id="mapWaterCity" name="city" type="text" placeholder="Naperville">
+              </label>
+              <label>
+                County
+                <input id="mapWaterCounty" name="county" type="text" placeholder="DuPage">
+              </label>
+              <label>
+                State
+                <input id="mapWaterState" name="state" type="text" value="IL" placeholder="IL">
+              </label>
+              <label>
+                Species
+                <input id="mapWaterSpecies" name="species" type="text" list="mapSpeciesOptions" placeholder="largemouth bass, crappie">
+              </label>
+              <label class="map-wide">
+                Access
+                <input id="mapWaterAccess" name="access" type="text" placeholder="shore, small craft, wade">
+              </label>
+              <label class="map-wide">
+                Notes
+                <textarea id="mapWaterNotes" name="notes" rows="4" placeholder="Short access note, seasonal pattern, or local intel."></textarea>
+              </label>
+              <label class="map-check">
+                <input id="mapWaterFavorite" name="favorite" type="checkbox">
+                Favorite water
+              </label>
+              <label class="map-check">
+                <input id="mapWaterTrout" name="stocked_trout" type="checkbox">
+                Stocked trout
+              </label>
+            </div>
+            <div class="map-add-actions">
+              <button id="mapUseCenterButton" type="button" class="secondary-button">Use map center</button>
+              <button type="submit">Save waterbody</button>
+            </div>
+            <div id="mapAddStatus" class="small" aria-live="polite"></div>
+          </form>
+          <datalist id="mapTypeOptions">
+            <option value="lake"></option>
+            <option value="pond"></option>
+            <option value="river"></option>
+            <option value="creek"></option>
+            <option value="reservoir"></option>
+            <option value="lagoon system"></option>
+            <option value="great lake"></option>
+            <option value="lake complex"></option>
+            <option value="other"></option>
+          </datalist>
+          <datalist id="mapSpeciesOptions"></datalist>
+        </details>
       </div>
 
-      <aside class="card map-detail-card">
-        <h2>Water Intel</h2>
-        <div id="mapDetails" class="small">Select a water marker.</div>
+      <aside class="map-sidebar">
+        <section class="card map-detail-card">
+          <h2>Water Intel</h2>
+          <div id="mapDetails" class="small">Select a water marker.</div>
+        </section>
+
+        <section class="card map-help-card">
+          <h2>Map Context</h2>
+          <p class="small">Street, satellite, and hybrid tiles are available. If the basemap looks empty, switch layers or check network access to the tile provider.</p>
+        </section>
       </aside>
     </section>
   </main>
 
-  <script src="/static/js/map_dashboard_v49.js"></script>
-  <script src="/static/js/global_nav_v433.js"></script>
-  <script src="/static/js/ui_polish_v442.js"></script>
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script defer src="/static/js/map_dashboard_v49.js"></script>
+  <script defer src="/static/js/global_nav_v433.js"></script>
+  <script defer src="/static/js/ui_polish_v442.js"></script>
 </body>
 </html>

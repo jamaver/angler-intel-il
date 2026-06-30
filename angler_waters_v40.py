@@ -8,11 +8,13 @@ from typing import Any
 
 from flask import current_app, jsonify, render_template_string, request
 
+from intelligence.water_registry import load_water_catalog, load_water_records
+
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 WATERS_PATH = DATA_DIR / "illinois_waters.json"
-DEFAULT_APP_VERSION = "v4.7-sqlite-authority-transition-plan"
+DEFAULT_APP_VERSION = "v4.9.2-map-context-custom-waterbodies"
 
 
 def _current_app_version() -> str:
@@ -38,12 +40,7 @@ def _read_json(path: Path, default: Any) -> Any:
 
 
 def _waters() -> list[dict[str, Any]]:
-    data = _read_json(WATERS_PATH, [])
-    if isinstance(data, list):
-        return [x for x in data if isinstance(x, dict)]
-    if isinstance(data, dict) and isinstance(data.get("waters"), list):
-        return [x for x in data["waters"] if isinstance(x, dict)]
-    return []
+    return load_water_records()
 
 
 def _haversine_miles(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -124,7 +121,8 @@ def _filter_rank_waters(
     q: str = "",
     limit: int = 20,
 ) -> dict[str, Any]:
-    waters = _waters()
+    catalog = load_water_catalog()
+    waters = catalog["records"]
     coords = _coords_from_zip(zip_code)
 
     q_l = q.strip().lower()
@@ -181,7 +179,7 @@ def _filter_rank_waters(
     return {
         "ok": True,
         "version": _current_app_version(),
-        "source": "local-starter-waters",
+        "source": "local-starter-and-custom-waters",
         "zip": zip_code,
         "origin": {"lat": coords[0], "lon": coords[1]} if coords else None,
         "radius_miles": radius,
@@ -191,8 +189,11 @@ def _filter_rank_waters(
         "total_matches": len(results),
         "waters": results[:limit],
         "database": {
-            "path": str(WATERS_PATH),
+            "path": catalog.get("source_path"),
+            "custom_path": catalog.get("custom_source_path"),
             "total_waters": len(waters),
+            "base_waters": catalog.get("base_count", 0),
+            "custom_waters": catalog.get("custom_count", 0),
         },
     }
 
@@ -278,7 +279,7 @@ def _render_waters_page() -> str:
 </nav>
   <h1>Local Waters</h1>
   <p class="muted release-line">Current release: {{ app_version }}</p>
-  <p class="muted">Local waters now uses the Pi-local starter database first, with broader ZIP-based OpenStreetMap detection available alongside it.</p>
+  <p class="muted">Local waters now uses the starter database plus any manually added waters, with broader ZIP-based detection available alongside it.</p>
 
   <div class="card">
     <h2>Search waters</h2>
@@ -287,7 +288,7 @@ def _render_waters_page() -> str:
     <label>Species filter<br><input id="speciesInput" placeholder="bass, walleye, crappie, catfish"></label><br>
     <label>Keyword<br><input id="queryInput" placeholder="river, lake, county, city, habitat"></label><br>
     <button onclick="loadWaters()">Search local waters</button>
-    <button onclick="loadAllWaters()">Show all starter waters</button>
+    <button onclick="loadAllWaters()">Show all waters</button>
   </div>
 
   <div class="card waters-results-card">
@@ -338,7 +339,7 @@ async function fetchAndRender(url) {
     raw.textContent = JSON.stringify(data, null, 2);
 
     const waters = data.waters || [];
-    summary.textContent = `${waters.length} shown · ${data.database?.total_waters ?? "?"} waters in local database`;
+    summary.textContent = `${waters.length} shown · ${data.database?.total_waters ?? "?"} waters in local catalog`;
 
     if (!waters.length) {
       results.innerHTML = "<p class='muted'>No local waters matched. Try a larger radius or no species filter.</p>";
@@ -353,6 +354,14 @@ async function fetchAndRender(url) {
           ${w.distance_miles !== null && w.distance_miles !== undefined ? " · " + esc(w.distance_miles) + " mi" : ""}
         </p>
         <p><strong>Score:</strong> ${esc(w.local_score ?? "")}</p>
+        ${(w.manual || String(w.source || "").toLowerCase() === "manual" || w.favorite || w.stocked_trout || w.catch_history_count)
+          ? `<p>${[
+              w.manual || String(w.source || "").toLowerCase() === "manual" ? "<span class='tag tag-manual'>Manual</span>" : "",
+              w.favorite ? "<span class='tag tag-favorite'>Favorite</span>" : "",
+              w.stocked_trout ? "<span class='tag tag-trout'>Stocked trout</span>" : "",
+              w.catch_history_count ? "<span class='tag tag-history'>Catch history</span>" : ""
+            ].join("")}</p>`
+          : ""}
         <p>${(w.species || []).map(s => `<span class="tag">${esc(s)}</span>`).join("")}</p>
         <p><strong>Habitat:</strong> ${(w.habitat || []).map(esc).join(", ")}</p>
         <p>${esc(w.notes || "")}</p>
@@ -386,6 +395,19 @@ def _render_water_detail(water: dict[str, Any]) -> str:
     species = "".join(f"<span class='tag'>{_esc(x)}</span>" for x in water.get("species", []))
     access = "".join(f"<span class='tag'>{_esc(x)}</span>" for x in water.get("access", []))
     habitat = "".join(f"<span class='tag'>{_esc(x)}</span>" for x in water.get("habitat", []))
+    meta_tags = []
+    if water.get("manual") or str(water.get("source") or "").lower() == "manual":
+        meta_tags.append("<span class='tag tag-manual'>Manual waterbody</span>")
+    if water.get("favorite"):
+        meta_tags.append("<span class='tag tag-favorite'>Favorite</span>")
+    if water.get("stocked_trout"):
+        meta_tags.append("<span class='tag tag-trout'>Stocked trout</span>")
+    if water.get("catch_history_count"):
+        meta_tags.append(f"<span class='tag tag-history'>Catch history {int(water.get('catch_history_count') or 0)}</span>")
+    if water.get("confidence"):
+        meta_tags.append(f"<span class='tag tag-confidence'>{_esc(water.get('confidence'))}</span>")
+    if water.get("source"):
+        meta_tags.append(f"<span class='tag tag-source'>{_esc(water.get('source'))}</span>")
     raw = json.dumps(water, indent=2, ensure_ascii=False)
 
     return render_template_string("""<!doctype html>
@@ -434,6 +456,12 @@ def _render_water_detail(water: dict[str, Any]) -> str:
   <p class="muted">{{ water_type }} · {{ water_city }} · {{ water_county }}</p>
 
   <div class="card">
+    <h2>Map Tags</h2>
+    <p>{{ meta_html | safe }}</p>
+    <p class="muted">Lat {{ water_lat }}, Lon {{ water_lon }}</p>
+  </div>
+
+  <div class="card">
     <h2>Species</h2>
     <p>{{ species_html | safe }}</p>
   </div>
@@ -472,6 +500,9 @@ def _render_water_detail(water: dict[str, Any]) -> str:
         species_html=species or "No species listed.",
         access_html=access or "No access data listed.",
         habitat_html=habitat or "No habitat data listed.",
+        meta_html="".join(meta_tags) or "No extra flags.",
+        water_lat=water.get("lat"),
+        water_lon=water.get("lon"),
         notes=water.get("notes") or "",
         raw=raw,
         app_version=_current_app_version(),
@@ -512,8 +543,10 @@ def register_local_waters_routes_v40(app):
 
     @app.route("/api/waters/all")
     def local_waters_all_api_v40():
+        catalog = load_water_catalog()
+        raw_waters = catalog["records"]
         waters = []
-        for water in _waters():
+        for water in raw_waters:
             item = dict(water)
             item["distance_miles"] = None
             item["local_score"] = _score_water(water)
@@ -525,18 +558,21 @@ def register_local_waters_routes_v40(app):
         return jsonify({
             "ok": True,
             "version": _current_app_version(),
-            "source": "local-starter-waters",
+            "source": "local-starter-and-custom-waters",
             "count": len(waters),
             "waters": waters,
             "database": {
-                "path": str(WATERS_PATH),
+                "path": catalog.get("source_path"),
+                "custom_path": catalog.get("custom_source_path"),
                 "total_waters": len(waters),
+                "base_waters": catalog.get("base_count", 0),
+                "custom_waters": catalog.get("custom_count", 0),
             },
         })
 
     @app.route("/api/water/<water_id>")
     def local_water_detail_api_v40(water_id: str):
-        for water in _waters():
+        for water in load_water_records():
             if water.get("id") == water_id:
                 return jsonify({
                     "ok": True,
@@ -552,7 +588,7 @@ def register_local_waters_routes_v40(app):
 
     @app.route("/water/<water_id>")
     def local_water_detail_page_v40(water_id: str):
-        for water in _waters():
+        for water in load_water_records():
             if water.get("id") == water_id:
                 return _render_water_detail(water)
 
@@ -560,7 +596,8 @@ def register_local_waters_routes_v40(app):
 
     @app.route("/api/waters/status")
     def local_waters_status_v40():
-        waters = _waters()
+        catalog = load_water_catalog()
+        waters = catalog["records"]
         counties = sorted({str(w.get("county", "")).strip() for w in waters if w.get("county")})
         types = sorted({str(w.get("type", "")).strip() for w in waters if w.get("type")})
 
@@ -568,8 +605,9 @@ def register_local_waters_routes_v40(app):
             "ok": True,
             "version": _current_app_version(),
             "database": {
-                "path": str(WATERS_PATH),
-                "exists": WATERS_PATH.exists(),
+                "path": catalog.get("source_path"),
+                "custom_path": catalog.get("custom_source_path"),
+                "exists": (BASE_DIR / str(catalog.get("source_path") or "")).exists(),
                 "total_waters": len(waters),
                 "counties": counties,
                 "types": types,
