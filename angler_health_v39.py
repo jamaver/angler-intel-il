@@ -522,7 +522,7 @@ def _render_health_html(payload: dict[str, Any]) -> str:
   </style>
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body>
+  <body class="app-health-page">
   <nav class="ai-main-tabs" aria-label="Angler Intel navigation">
   <a class="ai-main-tab" href="/">Dashboard</a>
   <a class="ai-main-tab" href="/waters">Local Waters</a>
@@ -540,14 +540,14 @@ def _render_health_html(payload: dict[str, Any]) -> str:
 
   <div class="card">
     <h2>Quick Counts</h2>
-    <div class="grid">
-      <div class="metric"><strong>{_html_escape(counts.get("favorites"))}</strong>Favorites</div>
-      <div class="metric"><strong>{_html_escape(counts.get("catches"))}</strong>Catches</div>
-      <div class="metric"><strong>{_html_escape(counts.get("reports_index"))}</strong>Indexed reports</div>
-      <div class="metric"><strong>{_html_escape(counts.get("backup_zips"))}</strong>Backup ZIPs</div>
-      <div class="metric"><strong>{_html_escape(counts.get("report_html_files"))}</strong>HTML reports</div>
-      <div class="metric"><strong>{_html_escape(counts.get("lure_assets"))}</strong>Lure assets</div>
-      <div class="metric"><strong>{_html_escape(counts.get("fish_assets"))}</strong>Fish assets</div>
+    <div class="grid quick-counts-grid">
+      <div class="metric quick-count"><strong>{_html_escape(counts.get("favorites"))}</strong><span>Favorites</span></div>
+      <div class="metric quick-count"><strong>{_html_escape(counts.get("catches"))}</strong><span>Catches</span></div>
+      <div class="metric quick-count"><strong>{_html_escape(counts.get("reports_index"))}</strong><span>Indexed reports</span></div>
+      <div class="metric quick-count"><strong>{_html_escape(counts.get("backup_zips"))}</strong><span>Backup ZIPs</span></div>
+      <div class="metric quick-count"><strong>{_html_escape(counts.get("report_html_files"))}</strong><span>HTML reports</span></div>
+      <div class="metric quick-count"><strong>{_html_escape(counts.get("lure_assets"))}</strong><span>Lure assets</span></div>
+      <div class="metric quick-count"><strong>{_html_escape(counts.get("fish_assets"))}</strong><span>Fish assets</span></div>
     </div>
   </div>
 

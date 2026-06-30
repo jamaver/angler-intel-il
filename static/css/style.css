@@ -1111,6 +1111,31 @@ button {
   word-break: break-word;
 }
 
+/* App Health Quick Counts rendering */
+.app-health-page .quick-counts-grid {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.app-health-page .quick-count {
+  display: grid;
+  gap: 0.25rem;
+  min-height: 5.2rem;
+  background: linear-gradient(180deg, #eff6ff, #dbeafe);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  color: #0f172a;
+}
+
+.app-health-page .quick-count strong {
+  color: #1d4ed8;
+  font-size: 1.65rem;
+  line-height: 1;
+}
+
+.app-health-page .quick-count span {
+  color: #1e3a8a;
+  font-weight: 700;
+}
+
 /* v4.6 Smart Intelligence dashboard card */
 .smart-intelligence-card h3 {
   margin: 0 0 0.5rem;
