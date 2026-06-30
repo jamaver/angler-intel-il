@@ -677,6 +677,22 @@ def health():
     }
 
 
+@app.route("/api/map-data")
+def api_map_data():
+    """Read-only map data endpoint for staged map dashboard work."""
+    readiness = get_map_data_readiness()
+    return jsonify({
+        "ok": bool(readiness.get("ok")),
+        "version": readiness.get("version"),
+        "json_source_of_truth": True,
+        "sqlite_role": "mirror/read-only foundation",
+        "record_count": readiness.get("record_count", 0),
+        "bounds": readiness.get("bounds"),
+        "warnings": readiness.get("warnings", []),
+        "waters": readiness.get("records", []),
+    })
+
+
 if __name__ == "__main__":
     print(f"Starting Angler Intel {APP_VERSION}...")
     app.run(host="0.0.0.0", port=5000)
@@ -766,19 +782,3 @@ def app_health_map_data_status():
             "sqlite_role": "mirror/read-only foundation",
             "errors": [str(exc)],
         }
-
-
-@app.route("/api/map-data")
-def api_map_data():
-    """Read-only map data endpoint for staged map dashboard work."""
-    readiness = get_map_data_readiness()
-    return jsonify({
-        "ok": bool(readiness.get("ok")),
-        "version": readiness.get("version"),
-        "json_source_of_truth": True,
-        "sqlite_role": "mirror/read-only foundation",
-        "record_count": readiness.get("record_count", 0),
-        "bounds": readiness.get("bounds"),
-        "warnings": readiness.get("warnings", []),
-        "waters": readiness.get("records", []),
-    })
