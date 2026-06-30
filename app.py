@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect
 import json
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -561,6 +561,11 @@ def index():
 @app.route("/map")
 def map_dashboard():
     return render_template("map.html")
+
+
+@app.route("/maps")
+def maps_alias():
+    return redirect("/map", code=308)
 
 
 @app.route("/snapshot")

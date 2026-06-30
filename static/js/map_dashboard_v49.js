@@ -130,8 +130,22 @@
   async function loadMap() {
     const status = byId("mapStatus");
     try {
-      const res = await fetch("/api/map-data");
-      const data = await res.json();
+      const res = await fetch("/api/map-data", {
+        headers: { "Accept": "application/json" }
+      });
+      const contentType = res.headers.get("content-type") || "";
+      const text = await res.text();
+
+      if (!contentType.includes("application/json")) {
+        const snippet = text.trim().slice(0, 80) || "empty response";
+        throw new Error(`Expected JSON from /api/map-data but received HTML or another format: ${snippet}`);
+      }
+
+      const data = JSON.parse(text);
+      if (!res.ok) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+
       state.waters = Array.isArray(data.waters) ? data.waters : [];
       state.filtered = state.waters.slice();
       state.bounds = data.bounds;
