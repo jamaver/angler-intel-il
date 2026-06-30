@@ -26,7 +26,7 @@
       <div class="ai-rig-head">
         <div>
           <h2>Rig Setup Guide</h2>
-          <p class="muted">v4.3 quick rigging help for trout, pike, bass, walleye, panfish, and catfish.</p>
+          <p class="muted">Quick rigging help for trout, pike, bass, walleye, panfish, and catfish.</p>
         </div>
         <a href="/rigs" class="ai-rig-link">Open Full Rig Guide</a>
       </div>

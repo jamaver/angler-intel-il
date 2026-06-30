@@ -6,12 +6,23 @@ import math
 from pathlib import Path
 from typing import Any
 
-from flask import jsonify, request
+from flask import current_app, jsonify, render_template_string, request
 
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 WATERS_PATH = DATA_DIR / "illinois_waters.json"
+DEFAULT_APP_VERSION = "v4.7-sqlite-authority-transition-plan"
+
+
+def _current_app_version() -> str:
+    try:
+        version = current_app.config.get("APP_VERSION")
+        if version:
+            return str(version)
+    except Exception:
+        pass
+    return DEFAULT_APP_VERSION
 
 
 def _read_json(path: Path, default: Any) -> Any:
@@ -155,7 +166,7 @@ def _filter_rank_waters(
         item = dict(water)
         item["distance_miles"] = round(distance, 1) if distance is not None else None
         item["local_score"] = _score_water(water, species=species)
-        item["source"] = "local-v4.0"
+        item["source"] = "local-waters"
 
         results.append(item)
 
@@ -169,7 +180,7 @@ def _filter_rank_waters(
 
     return {
         "ok": True,
-        "version": "v4.0",
+        "version": _current_app_version(),
         "source": "local-starter-waters",
         "zip": zip_code,
         "origin": {"lat": coords[0], "lon": coords[1]} if coords else None,
@@ -191,7 +202,7 @@ def _esc(value: Any) -> str:
 
 
 def _render_waters_page() -> str:
-    return """<!doctype html>
+    return render_template_string("""<!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -266,7 +277,8 @@ def _render_waters_page() -> str:
   <a class="ai-main-tab" href="/app-health">App Health</a>
 </nav>
   <h1>Local Waters</h1>
-  <p class="muted">v4.0 local waters foundation. This uses a Pi-local starter database plus broader ZIP-based OpenStreetMap detection.</p>
+  <p class="muted release-line">Current release: {{ app_version }}</p>
+  <p class="muted">Local waters now uses the Pi-local starter database first, with broader ZIP-based OpenStreetMap detection available alongside it.</p>
 
   <div class="card">
     <h2>Search waters</h2>
@@ -335,7 +347,7 @@ async function fetchAndRender(url) {
 
     results.innerHTML = waters.map(w => `
       <div class="water">
-        <h3>${esc(w.name)}</h3>
+        <h3 class="water-title">${esc(w.name)}</h3>
         <p class="muted">
           ${esc(w.type || "")} · ${esc(w.city || "")} · ${esc(w.county || "")}
           ${w.distance_miles !== null && w.distance_miles !== undefined ? " · " + esc(w.distance_miles) + " mi" : ""}
@@ -367,7 +379,7 @@ loadWaters();
   <script src="/static/js/ui_polish_v442.js"></script>
 </body>
 </html>
-"""
+""", app_version=_current_app_version())
 
 
 def _render_water_detail(water: dict[str, Any]) -> str:
@@ -376,27 +388,27 @@ def _render_water_detail(water: dict[str, Any]) -> str:
     habitat = "".join(f"<span class='tag'>{_esc(x)}</span>" for x in water.get("habitat", []))
     raw = json.dumps(water, indent=2, ensure_ascii=False)
 
-    return f"""<!doctype html>
+    return render_template_string("""<!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>{_esc(water.get("name"))} - Angler Intel</title>
+  <title>{{ water_name }} - Angler Intel</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body {{
+    body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       margin: 2rem;
       max-width: 900px;
       line-height: 1.45;
       color: #172018;
-    }}
-    .card {{
+    }
+    .card {
       border: 1px solid #ddd;
       border-radius: 12px;
       padding: 1rem;
       margin: 1rem 0;
-    }}
-    .tag {{
+    }
+    .tag {
       display: inline-block;
       padding: 0.15rem 0.4rem;
       margin: 0.12rem;
@@ -404,45 +416,46 @@ def _render_water_detail(water: dict[str, Any]) -> str:
       background: #e9f8ee;
       border: 1px solid #b9ddc5;
       font-size: 0.85rem;
-    }}
-    .muted {{ color: #666; }}
-    pre {{
+    }
+    .muted { color: #666; }
+    pre {
       background: #f5f5f5;
       padding: 1rem;
       border-radius: 8px;
       white-space: pre-wrap;
       overflow-x: auto;
-    }}
-    a {{ color: #0b5d2a; }}
+    }
+    a { color: #0b5d2a; }
   </style>
 </head>
 <body class="local-waters-page">
-  <h1>{_esc(water.get("name"))}</h1>
-  <p class="muted">{_esc(water.get("type"))} · {_esc(water.get("city"))} · {_esc(water.get("county"))}</p>
+  <h1>{{ water_name }}</h1>
+  <p class="muted release-line">Current release: {{ app_version }}</p>
+  <p class="muted">{{ water_type }} · {{ water_city }} · {{ water_county }}</p>
 
   <div class="card">
     <h2>Species</h2>
-    <p>{species or "No species listed."}</p>
+    <p>{{ species_html | safe }}</p>
   </div>
 
   <div class="card">
     <h2>Access</h2>
-    <p>{access or "No access data listed."}</p>
+    <p>{{ access_html | safe }}</p>
   </div>
 
   <div class="card">
     <h2>Habitat</h2>
-    <p>{habitat or "No habitat data listed."}</p>
+    <p>{{ habitat_html | safe }}</p>
   </div>
 
   <div class="card">
     <h2>Notes</h2>
-    <p>{_esc(water.get("notes"))}</p>
+    <p>{{ notes }}</p>
   </div>
 
   <details class="card">
     <summary>Raw local water record</summary>
-    <pre>{_esc(raw)}</pre>
+    <pre>{{ raw }}</pre>
   </details>
 
   <p>
@@ -451,7 +464,18 @@ def _render_water_detail(water: dict[str, Any]) -> str:
   </p>
 </body>
 </html>
-"""
+""",
+        water_name=water.get("name") or "",
+        water_type=water.get("type") or "",
+        water_city=water.get("city") or "",
+        water_county=water.get("county") or "",
+        species_html=species or "No species listed.",
+        access_html=access or "No access data listed.",
+        habitat_html=habitat or "No habitat data listed.",
+        notes=water.get("notes") or "",
+        raw=raw,
+        app_version=_current_app_version(),
+    )
 
 
 def register_local_waters_routes_v40(app):
@@ -493,14 +517,14 @@ def register_local_waters_routes_v40(app):
             item = dict(water)
             item["distance_miles"] = None
             item["local_score"] = _score_water(water)
-            item["source"] = "local-v4.0"
+            item["source"] = "local-waters"
             waters.append(item)
 
         waters.sort(key=lambda x: (x.get("county", ""), x.get("name", "")))
 
         return jsonify({
             "ok": True,
-            "version": "v4.0",
+            "version": _current_app_version(),
             "source": "local-starter-waters",
             "count": len(waters),
             "waters": waters,
@@ -516,7 +540,7 @@ def register_local_waters_routes_v40(app):
             if water.get("id") == water_id:
                 return jsonify({
                     "ok": True,
-                    "version": "v4.0",
+                    "version": _current_app_version(),
                     "water": water,
                 })
 
@@ -542,7 +566,7 @@ def register_local_waters_routes_v40(app):
 
         return jsonify({
             "ok": True,
-            "version": "v4.0",
+            "version": _current_app_version(),
             "database": {
                 "path": str(WATERS_PATH),
                 "exists": WATERS_PATH.exists(),

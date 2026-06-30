@@ -104,6 +104,12 @@ except Exception as exc:
 
 
 APP_VERSION = "v4.7-sqlite-authority-transition-plan"
+app.config["APP_VERSION"] = APP_VERSION
+
+
+@app.context_processor
+def inject_app_version():
+    return {"app_version": APP_VERSION}
 
 DATA_DIR = Path("data")
 FAVORITES_FILE = DATA_DIR / "favorites.json"

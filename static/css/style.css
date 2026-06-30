@@ -27,6 +27,14 @@ header {
   align-items: end;
 }
 
+.release-line {
+  margin: 0.35rem 0 0;
+  color: #93c5fd;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
 h1 {
   margin: 0;
   font-size: 34px;
@@ -1320,6 +1328,10 @@ button {
 .local-waters-page .water h3,
 .local-waters-page .water p {
   color: #f4fff6;
+}
+
+.local-waters-page .water-title {
+  color: #7cc4ff !important;
 }
 
 .local-waters-page .card h1,

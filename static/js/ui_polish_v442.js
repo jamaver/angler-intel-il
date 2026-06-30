@@ -42,9 +42,14 @@
     const nav = document.querySelector(".ai-main-tabs");
     if (!nav || nav.querySelector(".ai-version-badge-v442")) return;
 
+    const CURRENT_VERSION = "v4.7";
+    const CURRENT_RELEASE = "v4.7-sqlite-authority-transition-plan";
+
     const badge = document.createElement("span");
     badge.className = "ai-version-badge-v442";
-    badge.textContent = "v4.4.3";
+    badge.textContent = CURRENT_VERSION;
+    badge.title = `Angler Intel ${CURRENT_RELEASE}`;
+    badge.setAttribute("aria-label", `Current release ${CURRENT_RELEASE}`);
 
     const top = nav.querySelector(".ai-menu-top");
     if (top) top.appendChild(badge);

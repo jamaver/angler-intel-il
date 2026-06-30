@@ -50,7 +50,7 @@
       <div class="ai-smart-head">
         <div>
           <h2>Smart Recommendations</h2>
-          <p class="muted">v4.4 combines local waters, active species, rig setups, season, and distance.</p>
+          <p class="muted">Combines local waters, active species, rig setups, season, and distance.</p>
         </div>
         <a class="ai-smart-link" href="/recommendations">Open Smart Picks</a>
       </div>

@@ -81,7 +81,7 @@
       <div class="ai-local-waters-head">
         <div>
           <h2>Reliable Local Waters</h2>
-          <p class="muted">v4.2 uses the local starter waters database first. OpenStreetMap can still run separately for broader ZIP searches.</p>
+          <p class="muted">Local waters now uses the starter database first. OpenStreetMap can still run separately for broader ZIP searches.</p>
         </div>
         <div class="ai-local-waters-controls">
           <label>
