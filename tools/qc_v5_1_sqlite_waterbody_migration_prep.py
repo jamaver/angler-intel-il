@@ -56,12 +56,15 @@ if marker_path.exists():
 app_version_path = APP_ROOT / "data" / "app_version.json"
 if app_version_path.exists():
     app_version = json.loads(app_version_path.read_text(encoding="utf-8"))
-    if app_version.get("version") != "v5.1-sqlite-waterbody-migration-prep":
-        errors.append("app_version.json is not aligned to v5.1")
+    if app_version.get("version") not in {
+        "v5.1-sqlite-waterbody-migration-prep",
+        "v5.2-catch-learning",
+    }:
+        errors.append("app_version.json is not aligned to v5.1 or later")
 
 app_text = read("app.py")
-if 'APP_VERSION = "v5.1-sqlite-waterbody-migration-prep"' not in app_text:
-    errors.append("app.py version string is not aligned to v5.1")
+if 'APP_VERSION = "v5.1-sqlite-waterbody-migration-prep"' not in app_text and 'APP_VERSION = "v5.2-catch-learning"' not in app_text:
+    errors.append("app.py version string is not aligned to v5.1 or later")
 
 if "waterbodies_mirror" not in read("intelligence/sqlite_foundation.py"):
     errors.append("sqlite_foundation is missing the waterbodies_mirror table")

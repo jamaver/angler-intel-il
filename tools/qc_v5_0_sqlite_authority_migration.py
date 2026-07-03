@@ -68,6 +68,7 @@ if app_version_path.exists():
     if app_version.get("version") not in {
         "v5.0-sqlite-authority-migration",
         "v5.1-sqlite-waterbody-migration-prep",
+        "v5.2-catch-learning",
     }:
         errors.append("app_version.json is not aligned to the v5.0/v5.1 migration line")
 

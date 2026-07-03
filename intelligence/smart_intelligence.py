@@ -103,10 +103,16 @@ def _catch_history_signal(catch_insights: dict[str, Any] | None, zip_code: str, 
     total = max(_safe_int(insights.get("total")), 0)
     local_total = max(_safe_int(insights.get("local_total")), 0)
     top_species = _safe_sequence(insights.get("top_species"))
+    top_waterbodies = _safe_sequence(insights.get("top_waterbodies"))
     known_species = [
         item.get("name")
         for item in top_species
-        if isinstance(item, dict) and item.get("name")
+        if isinstance(item, dict) and item.get("name") and str(item.get("name")).strip().lower() != "unknown"
+    ]
+    known_waterbodies = [
+        item.get("name")
+        for item in top_waterbodies
+        if isinstance(item, dict) and item.get("name") and str(item.get("name")).strip().lower() != "unknown"
     ]
 
     if local_total >= 5:
@@ -140,6 +146,11 @@ def _catch_history_signal(catch_insights: dict[str, Any] | None, zip_code: str, 
     elif total > 0 and local_total == 0 and total < 5:
         weight = "There is some catch history, but the sample is small enough that it should only nudge the decision."
 
+    if known_waterbodies:
+        summary = f"{summary} Most recent waterbody signal: {known_waterbodies[0]}."
+    elif known_species:
+        summary = f"{summary} Top catch species signal: {known_species[0]}."
+
     return {
         "level": level,
         "summary": summary,
@@ -150,6 +161,8 @@ def _catch_history_signal(catch_insights: dict[str, Any] | None, zip_code: str, 
             "local": local_total,
         },
         "known_species": known_species[:5],
+        "known_waterbodies": known_waterbodies[:5],
+        "sample_quality": insights.get("sample_quality"),
     }
 
 

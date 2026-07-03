@@ -100,7 +100,7 @@ async function loadCatchLog() {
     setHTML("catchLog", catches.slice(0, 20).map(c => `
       <div class="catch-row">
         <b>${c.species}</b>
-        <div class="small">${c.timestamp} · ZIP ${c.zip || "unknown"}</div>
+        <div class="small">${c.timestamp} · ZIP ${c.zip || "unknown"}${c.waterbody ? ` · ${c.waterbody}` : ""}</div>
         <div>🎣 ${c.lure || "No lure recorded"}</div>
         <div class="small">${c.notes || ""}</div>
         <button class="danger small-btn" onclick="deleteCatch('${c.id}')">Delete</button>
@@ -114,10 +114,12 @@ async function loadCatchLog() {
 async function saveCatch() {
   const speciesNode = el("catchSpecies");
   const lureNode = el("catchLure");
+  const waterbodyNode = el("catchWaterbody");
   const notesNode = el("catchNotes");
 
   const species = speciesNode ? speciesNode.value : "";
   const lure = lureNode ? lureNode.value.trim() : "";
+  const waterbody = waterbodyNode ? waterbodyNode.value.trim() : "";
   const notes = notesNode ? notesNode.value.trim() : "";
 
   if (!species) {
@@ -132,6 +134,7 @@ async function saveCatch() {
       zip: currentZip,
       species,
       lure,
+      waterbody,
       notes
     })
   });
@@ -142,6 +145,7 @@ async function saveCatch() {
   }
 
   if (lureNode) lureNode.value = "";
+  if (waterbodyNode) waterbodyNode.value = "";
   if (notesNode) notesNode.value = "";
 
   await loadCatchLog();
@@ -193,6 +197,9 @@ function renderInsights(insights) {
 
   const topSpecies = insights.top_species || [];
   const topLures = insights.top_lures || [];
+  const topWaterbodies = insights.top_waterbodies || [];
+  const localTopWaterbodies = insights.local_top_waterbodies || [];
+  const sampleQuality = insights.sample_quality || "unknown";
 
   return `
     <div class="insight-grid">
@@ -211,6 +218,14 @@ function renderInsights(insights) {
 
     <h3>Top Lures</h3>
     ${topLures.map(l => `<div class="pill-line">🎣 ${l.name}: ${l.count}</div>`).join("")}
+
+    <h3>Top Waterbodies</h3>
+    ${topWaterbodies.map(w => `<div class="pill-line">📍 ${w.name}: ${w.count}</div>`).join("")}
+
+    <h3>Local Waterbodies</h3>
+    ${localTopWaterbodies.map(w => `<div class="pill-line">📍 ${w.name}: ${w.count}</div>`).join("")}
+
+    <div class="small">Sample quality: ${sampleQuality}</div>
   `;
 }
 

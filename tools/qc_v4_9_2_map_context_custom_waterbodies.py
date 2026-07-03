@@ -69,6 +69,7 @@ if app_version_path.exists():
         "v4.9.4-map-filters-water-list",
         "v5.0-sqlite-authority-migration",
         "v5.1-sqlite-waterbody-migration-prep",
+        "v5.2-catch-learning",
     }:
         errors.append("app_version.json is not aligned to v4.9.2 or later")
 

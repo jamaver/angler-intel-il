@@ -1,0 +1,19 @@
+{
+  "app_name": "Angler Intel",
+  "version": "v5.2-catch-learning",
+  "installed_at": "2026-07-03T13:57:03-05:00",
+  "previous_version": "v5.1-sqlite-waterbody-migration-prep",
+  "json_source_of_truth": true,
+  "sqlite_role": "mirror/read-only foundation until explicit migration",
+  "authority_flipped": false,
+  "catch_learning_enabled": true,
+  "catch_history_by_species_enabled": true,
+  "catch_history_by_waterbody_enabled": true,
+  "sample_size_weighting_enabled": true,
+  "optional_catch_waterbody_field": true,
+  "notes": [
+    "Catch logs can now carry optional waterbody context.",
+    "Catch-learning summaries include species, waterbody, and sample-quality signals.",
+    "Smart Intelligence can use richer catch-history context without changing authority."
+  ]
+}

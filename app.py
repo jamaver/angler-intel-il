@@ -3,8 +3,8 @@ import json
 from pathlib import Path
 from datetime import datetime, timedelta
 import uuid
-from collections import Counter
 
+from intelligence.catch_learning import build_catch_learning_summary
 from intelligence.location import get_coords
 from intelligence.weather import get_weather, f_temp, mph, inhg
 from intelligence.waters import detect_water, infer_area_type
@@ -104,7 +104,7 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v5.1-sqlite-waterbody-migration-prep"
+APP_VERSION = "v5.2-catch-learning"
 app.config["APP_VERSION"] = APP_VERSION
 
 
@@ -196,53 +196,7 @@ def format_hour_label(hour):
 
 def catch_insights(zip_code):
     catches = load_catches()
-
-    if not catches:
-        return {
-            "total": 0,
-            "local_total": 0,
-            "top_species": [],
-            "top_lures": [],
-            "message": "No catches logged yet. Once you log catches, Angler Intel will start showing your personal patterns."
-        }
-
-    local = [c for c in catches if c.get("zip") == zip_code]
-
-    species_counts = Counter(
-        c.get("species", "Unknown")
-        for c in catches
-        if c.get("species")
-    )
-
-    lure_counts = Counter(
-        c.get("lure", "Unknown")
-        for c in catches
-        if c.get("lure")
-    )
-
-    local_species_counts = Counter(
-        c.get("species", "Unknown")
-        for c in local
-        if c.get("species")
-    )
-
-    return {
-        "total": len(catches),
-        "local_total": len(local),
-        "top_species": [
-            {"name": name, "count": count}
-            for name, count in species_counts.most_common(5)
-        ],
-        "top_lures": [
-            {"name": name, "count": count}
-            for name, count in lure_counts.most_common(5)
-        ],
-        "local_top_species": [
-            {"name": name, "count": count}
-            for name, count in local_species_counts.most_common(3)
-        ],
-        "message": "Personal catch history is active."
-    }
+    return build_catch_learning_summary(catches, zip_code=zip_code)
 
 
 def fallback_weather_payload():
@@ -870,6 +824,7 @@ def api_add_catch():
         "zip": str(payload.get("zip", "")).strip(),
         "species": str(payload.get("species", "")).strip(),
         "lure": str(payload.get("lure", "")).strip(),
+        "waterbody": str(payload.get("waterbody", "")).strip(),
         "notes": str(payload.get("notes", "")).strip()
     }
 

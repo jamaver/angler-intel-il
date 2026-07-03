@@ -58,6 +58,7 @@ if app_version_path.exists():
         "v4.9.4-map-filters-water-list",
         "v5.0-sqlite-authority-migration",
         "v5.1-sqlite-waterbody-migration-prep",
+        "v5.2-catch-learning",
     }:
         errors.append("app_version.json is not aligned to v4.9.4 or later")
 
@@ -73,7 +74,7 @@ for needle, message in [
     if needle not in app_text:
         errors.append(message)
 
-if 'APP_VERSION = "v4.9.4-map-filters-water-list"' not in app_text and 'APP_VERSION = "v5.0-sqlite-authority-migration"' not in app_text and 'APP_VERSION = "v5.1-sqlite-waterbody-migration-prep"' not in app_text:
+if 'APP_VERSION = "v4.9.4-map-filters-water-list"' not in app_text and 'APP_VERSION = "v5.0-sqlite-authority-migration"' not in app_text and 'APP_VERSION = "v5.1-sqlite-waterbody-migration-prep"' not in app_text and 'APP_VERSION = "v5.2-catch-learning"' not in app_text:
     errors.append("app.py version is not aligned to the map filters release line")
 
 for needle, message in [

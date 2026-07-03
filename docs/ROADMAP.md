@@ -33,6 +33,7 @@ Angler Intel is moving toward a map-first, waterbody-centered fishing intelligen
 - Catch-history summaries by species and waterbody
 - Confidence weighting that respects sample size
 - Better local pattern learning from catch logs
+- Optional waterbody context on catch entries
 
 ## v5.3 Target Species Profiles
 
