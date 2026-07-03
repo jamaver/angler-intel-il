@@ -1,1 +1,31 @@
-[]
+[
+  {
+    "id": "manual-farmington-lakes-park-25d14eca",
+    "name": "Farmington Lakes Park",
+    "type": "lake",
+    "city": "Oswego",
+    "county": "",
+    "state": "IL",
+    "lat": 41.712969,
+    "lon": -88.311807,
+    "species": [
+      "largemouth bass"
+    ],
+    "species_ids": [
+      "largemouth-bass"
+    ],
+    "access": [
+      "shore",
+      "pier"
+    ],
+    "habitat": [],
+    "notes": "",
+    "confidence": "manual",
+    "manual": true,
+    "source": "manual",
+    "favorite": false,
+    "stocked_trout": false,
+    "catch_history_count": 0,
+    "created_at": "2026-06-29T21:13:57-05:00"
+  }
+]

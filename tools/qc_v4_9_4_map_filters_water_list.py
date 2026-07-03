@@ -54,8 +54,11 @@ if marker_path.exists():
 app_version_path = APP_ROOT / "data" / "app_version.json"
 if app_version_path.exists():
     app_version = json.loads(app_version_path.read_text(encoding="utf-8"))
-    if app_version.get("version") != "v4.9.4-map-filters-water-list":
-        errors.append("app_version.json is not aligned to v4.9.4")
+    if app_version.get("version") not in {
+        "v4.9.4-map-filters-water-list",
+        "v5.0-sqlite-authority-migration",
+    }:
+        errors.append("app_version.json is not aligned to v4.9.4 or later")
 
 app_text = read("app.py")
 map_text = read("static/js/map_dashboard_v49.js")
@@ -65,10 +68,12 @@ css_text = read("static/css/style.css")
 for needle, message in [
     ('@app.route("/api/water-intel")', "app.py missing water intel API"),
     ('@app.route("/water/<water_id>")', "app.py missing water detail route"),
-    ('APP_VERSION = "v4.9.4-map-filters-water-list"', "app.py version is not v4.9.4"),
 ]:
     if needle not in app_text:
         errors.append(message)
+
+if 'APP_VERSION = "v4.9.4-map-filters-water-list"' not in app_text and 'APP_VERSION = "v5.0-sqlite-authority-migration"' not in app_text:
+    errors.append("app.py version is not aligned to the map filters release line")
 
 for needle, message in [
     ("mapFilterFavorite", "Map filters missing favorite toggle"),

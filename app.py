@@ -104,7 +104,7 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v4.9.4-map-filters-water-list"
+APP_VERSION = "v5.0-sqlite-authority-migration"
 app.config["APP_VERSION"] = APP_VERSION
 
 

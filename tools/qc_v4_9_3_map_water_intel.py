@@ -57,6 +57,7 @@ if app_version_path.exists():
     if app_version.get("version") not in {
         "v4.9.3-map-water-intel",
         "v4.9.4-map-filters-water-list",
+        "v5.0-sqlite-authority-migration",
     }:
         errors.append("app_version.json is not aligned to the map-water-intel line")
 

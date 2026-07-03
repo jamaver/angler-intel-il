@@ -31,7 +31,7 @@ def get_map_data_readiness() -> dict[str, Any]:
 
     return {
         "ok": bool(records) and not catalog.get("missing_coords"),
-        "version": "v4.9.4-map-filters-water-list",
+        "version": "v5.0-sqlite-authority-migration",
         "json_source_of_truth": True,
         "sqlite_role": "mirror/read-only foundation",
         "map_dashboard_planned": True,

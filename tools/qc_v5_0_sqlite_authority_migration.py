@@ -62,6 +62,12 @@ else:
 from tools.sqlite_authority_preflight import collect_preflight
 from intelligence.app_health_sqlite_authority import get_sqlite_authority_health_for_app
 
+app_version_path = APP_ROOT / "data" / "app_version.json"
+if app_version_path.exists():
+    app_version = json.loads(app_version_path.read_text(encoding="utf-8"))
+    if app_version.get("version") != "v5.0-sqlite-authority-migration":
+        errors.append("app_version.json is not aligned to v5.0")
+
 preflight = collect_preflight()
 if not isinstance(preflight, dict):
     errors.append("collect_preflight did not return dict")
