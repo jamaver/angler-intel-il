@@ -16,6 +16,7 @@ CORE_JSON_FILES = [
     DATA_DIR / "catches.json",
     DATA_DIR / "waters.json",
     DATA_DIR / "waterbodies.json",
+    DATA_DIR / "manual_waters.json",
     DATA_DIR / "saved_reports.json",
 ]
 
@@ -144,9 +145,43 @@ def init_schema(conn: sqlite3.Connection) -> None:
             FOREIGN KEY(json_source_id) REFERENCES json_sources(id) ON DELETE SET NULL
         );
 
+        CREATE TABLE IF NOT EXISTS waterbodies_mirror (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            water_id TEXT NOT NULL UNIQUE,
+            source TEXT NOT NULL,
+            source_path TEXT,
+            source_sha256 TEXT,
+            source_row_index INTEGER NOT NULL,
+            name TEXT,
+            water_type TEXT,
+            city TEXT,
+            county TEXT,
+            state TEXT,
+            lat REAL,
+            lon REAL,
+            species_json TEXT,
+            species_ids_json TEXT,
+            access_json TEXT,
+            habitat_json TEXT,
+            notes TEXT,
+            confidence TEXT,
+            manual INTEGER NOT NULL DEFAULT 0,
+            favorite INTEGER NOT NULL DEFAULT 0,
+            stocked_trout INTEGER NOT NULL DEFAULT 0,
+            catch_history_count INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT,
+            payload_json TEXT NOT NULL,
+            payload_sha256 TEXT NOT NULL UNIQUE,
+            mirrored_at TEXT NOT NULL
+        );
+
         CREATE INDEX IF NOT EXISTS idx_catches_species ON catches_mirror(species);
         CREATE INDEX IF NOT EXISTS idx_catches_waterbody ON catches_mirror(waterbody);
         CREATE INDEX IF NOT EXISTS idx_favorites_waterbody ON favorites_mirror(waterbody);
+        CREATE INDEX IF NOT EXISTS idx_waterbodies_water_id ON waterbodies_mirror(water_id);
+        CREATE INDEX IF NOT EXISTS idx_waterbodies_type ON waterbodies_mirror(water_type);
+        CREATE INDEX IF NOT EXISTS idx_waterbodies_favorite ON waterbodies_mirror(favorite);
+        CREATE INDEX IF NOT EXISTS idx_waterbodies_manual ON waterbodies_mirror(manual);
         """
     )
 
@@ -366,6 +401,9 @@ def initialize_and_mirror() -> dict[str, Any]:
         init_schema(conn)
         files = discover_json_files()
         results = [mirror_json_file(conn, path) for path in files]
+        from intelligence.sqlite_waterbodies import mirror_waterbodies
+
+        waterbody_result = mirror_waterbodies(conn)
 
         table_counts = {}
         for table in (
@@ -375,6 +413,7 @@ def initialize_and_mirror() -> dict[str, Any]:
             "favorites_mirror",
             "catches_mirror",
             "reports_mirror",
+            "waterbodies_mirror",
         ):
             row = conn.execute(f"SELECT COUNT(*) AS n FROM {table}").fetchone()
             table_counts[table] = int(row["n"])
@@ -383,6 +422,7 @@ def initialize_and_mirror() -> dict[str, Any]:
         "database": str(DB_PATH.relative_to(APP_ROOT)),
         "json_source_of_truth": True,
         "files": results,
+        "waterbodies": waterbody_result,
         "table_counts": table_counts,
     }
 
@@ -403,6 +443,7 @@ def status() -> dict[str, Any]:
             "favorites_mirror",
             "catches_mirror",
             "reports_mirror",
+            "waterbodies_mirror",
         ]
         counts = {}
         for table in tables:

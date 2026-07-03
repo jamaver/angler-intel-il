@@ -63,8 +63,14 @@ if version_path.exists():
 app_version_path = APP_ROOT / "data" / "app_version.json"
 if app_version_path.exists():
     app_version = json.loads(app_version_path.read_text(encoding="utf-8"))
-    if app_version.get("version") != "v4.9.2-map-context-custom-waterbodies":
-        errors.append("app_version.json is not aligned to v4.9.2")
+    if app_version.get("version") not in {
+        "v4.9.2-map-context-custom-waterbodies",
+        "v4.9.3-map-water-intel",
+        "v4.9.4-map-filters-water-list",
+        "v5.0-sqlite-authority-migration",
+        "v5.1-sqlite-waterbody-migration-prep",
+    }:
+        errors.append("app_version.json is not aligned to v4.9.2 or later")
 
 app_text = read("app.py")
 map_text = read("static/js/map_dashboard_v49.js")

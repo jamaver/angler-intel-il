@@ -1,0 +1,19 @@
+{
+  "app_name": "Angler Intel",
+  "version": "v5.1-sqlite-waterbody-migration-prep",
+  "installed_at": "2026-07-03T12:49:56-05:00",
+  "previous_version": "v5.0-sqlite-authority-migration",
+  "json_source_of_truth": true,
+  "sqlite_role": "mirror/read-only foundation until explicit migration",
+  "authority_flipped": false,
+  "waterbody_mirror_enabled": true,
+  "waterbody_preflight_enabled": true,
+  "backup_proven": true,
+  "export_proven": true,
+  "rollback_proven": true,
+  "notes": [
+    "Waterbody records now have a mirror table in SQLite.",
+    "The mirror stays read-only and JSON remains the current authority.",
+    "Waterbody preflight proves the mirror count matches the catalog."
+  ]
+}

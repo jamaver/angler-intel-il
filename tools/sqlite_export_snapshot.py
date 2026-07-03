@@ -28,6 +28,7 @@ for table in [
     "favorites_mirror",
     "catches_mirror",
     "reports_mirror",
+    "waterbodies_mirror",
 ]:
     try:
         snapshot[table] = [dict(row) for row in conn.execute(f"SELECT * FROM {table}")]

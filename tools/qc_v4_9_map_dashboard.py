@@ -47,6 +47,11 @@ if marker_path.exists():
     if marker.get("authority_switch_allowed_now") is not False:
         errors.append("v4.9 marker must not allow SQLite authority switch")
 
+app_version_path = APP_ROOT / "data" / "app_version.json"
+app_version = None
+if app_version_path.exists():
+    app_version = json.loads(app_version_path.read_text(encoding="utf-8")).get("version")
+
 app_text = read("app.py")
 nav_text = read("static/js/global_nav_v433.js")
 map_html = read("templates/map.html") if (APP_ROOT / "templates/map.html").exists() else ""
@@ -60,7 +65,7 @@ if "/map" not in nav_text:
     errors.append("Global nav missing Map link")
 if 'href="/admin"' in map_html or 'href="/admin"' in nav_text:
     errors.append("Map normal navigation should not expose Admin")
-if "leaflet" in map_html.lower() or "tile.openstreetmap" in map_js.lower():
+if app_version == "v4.9-map-dashboard-prototype" and ("leaflet" in map_html.lower() or "tile.openstreetmap" in map_js.lower()):
     errors.append("v4.9 prototype should not add external tile dependency")
 
 from intelligence.map_data import get_map_data_readiness

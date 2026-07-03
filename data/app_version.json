@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel",
-  "version": "v5.0-sqlite-authority-migration",
-  "updated": "2026-07-03T12:20:00-05:00",
+  "version": "v5.1-sqlite-waterbody-migration-prep",
+  "updated": "2026-07-03T12:49:56-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -29,7 +29,8 @@
     "map_context_custom_waterbodies": "v4.9.2",
     "map_water_intel": "v4.9.3",
     "map_filters_water_list": "v4.9.4",
-    "sqlite_authority_migration": "v5.0"
+    "sqlite_authority_migration": "v5.0",
+    "sqlite_waterbody_migration_prep": "v5.1"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -53,6 +54,7 @@
     "v4.9.2 adds real basemap tiles, hybrid satellite view, and manual waterbody entry backed by a custom JSON registry.",
     "v4.9.3 adds water-specific intelligence, a water detail route, and a map panel that can open Smart Intelligence for the selected waterbody.",
     "v4.9.4 adds map filtering controls and a visible waters-in-view list to make the map easier to use as a fishing intelligence tool.",
-    "v5.0 is a SQLite authority migration preflight release. JSON remains current authority until an explicit later migration flips it."
+    "v5.0 is a SQLite authority migration preflight release. JSON remains current authority until an explicit later migration flips it.",
+    "v5.1 adds the first waterbody SQLite mirror and a dedicated waterbody migration preflight while keeping JSON as the source of truth."
   ]
 }

@@ -1,0 +1,59 @@
+<section class="card sqlite-waterbodies-health-card" id="sqlite-waterbodies-health-card">
+  <h2>Waterbody Migration Prep</h2>
+  <p class="muted">
+    v5.1 proves the waterbody mirror exists and matches the catalog before any authority switch.
+  </p>
+
+  {% if sqlite_waterbodies_health %}
+    <div class="health-grid">
+      <div>
+        <strong>Status</strong><br>
+        {% if sqlite_waterbodies_health.ok %}
+          <span class="status-good">Ready</span>
+        {% else %}
+          <span class="status-warn">Needs attention</span>
+        {% endif %}
+      </div>
+
+      <div>
+        <strong>Current authority</strong><br>
+        <span>{{ sqlite_waterbodies_health.current_authority }}</span>
+      </div>
+
+      <div>
+        <strong>Waterbodies mirrored</strong><br>
+        <span>{{ sqlite_waterbodies_health.catalog.total_count }}</span>
+      </div>
+
+      <div>
+        <strong>SQLite role</strong><br>
+        <span>{{ sqlite_waterbodies_health.sqlite_role }}</span>
+      </div>
+    </div>
+
+    <details class="health-details" open>
+      <summary>Preflight gates</summary>
+      <ul>
+        {% for gate in sqlite_waterbodies_health.gates %}
+          <li>
+            <strong>{{ gate.name }}:</strong>
+            {{ "PASS" if gate.ok else "FAIL" }} - {{ gate.summary }}
+          </li>
+        {% endfor %}
+      </ul>
+    </details>
+
+    {% if sqlite_waterbodies_health.errors %}
+      <details class="health-details">
+        <summary>Errors</summary>
+        <ul>
+          {% for error in sqlite_waterbodies_health.errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+  {% else %}
+    <p class="status-warn">Waterbody migration preflight unavailable.</p>
+  {% endif %}
+</section>
