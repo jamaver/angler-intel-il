@@ -57,6 +57,32 @@
           <option value="">All types</option>
         </select>
       </label>
+      <label>
+        Target species
+        <select id="mapTargetSpecies">
+          <option value="">Auto from water</option>
+        </select>
+      </label>
+      <label class="map-toggle">
+        <input id="mapFilterFavorite" type="checkbox">
+        Favorites
+      </label>
+      <label class="map-toggle">
+        <input id="mapFilterManual" type="checkbox">
+        Manual
+      </label>
+      <label class="map-toggle">
+        <input id="mapFilterStocked" type="checkbox">
+        Stocked trout
+      </label>
+      <label class="map-toggle">
+        <input id="mapFilterHistory" type="checkbox">
+        Catch history
+      </label>
+      <label class="map-toggle">
+        <input id="mapFilterConfidence" type="checkbox">
+        High confidence
+      </label>
       <button id="mapResetButton" type="button" class="secondary-button">Reset</button>
     </section>
 
@@ -161,6 +187,17 @@
         <section class="card map-detail-card">
           <h2>Water Intel</h2>
           <div id="mapDetails" class="small">Select a water marker.</div>
+          <div id="mapIntelResults" class="map-intel-results"></div>
+        </section>
+
+        <section class="card map-list-card">
+          <div class="map-panel-head">
+            <div>
+              <h2>Waters in View</h2>
+              <p id="mapListStatus" class="small">Filtered waters appear here.</p>
+            </div>
+          </div>
+          <div id="mapList" class="map-water-list"></div>
         </section>
 
         <section class="card map-help-card">

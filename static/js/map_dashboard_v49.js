@@ -89,12 +89,20 @@
     waters: [],
     filtered: [],
     selectedId: null,
+    filters: {
+      favorite: false,
+      manual: false,
+      stocked: false,
+      history: false,
+      confidence: false
+    },
     catalog: {
       base_count: 0,
       custom_count: 0,
       total_count: 0,
       warnings: []
     },
+    waterIntel: null,
     initialFitDone: false
   };
 
@@ -118,6 +126,13 @@
 
   function uniq(values) {
     return Array.from(new Set(values.filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b)));
+  }
+
+  function speciesKey(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
   }
 
   function splitList(value) {
@@ -152,6 +167,19 @@
       ? "manual"
       : typeKey(water.type);
     return TYPE_COLORS[key] || TYPE_COLORS.other;
+  }
+
+  function confidenceTier(water) {
+    const confidence = String(water.confidence || "").toLowerCase();
+    const catchHistory = Number(water.catch_history_count || 0) || 0;
+
+    if (confidence.includes("high") || confidence.includes("strong") || confidence.includes("verified")) {
+      return "high";
+    }
+    if (catchHistory >= 5 || confidence.includes("moderate") || confidence.includes("good")) {
+      return "moderate";
+    }
+    return "low";
   }
 
   function pinGlyphPath(key) {
@@ -307,6 +335,7 @@
   function renderFilters() {
     const speciesSelect = byId("mapSpeciesFilter");
     const typeSelect = byId("mapTypeFilter");
+    const targetSelect = byId("mapTargetSpecies");
     const speciesList = byId("mapSpeciesOptions");
     if (!speciesSelect || !typeSelect) return;
 
@@ -320,19 +349,56 @@
       `<option value="${esc(item)}">${esc(item)}</option>`
     ).join("");
 
+    if (targetSelect) {
+      const commonSpecies = [
+        "largemouth bass",
+        "smallmouth bass",
+        "crappie",
+        "bluegill",
+        "channel catfish",
+        "flathead catfish",
+        "walleye",
+        "sauger",
+        "rainbow trout",
+        "brown trout",
+        "northern pike",
+        "muskie"
+      ];
+      const targets = uniq([...species, ...commonSpecies]);
+      targetSelect.innerHTML = `<option value="">Auto from water</option>` + targets.map(item =>
+        `<option value="${esc(item)}">${esc(item)}</option>`
+      ).join("");
+    }
+
     if (speciesList) {
       speciesList.innerHTML = species.map(item => `<option value="${esc(item)}"></option>`).join("");
     }
   }
 
+  function readFilterFlags() {
+    state.filters = {
+      favorite: !!byId("mapFilterFavorite")?.checked,
+      manual: !!byId("mapFilterManual")?.checked,
+      stocked: !!byId("mapFilterStocked")?.checked,
+      history: !!byId("mapFilterHistory")?.checked,
+      confidence: !!byId("mapFilterConfidence")?.checked
+    };
+  }
+
   function applyFilters() {
     const species = (byId("mapSpeciesFilter")?.value || "").toLowerCase();
     const type = (byId("mapTypeFilter")?.value || "").toLowerCase();
+    readFilterFlags();
 
     state.filtered = state.waters.filter(water => {
       const speciesOk = !species || splitList(water.species).some(item => item.toLowerCase() === species);
       const typeOk = !type || String(water.type || "").toLowerCase() === type;
-      return speciesOk && typeOk;
+      const favoriteOk = !state.filters.favorite || !!water.favorite;
+      const manualOk = !state.filters.manual || water.manual || String(water.source || "").toLowerCase() === "manual";
+      const stockedOk = !state.filters.stocked || !!water.stocked_trout;
+      const historyOk = !state.filters.history || Number(water.catch_history_count || 0) > 0;
+      const confidenceOk = !state.filters.confidence || confidenceTier(water) === "high";
+      return speciesOk && typeOk && favoriteOk && manualOk && stockedOk && historyOk && confidenceOk;
     });
 
     if (state.filtered.length) {
@@ -345,12 +411,180 @@
 
     renderMap();
     renderDetails();
+    if (state.selectedId) {
+      loadWaterIntel(state.selectedId);
+    }
+    renderWaterList();
 
     const statusParts = [`${state.filtered.length} of ${state.waters.length} waters shown`];
     if (state.catalog.warnings && state.catalog.warnings.length) {
       statusParts.push(`Warnings: ${state.catalog.warnings.slice(0, 2).join(" | ")}`);
     }
     setStatus(statusParts.join(" • "));
+    const listStatus = byId("mapListStatus");
+    if (listStatus) {
+      const activeFilters = Object.entries(state.filters)
+        .filter(([, value]) => value)
+        .map(([key]) => key)
+        .join(", ");
+      listStatus.textContent = activeFilters ? `Active filters: ${activeFilters}` : "Filtered waters appear here.";
+    }
+  }
+
+  function waterIntelUrl(waterId) {
+    const targetSpecies = byId("mapTargetSpecies")?.value || "";
+    const params = new URLSearchParams({ water_id: waterId });
+    if (targetSpecies) params.set("target_species", targetSpecies);
+    return `/api/water-intel?${params.toString()}`;
+  }
+
+  function renderMapIntel(payload) {
+    const container = byId("mapIntelResults");
+    if (!container) return;
+
+    if (!payload || !payload.smart_intelligence) {
+      container.innerHTML = `<p class="small">No water intelligence available.</p>`;
+      return;
+    }
+
+    const intel = payload.smart_intelligence;
+    const bestBet = payload.best_bet || {};
+    const confidence = intel.confidence || {};
+    const positives = Array.isArray(intel.positive_signals) ? intel.positive_signals : [];
+    const cautions = Array.isArray(intel.caution_signals) ? intel.caution_signals : [];
+    const explanation = Array.isArray(intel.explanation) ? intel.explanation : [];
+    const water = payload.water || {};
+
+    container.innerHTML = `
+      <div class="map-intel-head">
+        <div>
+          <h3>${esc(intel.headline || water.name || "Water intel")}</h3>
+          <p class="small">${esc(intel.summary || "")}</p>
+        </div>
+        <div class="map-intel-score">
+          <span>${esc(confidence.score ?? "?" )}</span>
+          <label>${esc(confidence.label || confidence.level || "Unknown")}</label>
+        </div>
+      </div>
+
+      <div class="chip-row">
+        <span class="map-chip map-chip-strong">${esc(payload.selected_species || bestBet.species || "Target species")}</span>
+        <span class="map-chip">${esc(payload.area_type || water.type || "water")}</span>
+        <span class="map-chip">${esc(payload.weather?.temp ?? "?")}F</span>
+        <span class="map-chip">${esc(payload.weather?.wind ?? "?")} mph wind</span>
+        <span class="map-chip">${esc(payload.weather?.cloud ?? "?")}% cloud</span>
+      </div>
+
+      <div class="map-intel-grid">
+        <div class="map-intel-panel">
+          <strong>Primary lure</strong>
+          <div>${esc(bestBet.lure_name || "General-purpose lure")}</div>
+          <p class="small">${esc(bestBet.why || "")}</p>
+        </div>
+        <div class="map-intel-panel">
+          <strong>Clarity</strong>
+          <div>${esc(intel.clarity_signal?.label || "Unknown")}</div>
+          <p class="small">${esc(intel.clarity_signal?.basis || "")}</p>
+        </div>
+        <div class="map-intel-panel">
+          <strong>Catch history</strong>
+          <div>${esc(intel.catch_history?.level || "none")}</div>
+          <p class="small">${esc(intel.catch_history?.summary || "No catch history yet.")}</p>
+        </div>
+        <div class="map-intel-panel">
+          <strong>Recommendation</strong>
+          <div>${esc(bestBet.species || "Target species")}</div>
+          <p class="small">${esc((bestBet.reasons && bestBet.reasons[0]) || "")}</p>
+        </div>
+      </div>
+
+      ${positives.length ? `
+        <h4>Positive signals</h4>
+        <div class="chip-row">${positives.map(item => `<span class="map-chip positive">${esc(item)}</span>`).join("")}</div>
+      ` : ""}
+
+      ${cautions.length ? `
+        <h4>Caution signals</h4>
+        <div class="chip-row">${cautions.map(item => `<span class="map-chip caution">${esc(item)}</span>`).join("")}</div>
+      ` : ""}
+
+      ${explanation.length ? `
+        <details class="intel-details">
+          <summary>Explanation</summary>
+          <ul>${explanation.map(item => `<li>${esc(item)}</li>`).join("")}</ul>
+        </details>
+      ` : ""}
+
+      <div class="map-intel-actions">
+        <a class="button-link" href="/water/${encodeURIComponent(water.id)}">Open water detail</a>
+        <a class="button-link secondary" href="/recommendations">Open Smart Picks</a>
+      </div>
+    `;
+  }
+
+  function waterRowMeta(water) {
+    const parts = [];
+    if (water.type) parts.push(esc(water.type));
+    if (water.city) parts.push(esc(water.city));
+    if (water.county) parts.push(esc(water.county));
+    if (water.favorite) parts.push("Favorite");
+    if (water.manual || String(water.source || "").toLowerCase() === "manual") parts.push("Manual");
+    if (water.stocked_trout) parts.push("Stocked trout");
+    if ((water.catch_history_count || 0) > 0) parts.push(`History ${water.catch_history_count}`);
+    return parts.join(" · ");
+  }
+
+  function renderWaterList() {
+    const list = byId("mapList");
+    if (!list) return;
+
+    const waters = state.filtered.slice(0, 24);
+    if (!waters.length) {
+      list.innerHTML = `<p class="small">No waters match the current filters.</p>`;
+      return;
+    }
+
+    list.innerHTML = waters.map(water => {
+      const tier = confidenceTier(water);
+      const active = water.id === state.selectedId ? " active" : "";
+      return `
+        <button type="button" class="map-water-row${active}" data-water-id="${esc(water.id)}">
+          <div class="map-water-row-head">
+            <strong>${esc(water.name || "Waterbody")}</strong>
+            <span class="map-water-tier ${esc(tier)}">${esc(tier)}</span>
+          </div>
+          <div class="small">${waterRowMeta(water)}</div>
+          <div class="map-water-row-chips">
+            ${splitList(water.species).slice(0, 3).map(item => `<span class="map-chip">${esc(item)}</span>`).join("")}
+          </div>
+        </button>
+      `;
+    }).join("");
+
+    list.querySelectorAll("[data-water-id]").forEach(button => {
+      button.addEventListener("click", () => {
+        const waterId = button.getAttribute("data-water-id");
+        if (waterId) selectWater(waterId);
+      });
+    });
+  }
+
+  async function loadWaterIntel(waterId) {
+    const container = byId("mapIntelResults");
+    if (container) {
+      container.innerHTML = `<p class="small">Loading water intelligence...</p>`;
+    }
+
+    try {
+      const data = await fetchJson(waterIntelUrl(waterId));
+      state.waterIntel = data;
+      renderMapIntel(data);
+    } catch (error) {
+      state.waterIntel = null;
+      if (container) {
+        container.innerHTML = `<p class="small error-text">Unable to load water intel: ${esc(error.message || error)}</p>`;
+      }
+    }
   }
 
   function renderMap() {
@@ -414,6 +648,8 @@
     const selected = state.waters.find(water => water.id === state.selectedId) || state.filtered[0] || null;
     if (!selected) {
       details.innerHTML = "No water selected.";
+      const intel = byId("mapIntelResults");
+      if (intel) intel.innerHTML = "";
       return;
     }
 
@@ -432,16 +668,34 @@
     ].filter(Boolean);
 
     details.innerHTML = `
-      <h3>${esc(selected.name || "Waterbody")}</h3>
-      <p class="small">${esc(selected.type || "water")} ${selected.city ? "· " + esc(selected.city) : ""} ${selected.county ? "· " + esc(selected.county) : ""}</p>
+      <div class="map-selection-head">
+        <div>
+          <h3>${esc(selected.name || "Waterbody")}</h3>
+          <p class="small">${esc(selected.type || "water")}${selected.city ? " · " + esc(selected.city) : ""}${selected.county ? " · " + esc(selected.county) : ""}</p>
+        </div>
+        <span class="map-selected-badge">Selected</span>
+      </div>
       <p>${chips.map(item => `<span class="map-chip">${esc(item)}</span>`).join("") || "<span class='small'>No extra flags.</span>"}</p>
       <p><strong>Species</strong><br>${species.length ? species.map(item => `<span class="map-chip">${esc(item)}</span>`).join("") : "No species listed."}</p>
       <p><strong>Access</strong><br>${access.length ? access.map(item => `<span class="map-chip habitat">${esc(item)}</span>`).join("") : "No access listed."}</p>
       <p><strong>Habitat</strong><br>${habitat.length ? habitat.map(item => `<span class="map-chip habitat">${esc(item)}</span>`).join("") : "No habitat listed."}</p>
       <p class="small">Lat ${esc(selected.lat)} · Lon ${esc(selected.lon)}</p>
       <p>${selected.notes ? textBlock(selected.notes) : "No notes yet."}</p>
-      <p><a href="/water/${encodeURIComponent(selected.id)}">Open water detail</a></p>
+      <div class="map-intel-actions">
+        <a class="button-link" href="/water/${encodeURIComponent(selected.id)}">Open water detail</a>
+        <button type="button" class="secondary-button" id="mapZoomToSelection">Zoom here</button>
+      </div>
     `;
+
+    const zoomButton = byId("mapZoomToSelection");
+    if (zoomButton) {
+      zoomButton.addEventListener("click", () => {
+        if (selected.lat !== null && selected.lon !== null) {
+          const map = ensureMap();
+          if (map) map.setView([selected.lat, selected.lon], Math.max(map.getZoom() || 8, 12), { animate: true });
+        }
+      });
+    }
   }
 
   function selectWater(id, options = {}) {
@@ -451,6 +705,8 @@
 
     const water = state.waters.find(item => item.id === id);
     if (!water) return;
+
+    loadWaterIntel(id);
 
     if (options.panTo !== false) {
       const map = ensureMap();
@@ -524,6 +780,9 @@
       } else if (!state.initialFitDone && state.filtered.length) {
         fitToWaters(state.filtered);
         state.initialFitDone = true;
+        if (state.selectedId) {
+          loadWaterIntel(state.selectedId);
+        }
       }
     } catch (error) {
       setStatus(`Unable to load map data: ${error.message || error}`);
@@ -607,17 +866,41 @@
 
     byId("mapSpeciesFilter")?.addEventListener("change", applyFilters);
     byId("mapTypeFilter")?.addEventListener("change", applyFilters);
+    ["mapFilterFavorite", "mapFilterManual", "mapFilterStocked", "mapFilterHistory", "mapFilterConfidence"].forEach(id => {
+      byId(id)?.addEventListener("change", applyFilters);
+    });
+    byId("mapTargetSpecies")?.addEventListener("change", () => {
+      if (state.selectedId) {
+        loadWaterIntel(state.selectedId);
+      }
+    });
     byId("mapResetButton")?.addEventListener("click", () => {
       const species = byId("mapSpeciesFilter");
       const type = byId("mapTypeFilter");
+      const target = byId("mapTargetSpecies");
+      ["mapFilterFavorite", "mapFilterManual", "mapFilterStocked", "mapFilterHistory", "mapFilterConfidence"].forEach(id => {
+        const input = byId(id);
+        if (input) input.checked = false;
+      });
       const base = byId("mapBaseLayer");
       if (species) species.value = "";
       if (type) type.value = "";
+      if (target) target.value = "";
       if (base) base.value = "hybrid";
       state.selectedId = state.waters[0]?.id || null;
       state.activeBasemap = "hybrid";
+      state.filters = {
+        favorite: false,
+        manual: false,
+        stocked: false,
+        history: false,
+        confidence: false
+      };
       switchBaseMap("hybrid");
       applyFilters();
+      if (state.selectedId) {
+        loadWaterIntel(state.selectedId);
+      }
     });
 
     byId("mapUseCenterButton")?.addEventListener("click", fillCenterFields);

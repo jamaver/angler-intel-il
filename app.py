@@ -19,7 +19,7 @@ from intelligence.app_health_intelligence import get_smart_intelligence_health_f
 from intelligence.app_health_sqlite_transition import get_sqlite_transition_health_for_app
 from intelligence.app_health_map_data import get_map_data_health_for_app
 from intelligence.map_data import get_map_data_readiness
-from intelligence.water_registry import append_custom_water_record, load_water_catalog
+from intelligence.water_registry import append_custom_water_record, load_water_catalog, get_water_record_by_id
 
 app = Flask(__name__)
 
@@ -104,7 +104,7 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v4.9.2-map-context-custom-waterbodies"
+APP_VERSION = "v4.9.4-map-filters-water-list"
 app.config["APP_VERSION"] = APP_VERSION
 
 
@@ -169,6 +169,18 @@ def slugify_species(name):
 
 def fish_image(name):
     return f"/static/fish/{slugify_species(name)}.svg"
+
+
+def species_key(name):
+    return slugify_species(name).replace("_", "-")
+
+
+def find_species_entry(name):
+    target = species_key(name)
+    for species in SPECIES:
+        if species_key(species.get("name", "")) == target:
+            return species
+    return None
 
 
 def format_hour_label(hour):
@@ -374,16 +386,10 @@ def build_best_bet(species_ranked, best_time, best_hour, base_score, temp_f, win
     }
 
 
-def build_intel(zip_code):
-    zip_code = zip_code.strip()
-    loc = get_coords(zip_code)
-
-    if not loc:
-        return None
-
+def _weather_summary_for_coords(lat, lon):
     weather_error = None
     try:
-        weather = get_weather(loc["lat"], loc["lon"])
+        weather = get_weather(lat, lon)
         weather["source"] = weather.get("source", "open-meteo")
         weather["fallback"] = False
     except Exception as exc:
@@ -403,6 +409,214 @@ def build_intel(zip_code):
     wind_mph = mph(current["wind_speed_10m"])
     pressure_inhg = inhg(current["pressure_msl"])
     cloud = current.get("cloud_cover", 0)
+
+    daily = weather.get("daily", {}) if isinstance(weather, dict) else {}
+    required_daily_keys = ("time", "temperature_2m_max", "temperature_2m_min", "wind_speed_10m_max")
+    if not isinstance(daily, dict) or any(
+        key not in daily or not isinstance(daily.get(key), list) or not daily.get(key)
+        for key in required_daily_keys
+    ):
+        if weather_error is None:
+            weather_error = "Live weather forecast payload was incomplete, so fallback weather was used."
+        weather = fallback_weather_payload()
+        weather["error"] = weather_error
+        current = weather["current"]
+        temp_f = f_temp(current["temperature_2m"])
+        wind_mph = mph(current["wind_speed_10m"])
+        pressure_inhg = inhg(current["pressure_msl"])
+        cloud = current.get("cloud_cover", 0)
+        daily = weather["daily"]
+
+    weather_summary = {
+        "temp": round(temp_f, 1),
+        "wind": round(wind_mph, 1),
+        "pressure": round(pressure_inhg, 2),
+        "cloud": cloud,
+        "source": weather.get("source", "unknown"),
+        "fallback": bool(weather.get("fallback")),
+        "error": weather_error,
+    }
+
+    return weather, weather_summary
+
+
+def build_water_intel(water, target_species="", zip_code=""):
+    water = water if isinstance(water, dict) else {}
+    lat = water.get("lat")
+    lon = water.get("lon")
+    has_coords = lat is not None and lon is not None
+
+    if has_coords:
+        weather, weather_summary = _weather_summary_for_coords(lat, lon)
+    else:
+        weather = fallback_weather_payload()
+        weather_summary = {
+            "temp": round(f_temp(weather["current"]["temperature_2m"]), 1),
+            "wind": round(mph(weather["current"]["wind_speed_10m"]), 1),
+            "pressure": round(inhg(weather["current"]["pressure_msl"]), 2),
+            "cloud": weather["current"].get("cloud_cover", 0),
+            "source": "fallback",
+            "fallback": True,
+            "error": "Waterbody has no coordinates, so fallback weather is shown until it is mapped.",
+        }
+
+    temp_f = weather_summary["temp"]
+    wind_mph = weather_summary["wind"]
+    pressure_inhg = weather_summary["pressure"]
+    cloud = weather_summary["cloud"]
+
+    water_type = str(water.get("type") or "water").strip() or "water"
+    area_type = water_type.lower()
+    base = overall_score(temp_f, wind_mph, pressure_inhg, cloud)
+    blocks = time_blocks(base, temp_f, wind_mph)
+    best_block = max(blocks, key=lambda x: x["score"]) if blocks else {
+        "label": "Any time",
+        "time": "Any time",
+        "score": base,
+    }
+
+    hourly = hourly_bite_forecast(
+        weather.get("hourly", {}),
+        f_temp,
+        mph,
+        inhg,
+    )
+    best_hour = max(hourly, key=lambda x: x["score"]) if hourly else None
+
+    water_species = [
+        str(item).strip()
+        for item in (water.get("species") or [])
+        if str(item).strip()
+    ]
+    water_species_keys = {species_key(item) for item in water_species}
+    target_species_key = species_key(target_species) if target_species else ""
+
+    species_ranked = []
+    for sp in SPECIES:
+        sp_score = score_species(sp, temp_f, wind_mph, pressure_inhg, area_type)
+        sp_key = species_key(sp.get("name", ""))
+        if target_species_key and sp_key == target_species_key:
+            sp_score += 12
+        elif water_species_keys and sp_key in water_species_keys:
+            sp_score += 8
+
+        species_ranked.append({
+            "name": sp["name"],
+            "score": sp_score,
+            "rating": rating(sp_score),
+            "lures": choose_lure(sp["name"]),
+            "habitat": ", ".join(sp["habitat"]),
+            "fish_image": fish_image(sp["name"]),
+        })
+
+    species_ranked.sort(key=lambda x: x["score"], reverse=True)
+
+    if target_species_key:
+        for index, item in enumerate(species_ranked):
+            if species_key(item.get("name", "")) == target_species_key:
+                species_ranked.insert(0, species_ranked.pop(index))
+                break
+    elif water_species_keys:
+        for index, item in enumerate(species_ranked):
+            if species_key(item.get("name", "")) in water_species_keys:
+                species_ranked.insert(0, species_ranked.pop(index))
+                break
+
+    top_lure_cards = []
+    for sp in species_ranked[:4]:
+        cards = sp["lures"].get("cards", {})
+        if cards:
+            best_card = cards.get("evening") or cards.get("morning")
+            top_lure_cards.append({
+                "species": sp["name"],
+                "species_score": sp["score"],
+                "fish_image": sp["fish_image"],
+                "top_pick": True if len(top_lure_cards) == 0 else False,
+                **best_card
+            })
+
+    best_bet = build_best_bet(
+        species_ranked,
+        best_block,
+        best_hour,
+        base,
+        temp_f,
+        wind_mph,
+        pressure_inhg,
+        area_type,
+        zip_code or "",
+    )
+
+    if water.get("city") or water.get("state"):
+        location_label = ", ".join(
+            part
+            for part in (water.get("city"), water.get("state"))
+            if part
+        )
+    else:
+        location_label = str(water.get("name") or "Selected waterbody")
+
+    insights = catch_insights(zip_code or "")
+    try:
+        smart_intelligence = build_smart_intelligence(
+            zip_code=zip_code or "",
+            location={
+                "city": water.get("city", ""),
+                "state": water.get("state", ""),
+            },
+            weather=weather_summary,
+            area_type=area_type,
+            best_bet=best_bet,
+            best_time=best_block,
+            catch_insights=insights,
+        )
+    except Exception as exc:
+        smart_intelligence = build_smart_intelligence_fallback(
+            zip_code=zip_code or "",
+            location={
+                "city": water.get("city", ""),
+                "state": water.get("state", ""),
+            },
+            weather=weather_summary,
+            area_type=area_type,
+            best_bet=best_bet,
+            best_time=best_block,
+            catch_insights=insights,
+            error=str(exc),
+        )
+
+    smart_intelligence["location_label"] = location_label
+
+    return {
+        "version": APP_VERSION,
+        "generated_at": datetime.now().strftime("%b %d, %Y %I:%M %p"),
+        "water": water,
+        "target_species": target_species or "",
+        "selected_species": best_bet["species"],
+        "best_bet": best_bet,
+        "weather": weather_summary,
+        "area_type": area_type,
+        "best_time": best_block,
+        "best_hour": best_hour,
+        "lure_cards": top_lure_cards,
+        "species": species_ranked,
+        "smart_intelligence": smart_intelligence,
+        "catch_insights": insights,
+    }
+
+
+def build_intel(zip_code):
+    zip_code = zip_code.strip()
+    loc = get_coords(zip_code)
+
+    if not loc:
+        return None
+
+    weather, weather_summary = _weather_summary_for_coords(loc["lat"], loc["lon"])
+    temp_f = weather_summary["temp"]
+    wind_mph = weather_summary["wind"]
+    pressure_inhg = weather_summary["pressure"]
+    cloud = weather_summary["cloud"]
 
     waters = detect_water(loc["lat"], loc["lon"])
     area_type = infer_area_type(waters)
@@ -464,21 +678,6 @@ def build_intel(zip_code):
     )
 
     daily = weather.get("daily", {}) if isinstance(weather, dict) else {}
-    required_daily_keys = ("time", "temperature_2m_max", "temperature_2m_min", "wind_speed_10m_max")
-    if not isinstance(daily, dict) or any(
-        key not in daily or not isinstance(daily.get(key), list) or not daily.get(key)
-        for key in required_daily_keys
-    ):
-        if weather_error is None:
-            weather_error = "Live weather forecast payload was incomplete, so fallback weather was used."
-        weather = fallback_weather_payload()
-        weather["error"] = weather_error
-        current = weather["current"]
-        temp_f = f_temp(current["temperature_2m"])
-        wind_mph = mph(current["wind_speed_10m"])
-        pressure_inhg = inhg(current["pressure_msl"])
-        cloud = current.get("cloud_cover", 0)
-        daily = weather["daily"]
 
     forecast = []
 
@@ -498,15 +697,6 @@ def build_intel(zip_code):
             "wind": round(max_wind)
         })
 
-    weather_summary = {
-        "temp": round(temp_f, 1),
-        "wind": round(wind_mph, 1),
-        "pressure": round(pressure_inhg, 2),
-        "cloud": cloud,
-        "source": weather.get("source", "unknown"),
-        "fallback": bool(weather.get("fallback")),
-        "error": weather_error,
-    }
     insights = catch_insights(zip_code)
     try:
         smart_intelligence = build_smart_intelligence(
@@ -562,6 +752,37 @@ def index():
 @app.route("/map")
 def map_dashboard():
     return render_template("map.html")
+
+
+@app.route("/api/water-intel")
+def api_water_intel():
+    water_id = str(request.args.get("water_id", "")).strip()
+    target_species = str(request.args.get("target_species", "")).strip()
+    zip_code = str(request.args.get("zip", "")).strip()
+
+    if not water_id:
+        return jsonify({"ok": False, "error": "water_id is required"}), 400
+
+    water = get_water_record_by_id(water_id)
+    if not water:
+        return jsonify({"ok": False, "error": "Waterbody not found"}), 404
+
+    payload = build_water_intel(water, target_species=target_species, zip_code=zip_code)
+    payload["ok"] = True
+    return jsonify(payload)
+
+
+@app.route("/water/<water_id>")
+def water_detail(water_id):
+    target_species = str(request.args.get("species", "")).strip()
+    zip_code = str(request.args.get("zip", "")).strip()
+
+    water = get_water_record_by_id(water_id)
+    if not water:
+        return "<h1>Waterbody not found</h1>", 404
+
+    payload = build_water_intel(water, target_species=target_species, zip_code=zip_code)
+    return render_template("water.html", data=payload)
 
 
 @app.route("/maps")

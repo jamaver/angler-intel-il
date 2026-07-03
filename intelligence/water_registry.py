@@ -306,6 +306,18 @@ def load_custom_water_records() -> list[dict[str, Any]]:
     return []
 
 
+def get_water_record_by_id(water_id: str) -> dict[str, Any] | None:
+    water_id = str(water_id or "").strip()
+    if not water_id:
+        return None
+
+    for record in load_water_records(include_custom=True):
+        if str(record.get("id") or "").strip() == water_id:
+            return record
+
+    return None
+
+
 def normalize_custom_water_record(payload: dict[str, Any]) -> dict[str, Any]:
     """Normalize a manual waterbody payload before persistence."""
     if not isinstance(payload, dict):

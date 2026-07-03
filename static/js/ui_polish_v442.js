@@ -43,8 +43,8 @@
     const nav = document.querySelector(".ai-main-tabs");
     if (!nav || nav.querySelector(".ai-version-badge-v442")) return;
 
-    const CURRENT_VERSION = "v4.9.2";
-    const CURRENT_RELEASE = "v4.9.2-map-context-custom-waterbodies";
+    const CURRENT_VERSION = "v4.9.4";
+    const CURRENT_RELEASE = "v4.9.4-map-filters-water-list";
 
     const badge = document.createElement("span");
     badge.className = "ai-version-badge-v442";
