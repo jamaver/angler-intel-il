@@ -69,6 +69,9 @@ if app_version_path.exists():
         "v5.0-sqlite-authority-migration",
         "v5.1-sqlite-waterbody-migration-prep",
         "v5.2-catch-learning",
+        "v5.3-target-species-profile",
+        "v5.4-map-ranking-prep",
+        "v5.5-realistic-icon-system",
     }:
         errors.append("app_version.json is not aligned to the v5.0/v5.1 migration line")
 

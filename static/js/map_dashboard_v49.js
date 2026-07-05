@@ -88,7 +88,9 @@
     markerLayer: null,
     waters: [],
     filtered: [],
+    ranked: [],
     selectedId: null,
+    targetProfile: null,
     filters: {
       favorite: false,
       manual: false,
@@ -146,6 +148,24 @@
       .filter(Boolean);
   }
 
+  function currentTargetSpecies() {
+    const selected = byId("mapTargetSpecies")?.value || "";
+    if (selected) return selected;
+    return state.targetProfile?.current_trip_target || state.targetProfile?.default_target_species || "";
+  }
+
+  function renderTargetSummary() {
+    const label = byId("mapRankStatus");
+    if (!label) return;
+    const target = currentTargetSpecies();
+    if (!target) {
+      label.textContent = "Ranked for all waters until a target fish is selected.";
+      return;
+    }
+
+    label.textContent = `Ranked for ${target}.`;
+  }
+
   function toFloat(value) {
     const n = Number(value);
     return Number.isFinite(n) ? n : null;
@@ -180,6 +200,48 @@
       return "moderate";
     }
     return "low";
+  }
+
+  function targetFitScore(water, targetSpecies) {
+    const target = String(targetSpecies || "").toLowerCase().trim();
+    if (!target) return 0;
+
+    const waterSpecies = splitList(water.species).map(item => item.toLowerCase());
+    const waterType = String(water.type || "").toLowerCase();
+    const isStockedTrout = !!water.stocked_trout;
+    const catchHistory = Number(water.catch_history_count || 0) || 0;
+    let score = 18;
+
+    if (waterSpecies.includes(target)) {
+      score += 50;
+    } else if (target.includes("trout") && isStockedTrout) {
+      score += 42;
+    } else if (target.includes("bass") && ["lake", "pond", "reservoir"].some(item => waterType.includes(item))) {
+      score += 24;
+    } else if ((target.includes("walleye") || target.includes("sauger")) && ["river", "lake", "reservoir"].some(item => waterType.includes(item))) {
+      score += 22;
+    } else if ((target.includes("catfish") || target.includes("carp")) && ["river", "lake", "pond"].some(item => waterType.includes(item))) {
+      score += 18;
+    } else if ((target.includes("crappie") || target.includes("bluegill") || target.includes("perch")) && ["lake", "pond", "reservoir"].some(item => waterType.includes(item))) {
+      score += 18;
+    } else {
+      score += 10;
+    }
+
+    if (catchHistory >= 5) score += 10;
+    else if (catchHistory > 0) score += 5;
+
+    if (water.favorite) score += 4;
+    if (water.manual || String(water.source || "").toLowerCase() === "manual") score += 2;
+
+    return Math.max(0, Math.min(100, score));
+  }
+
+  function targetFitLabel(score) {
+    if (score >= 80) return "Excellent";
+    if (score >= 60) return "Good";
+    if (score >= 40) return "Fair";
+    return "Low";
   }
 
   function pinGlyphPath(key) {
@@ -277,6 +339,38 @@
     if (label) {
       label.textContent = BASEMAPS[state.activeBasemap]?.label || "Basemap";
     }
+  }
+
+  function syncTargetSelector() {
+    const targetSelect = byId("mapTargetSpecies");
+    if (!targetSelect) return;
+    targetSelect.value = currentTargetSpecies();
+  }
+
+  async function loadTargetProfile() {
+    try {
+      const data = await fetchJson("/api/target-profile");
+      state.targetProfile = data.profile || null;
+      syncTargetSelector();
+      renderTargetSummary();
+    } catch (error) {
+      state.targetProfile = null;
+      renderTargetSummary();
+    }
+  }
+
+  async function saveTargetProfile(payload) {
+    const data = await fetchJson("/api/target-profile", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+    state.targetProfile = data.profile || null;
+    syncTargetSelector();
+    renderTargetSummary();
+    return data;
   }
 
   function ensureMap() {
@@ -388,6 +482,7 @@
   function applyFilters() {
     const species = (byId("mapSpeciesFilter")?.value || "").toLowerCase();
     const type = (byId("mapTypeFilter")?.value || "").toLowerCase();
+    const targetSpecies = currentTargetSpecies();
     readFilterFlags();
 
     state.filtered = state.waters.filter(water => {
@@ -399,6 +494,12 @@
       const historyOk = !state.filters.history || Number(water.catch_history_count || 0) > 0;
       const confidenceOk = !state.filters.confidence || confidenceTier(water) === "high";
       return speciesOk && typeOk && favoriteOk && manualOk && stockedOk && historyOk && confidenceOk;
+    });
+
+    state.ranked = [...state.filtered].sort((a, b) => {
+      const targetDelta = targetFitScore(b, targetSpecies) - targetFitScore(a, targetSpecies);
+      if (targetDelta) return targetDelta;
+      return (Number(b.catch_history_count || 0) - Number(a.catch_history_count || 0));
     });
 
     if (state.filtered.length) {
@@ -415,6 +516,7 @@
       loadWaterIntel(state.selectedId);
     }
     renderWaterList();
+    renderRankedWaters();
 
     const statusParts = [`${state.filtered.length} of ${state.waters.length} waters shown`];
     if (state.catalog.warnings && state.catalog.warnings.length) {
@@ -432,7 +534,7 @@
   }
 
   function waterIntelUrl(waterId) {
-    const targetSpecies = byId("mapTargetSpecies")?.value || "";
+    const targetSpecies = currentTargetSpecies();
     const params = new URLSearchParams({ water_id: waterId });
     if (targetSpecies) params.set("target_species", targetSpecies);
     return `/api/water-intel?${params.toString()}`;
@@ -450,6 +552,7 @@
     const intel = payload.smart_intelligence;
     const bestBet = payload.best_bet || {};
     const confidence = intel.confidence || {};
+    const targetFit = payload.target_fit || {};
     const positives = Array.isArray(intel.positive_signals) ? intel.positive_signals : [];
     const cautions = Array.isArray(intel.caution_signals) ? intel.caution_signals : [];
     const explanation = Array.isArray(intel.explanation) ? intel.explanation : [];
@@ -491,12 +594,17 @@
           <div>${esc(intel.catch_history?.level || "none")}</div>
           <p class="small">${esc(intel.catch_history?.summary || "No catch history yet.")}</p>
         </div>
-        <div class="map-intel-panel">
-          <strong>Recommendation</strong>
-          <div>${esc(bestBet.species || "Target species")}</div>
-          <p class="small">${esc((bestBet.reasons && bestBet.reasons[0]) || "")}</p>
-        </div>
+      <div class="map-intel-panel">
+        <strong>Recommendation</strong>
+        <div>${esc(bestBet.species || "Target species")}</div>
+        <p class="small">${esc((bestBet.reasons && bestBet.reasons[0]) || "")}</p>
       </div>
+      <div class="map-intel-panel">
+        <strong>Target fit</strong>
+        <div>${esc(targetFit.label || "Auto")}${targetFit.score !== undefined ? ` · ${esc(targetFit.score)}%` : ""}</div>
+        <p class="small">${esc(targetFit.reason || "No target profile selected yet.")}</p>
+      </div>
+    </div>
 
       ${positives.length ? `
         <h4>Positive signals</h4>
@@ -538,22 +646,24 @@
     const list = byId("mapList");
     if (!list) return;
 
-    const waters = state.filtered.slice(0, 24);
+    const waters = (state.ranked.length ? state.ranked : state.filtered).slice(0, 24);
     if (!waters.length) {
       list.innerHTML = `<p class="small">No waters match the current filters.</p>`;
       return;
     }
 
+    const target = currentTargetSpecies();
     list.innerHTML = waters.map(water => {
       const tier = confidenceTier(water);
+      const fitScore = target ? targetFitScore(water, target) : 0;
       const active = water.id === state.selectedId ? " active" : "";
       return `
         <button type="button" class="map-water-row${active}" data-water-id="${esc(water.id)}">
           <div class="map-water-row-head">
             <strong>${esc(water.name || "Waterbody")}</strong>
-            <span class="map-water-tier ${esc(tier)}">${esc(tier)}</span>
+            <span class="map-water-tier ${esc(tier)}">${target ? `${fitScore}%` : esc(tier)}</span>
           </div>
-          <div class="small">${waterRowMeta(water)}</div>
+          <div class="small">${waterRowMeta(water)}${target ? ` · Fit ${fitScore}%` : ""}</div>
           <div class="map-water-row-chips">
             ${splitList(water.species).slice(0, 3).map(item => `<span class="map-chip">${esc(item)}</span>`).join("")}
           </div>
@@ -564,6 +674,42 @@
     list.querySelectorAll("[data-water-id]").forEach(button => {
       button.addEventListener("click", () => {
         const waterId = button.getAttribute("data-water-id");
+        if (waterId) selectWater(waterId);
+      });
+    });
+  }
+
+  function renderRankedWaters() {
+    const list = byId("mapRankedList");
+    const target = currentTargetSpecies();
+    if (!list) return;
+
+    if (!state.ranked.length) {
+      list.innerHTML = `<p class="small">No waters match the current filters.</p>`;
+      return;
+    }
+
+    const waters = state.ranked.slice(0, 8);
+    list.innerHTML = waters.map(water => {
+      const score = targetFitScore(water, target);
+      const label = targetFitLabel(score);
+      return `
+        <button type="button" class="map-water-row${water.id === state.selectedId ? " active" : ""}" data-ranked-water-id="${esc(water.id)}">
+          <div class="map-water-row-head">
+            <strong>${esc(water.name || "Waterbody")}</strong>
+            <span class="map-water-tier ${esc(label.toLowerCase())}">${score}%</span>
+          </div>
+          <div class="small">${label} target fit · ${waterRowMeta(water)}</div>
+          <div class="map-water-row-chips">
+            ${splitList(water.species).slice(0, 3).map(item => `<span class="map-chip">${esc(item)}</span>`).join("")}
+          </div>
+        </button>
+      `;
+    }).join("");
+
+    list.querySelectorAll("[data-ranked-water-id]").forEach(button => {
+      button.addEventListener("click", () => {
+        const waterId = button.getAttribute("data-ranked-water-id");
         if (waterId) selectWater(waterId);
       });
     });
@@ -769,6 +915,8 @@
       renderFilters();
       if (byId("mapSpeciesFilter")) byId("mapSpeciesFilter").value = speciesFilter;
       if (byId("mapTypeFilter")) byId("mapTypeFilter").value = typeFilter;
+      syncTargetSelector();
+      renderTargetSummary();
       updateHeaderCounts();
       applyFilters();
 
@@ -870,9 +1018,18 @@
       byId(id)?.addEventListener("change", applyFilters);
     });
     byId("mapTargetSpecies")?.addEventListener("change", () => {
-      if (state.selectedId) {
-        loadWaterIntel(state.selectedId);
-      }
+      saveTargetProfile({ current_trip_target: currentTargetSpecies() })
+        .then(() => {
+          if (state.selectedId) {
+            loadWaterIntel(state.selectedId);
+          }
+          applyFilters();
+        })
+        .catch(() => {
+          if (state.selectedId) {
+            loadWaterIntel(state.selectedId);
+          }
+        });
     });
     byId("mapResetButton")?.addEventListener("click", () => {
       const species = byId("mapSpeciesFilter");
@@ -912,7 +1069,9 @@
     bindUi();
     ensureMap();
     updateLayerLabel();
-    loadMapData();
+    loadTargetProfile().finally(() => {
+      loadMapData();
+    });
   }
 
   if (document.readyState === "loading") {

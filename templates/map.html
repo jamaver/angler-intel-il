@@ -61,6 +61,9 @@
         Target species
         <select id="mapTargetSpecies">
           <option value="">Auto from water</option>
+          {% for species in target_species_options %}
+            <option value="{{ species }}">{{ species }}</option>
+          {% endfor %}
         </select>
       </label>
       <label class="map-toggle">
@@ -198,6 +201,16 @@
             </div>
           </div>
           <div id="mapList" class="map-water-list"></div>
+        </section>
+
+        <section class="card map-ranking-card">
+          <div class="map-panel-head">
+            <div>
+              <h2>Top Waters Right Now</h2>
+              <p id="mapRankStatus" class="small">Ranked for the selected target species.</p>
+            </div>
+          </div>
+          <div id="mapRankedList" class="map-water-list"></div>
         </section>
 
         <section class="card map-help-card">

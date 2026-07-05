@@ -1,9 +1,12 @@
 const form = document.getElementById("searchForm");
 const zipInput = document.getElementById("zipInput");
 const favoriteName = document.getElementById("favoriteName");
+const targetSpeciesNode = document.getElementById("targetSpecies");
+const targetProfileSummary = document.getElementById("targetProfileSummary");
 
 let currentZip = "60543";
 let latestData = null;
+let targetProfile = null;
 
 function el(id) {
   return document.getElementById(id);
@@ -27,6 +30,37 @@ if (form) {
   });
 }
 
+targetSpeciesNode?.addEventListener("change", () => {
+  syncTargetSpecies({ use_trip: true }).catch(err => {
+    console.error(err);
+  });
+});
+
+document.getElementById("setTripTarget")?.addEventListener("click", () => {
+  syncTargetSpecies({ use_trip: true }).catch(err => {
+    alert(err.message || "Could not save trip target.");
+  });
+});
+
+document.getElementById("setDefaultTarget")?.addEventListener("click", () => {
+  const value = targetSpeciesNode ? targetSpeciesNode.value.trim() : "";
+  saveTargetProfile({ default_target_species: value, current_trip_target: value || "" })
+    .then(() => loadIntel(currentZip))
+    .catch(err => {
+      alert(err.message || "Could not save default target.");
+    });
+});
+
+document.getElementById("favoriteTarget")?.addEventListener("click", () => {
+  const value = targetSpeciesNode ? targetSpeciesNode.value.trim() : "";
+  if (!value) return;
+  saveTargetProfile({ favorite_species_add: value })
+    .then(() => loadIntel(currentZip))
+    .catch(err => {
+      alert(err.message || "Could not save favorite target.");
+    });
+});
+
 function formatHour(hour) {
   const suffix = hour >= 12 ? "PM" : "AM";
   let h = hour % 12;
@@ -36,6 +70,65 @@ function formatHour(hour) {
 
 function openSnapshot() {
   window.open(`/snapshot?zip=${encodeURIComponent(currentZip)}`, "_blank");
+}
+
+function currentTargetSpecies() {
+  const selected = targetSpeciesNode ? targetSpeciesNode.value.trim() : "";
+  if (selected) return selected;
+  return targetProfile?.current_trip_target || targetProfile?.default_target_species || "";
+}
+
+function renderTargetProfile() {
+  if (!targetProfileSummary) return;
+  if (!targetProfile) {
+    targetProfileSummary.textContent = "Target profile unavailable.";
+    return;
+  }
+
+  const favorites = Array.isArray(targetProfile.favorite_species) ? targetProfile.favorite_species : [];
+  const trip = targetProfile.current_trip_target || "Auto";
+  const defaultTarget = targetProfile.default_target_species || "Auto";
+  targetProfileSummary.textContent = `Trip target: ${trip} · Default: ${defaultTarget} · Favorites: ${favorites.slice(0, 3).join(", ") || "none"}`;
+}
+
+async function loadTargetProfile() {
+  try {
+    const res = await fetch("/api/target-profile");
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || "Could not load target profile");
+    }
+
+    targetProfile = data.profile || {};
+    if (targetSpeciesNode) {
+      targetSpeciesNode.value = targetProfile.current_trip_target || targetProfile.default_target_species || "";
+    }
+    renderTargetProfile();
+  } catch (err) {
+    console.error(err);
+    targetProfile = null;
+    renderTargetProfile();
+  }
+}
+
+async function saveTargetProfile(payload) {
+  const res = await fetch("/api/target-profile", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data.ok) {
+    throw new Error(data.error || "Could not save target profile");
+  }
+
+  targetProfile = data.profile || {};
+  if (targetSpeciesNode) {
+    targetSpeciesNode.value = targetProfile.current_trip_target || targetProfile.default_target_species || "";
+  }
+  renderTargetProfile();
+  return targetProfile;
 }
 
 async function loadFavorites() {
@@ -163,11 +256,14 @@ async function deleteCatch(id) {
 async function loadIntel(zip) {
   currentZip = zip;
   if (zipInput) zipInput.value = zip;
+  const target = currentTargetSpecies();
 
   setHTML("status", "Loading fishing intelligence...");
 
   try {
-    const res = await fetch(`/api/intel?zip=${encodeURIComponent(zip)}`);
+    const params = new URLSearchParams({ zip });
+    if (target) params.set("target_species", target);
+    const res = await fetch(`/api/intel?${params.toString()}`);
     const data = await res.json();
 
     if (!res.ok) {
@@ -227,6 +323,21 @@ function renderInsights(insights) {
 
     <div class="small">Sample quality: ${sampleQuality}</div>
   `;
+}
+
+async function syncTargetSpecies(payload = {}) {
+  const value = targetSpeciesNode ? targetSpeciesNode.value.trim() : "";
+  const nextPayload = { ...payload };
+  if (value) {
+    if (payload.use_trip !== false) {
+      nextPayload.current_trip_target = value;
+    }
+  } else if (payload.use_trip !== false) {
+    nextPayload.current_trip_target = "";
+  }
+
+  await saveTargetProfile(nextPayload);
+  await loadIntel(currentZip);
 }
 
 function renderSmartIntelligence(intel) {
@@ -326,12 +437,18 @@ function render(data) {
   currentZip = loc.zip || currentZip;
 
   if (zipInput) zipInput.value = currentZip;
+  if (targetSpeciesNode && data.target_species) {
+    targetSpeciesNode.value = data.target_species;
+  } else if (targetSpeciesNode && targetProfile) {
+    targetSpeciesNode.value = targetProfile.current_trip_target || targetProfile.default_target_species || "";
+  }
 
   setHTML("status", `
     <div class="status-layout">
       <div>
         <h2>${loc.city || "Unknown"}, ${loc.state || ""}</h2>
         <div class="small">ZIP ${loc.zip || currentZip} · ${data.area_type || "unknown"} water pattern</div>
+        <div class="small">Target: ${data.target_species || currentTargetSpecies() || "auto"}</div>
         <div class="small">Generated: ${data.generated_at || ""}</div>
       </div>
       <div class="status-score">
@@ -468,4 +585,6 @@ function render(data) {
 
 loadFavorites();
 loadCatchLog();
-loadIntel("60543");
+loadTargetProfile().finally(() => {
+  loadIntel("60543");
+});

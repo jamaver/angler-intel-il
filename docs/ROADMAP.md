@@ -40,6 +40,8 @@ Angler Intel is moving toward a map-first, waterbody-centered fishing intelligen
 - User-configurable target species
 - Favorite species and current trip target
 - Species-specific lure, rig, and seasonal guidance
+- Persisted target profile for dashboard and map
+- Target-aware intelligence defaults and ranking prep
 
 ## v5.4 Map Data Expansion
 
@@ -47,6 +49,7 @@ Angler Intel is moving toward a map-first, waterbody-centered fishing intelligen
 - Region, county, and access metadata
 - Stocked and special-case waters
 - Manual waterbody review and cleanup tools
+- Ranked waters for the selected target species
 
 ## v5.5 Data Import and Export
 

@@ -12,6 +12,13 @@ from intelligence.species import SPECIES, score_species
 from intelligence.lures import choose_lure
 from intelligence.scoring import overall_score, time_blocks, rating, hourly_bite_forecast
 from intelligence.smart_intelligence import build_smart_intelligence, build_smart_intelligence_fallback
+from intelligence.target_profile import (
+    available_target_species,
+    load_target_profile,
+    resolve_target_species,
+    save_target_profile,
+    species_fit_bonus,
+)
 from intelligence.app_health_sqlite import get_sqlite_health_for_app
 from intelligence.app_health_backup import get_backup_health_for_app
 from intelligence.app_health_versions import get_version_health_for_app
@@ -104,13 +111,16 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v5.2-catch-learning"
+APP_VERSION = "v5.3-target-species-profile"
 app.config["APP_VERSION"] = APP_VERSION
 
 
 @app.context_processor
 def inject_app_version():
-    return {"app_version": APP_VERSION}
+    return {
+        "app_version": APP_VERSION,
+        "target_species_options": available_target_species(),
+    }
 
 DATA_DIR = Path("data")
 FAVORITES_FILE = DATA_DIR / "favorites.json"
@@ -396,6 +406,8 @@ def _weather_summary_for_coords(lat, lon):
 
 def build_water_intel(water, target_species="", zip_code=""):
     water = water if isinstance(water, dict) else {}
+    profile = load_target_profile()
+    resolved_target_species, target_species_source = resolve_target_species(target_species, profile)
     lat = water.get("lat")
     lon = water.get("lon")
     has_coords = lat is not None and lon is not None
@@ -443,7 +455,8 @@ def build_water_intel(water, target_species="", zip_code=""):
         if str(item).strip()
     ]
     water_species_keys = {species_key(item) for item in water_species}
-    target_species_key = species_key(target_species) if target_species else ""
+    target_species_key = species_key(resolved_target_species) if resolved_target_species else ""
+    target_fit = species_fit_bonus(water, resolved_target_species)
 
     species_ranked = []
     for sp in SPECIES:
@@ -545,7 +558,10 @@ def build_water_intel(water, target_species="", zip_code=""):
         "version": APP_VERSION,
         "generated_at": datetime.now().strftime("%b %d, %Y %I:%M %p"),
         "water": water,
-        "target_species": target_species or "",
+        "target_species": resolved_target_species or "",
+        "target_species_source": target_species_source,
+        "target_profile": profile,
+        "target_fit": target_fit,
         "selected_species": best_bet["species"],
         "best_bet": best_bet,
         "weather": weather_summary,
@@ -559,7 +575,7 @@ def build_water_intel(water, target_species="", zip_code=""):
     }
 
 
-def build_intel(zip_code):
+def build_intel(zip_code, target_species=""):
     zip_code = zip_code.strip()
     loc = get_coords(zip_code)
 
@@ -574,6 +590,8 @@ def build_intel(zip_code):
 
     waters = detect_water(loc["lat"], loc["lon"])
     area_type = infer_area_type(waters)
+    profile = load_target_profile()
+    resolved_target_species, target_species_source = resolve_target_species(target_species, profile)
 
     base = overall_score(temp_f, wind_mph, pressure_inhg, cloud)
     blocks = time_blocks(base, temp_f, wind_mph)
@@ -595,6 +613,9 @@ def build_intel(zip_code):
     species_ranked = []
     for sp in SPECIES:
         sp_score = score_species(sp, temp_f, wind_mph, pressure_inhg, area_type)
+        sp_key = species_key(sp.get("name", ""))
+        if resolved_target_species and sp_key == species_key(resolved_target_species):
+            sp_score += 12
         species_ranked.append({
             "name": sp["name"],
             "score": sp_score,
@@ -605,6 +626,11 @@ def build_intel(zip_code):
         })
 
     species_ranked.sort(key=lambda x: x["score"], reverse=True)
+    if resolved_target_species:
+        for index, item in enumerate(species_ranked):
+            if species_key(item.get("name", "")) == species_key(resolved_target_species):
+                species_ranked.insert(0, species_ranked.pop(index))
+                break
 
     top_lure_cards = []
     for sp in species_ranked[:4]:
@@ -692,6 +718,9 @@ def build_intel(zip_code):
         "lure_cards": top_lure_cards,
         "waters": waters,
         "area_type": area_type,
+        "target_species": resolved_target_species,
+        "target_species_source": target_species_source,
+        "target_profile": profile,
         "forecast": forecast,
         "catch_insights": insights,
         "smart_intelligence": smart_intelligence
@@ -758,12 +787,37 @@ def snapshot():
 @app.route("/api/intel")
 def api_intel():
     zip_code = request.args.get("zip", "60543")
-    data = build_intel(zip_code)
+    target_species = str(request.args.get("target_species", "")).strip()
+    data = build_intel(zip_code, target_species=target_species)
 
     if not data:
         return jsonify({"error": "Invalid ZIP code"}), 400
 
     return jsonify(data)
+
+
+@app.route("/api/target-profile", methods=["GET", "POST"])
+def api_target_profile():
+    if request.method == "GET":
+        return jsonify({
+            "ok": True,
+            "version": APP_VERSION,
+            "profile": load_target_profile(),
+            "options": available_target_species(),
+        })
+
+    payload = request.get_json(silent=True) or {}
+    try:
+        profile = save_target_profile(payload)
+    except Exception as exc:
+        return jsonify({"ok": False, "error": f"Could not save target profile: {exc}"}), 500
+
+    return jsonify({
+        "ok": True,
+        "version": APP_VERSION,
+        "profile": profile,
+        "options": available_target_species(),
+    })
 
 
 @app.route("/api/favorites", methods=["GET"])

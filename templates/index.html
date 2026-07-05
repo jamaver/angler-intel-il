@@ -30,6 +30,24 @@
         <button type="submit">Search</button>
       </form>
 
+      <div class="target-control">
+        <label>
+          Target fish
+          <select id="targetSpecies">
+            <option value="">Auto from profile</option>
+            {% for species in target_species_options %}
+              <option value="{{ species }}">{{ species }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <div class="target-actions">
+          <button type="button" id="setTripTarget">Use for Trip</button>
+          <button type="button" class="secondary-button" id="setDefaultTarget">Set Default</button>
+          <button type="button" class="secondary-button" id="favoriteTarget">Favorite</button>
+        </div>
+        <div id="targetProfileSummary" class="small"></div>
+      </div>
+
       <div class="favorite-add">
         <input id="favoriteName" placeholder="Favorite name">
         <button onclick="saveFavorite()" type="button">Save ZIP</button>

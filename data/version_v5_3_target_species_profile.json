@@ -1,0 +1,19 @@
+{
+  "app_name": "Angler Intel",
+  "version": "v5.3-target-species-profile",
+  "installed_at": "2026-07-05T00:00:00-05:00",
+  "previous_version": "v5.2-catch-learning",
+  "json_source_of_truth": true,
+  "sqlite_role": "mirror/read-only foundation until explicit migration",
+  "authority_flipped": false,
+  "target_species_profile_enabled": true,
+  "current_trip_target_enabled": true,
+  "favorite_species_enabled": true,
+  "target_aware_intel_enabled": true,
+  "target_fit_ranking_prep": true,
+  "notes": [
+    "Angler Intel now persists a target species profile.",
+    "Target-aware intelligence defaults to the current trip target or default target species.",
+    "The map and water intel can reuse the same target profile for ranking prep."
+  ]
+}
