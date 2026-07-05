@@ -43,8 +43,8 @@
     const nav = document.querySelector(".ai-main-tabs");
     if (!nav || nav.querySelector(".ai-version-badge-v442")) return;
 
-    const CURRENT_VERSION = "v5.3";
-    const CURRENT_RELEASE = "v5.3-target-species-profile";
+    const CURRENT_VERSION = "v5.4";
+    const CURRENT_RELEASE = "v5.4-map-ranking-prep";
 
     const badge = document.createElement("span");
     badge.className = "ai-version-badge-v442";

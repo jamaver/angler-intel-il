@@ -111,7 +111,7 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v5.3-target-species-profile"
+APP_VERSION = "v5.4-map-ranking-prep"
 app.config["APP_VERSION"] = APP_VERSION
 
 
@@ -937,7 +937,25 @@ def health():
 @app.route("/api/map-data")
 def api_map_data():
     """Read-only map data endpoint for staged map dashboard work."""
+    target_species = str(request.args.get("target_species", "")).strip()
+    profile = load_target_profile()
+    resolved_target_species, target_species_source = resolve_target_species(target_species, profile)
     readiness = get_map_data_readiness()
+    waters = []
+    for water in readiness.get("records", []):
+        item = dict(water)
+        item["target_fit"] = species_fit_bonus(item, resolved_target_species)
+        waters.append(item)
+
+    top_waters = sorted(
+        waters,
+        key=lambda item: (
+            int(item.get("target_fit", {}).get("score", 0) or 0),
+            int(item.get("catch_history_count", 0) or 0),
+        ),
+        reverse=True,
+    )[:10]
+
     return jsonify({
         "ok": bool(readiness.get("ok")),
         "version": readiness.get("version"),
@@ -951,7 +969,12 @@ def api_map_data():
         "warnings": readiness.get("warnings", []),
         "source_path": readiness.get("source_path"),
         "custom_source_path": readiness.get("custom_source_path"),
-        "waters": readiness.get("records", []),
+        "target_species": resolved_target_species,
+        "target_species_source": target_species_source,
+        "target_profile": profile,
+        "target_ranking_enabled": bool(resolved_target_species),
+        "top_waters": top_waters,
+        "waters": waters,
     })
 
 

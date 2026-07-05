@@ -53,11 +53,15 @@ if marker_path.exists():
 app_version_path = APP_ROOT / "data" / "app_version.json"
 if app_version_path.exists():
     app_version = json.loads(app_version_path.read_text(encoding="utf-8"))
-    if app_version.get("version") != "v5.3-target-species-profile":
+    if app_version.get("version") not in {
+        "v5.3-target-species-profile",
+        "v5.4-map-ranking-prep",
+        "v5.5-realistic-icon-system",
+    }:
         errors.append("app_version.json is not aligned to v5.3")
 
 app_text = read("app.py")
-if 'APP_VERSION = "v5.3-target-species-profile"' not in app_text:
+if 'APP_VERSION = "v5.3-target-species-profile"' not in app_text and 'APP_VERSION = "v5.4-map-ranking-prep"' not in app_text and 'APP_VERSION = "v5.5-realistic-icon-system"' not in app_text:
     errors.append("app.py version string is not aligned to v5.3")
 for needle, message in [
     ('@app.route("/api/target-profile"', "app.py missing target profile API"),

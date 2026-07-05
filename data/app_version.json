@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel",
-  "version": "v5.3-target-species-profile",
-  "updated": "2026-07-05T00:00:00-05:00",
+  "version": "v5.4-map-ranking-prep",
+  "updated": "2026-07-05T00:20:00-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -32,7 +32,8 @@
     "sqlite_authority_migration": "v5.0",
     "sqlite_waterbody_migration_prep": "v5.1",
     "catch_learning": "v5.2",
-    "target_species_profile": "v5.3"
+    "target_species_profile": "v5.3",
+    "map_ranking_prep": "v5.4"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -59,6 +60,7 @@
     "v5.0 is a SQLite authority migration preflight release. JSON remains current authority until an explicit later migration flips it.",
     "v5.1 adds the first waterbody SQLite mirror and a dedicated waterbody migration preflight while keeping JSON as the source of truth.",
     "v5.2 adds catch-learning summaries by species and waterbody, plus a catch log path that records optional waterbody context.",
-    "v5.3 adds a persisted target species profile, current trip target, and target-aware intelligence defaults."
+    "v5.3 adds a persisted target species profile, current trip target, and target-aware intelligence defaults.",
+    "v5.4 adds target-aware map ranking, ranked waters in view, and water-fit annotations from the map data endpoint."
   ]
 }

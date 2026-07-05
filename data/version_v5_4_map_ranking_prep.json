@@ -1,0 +1,18 @@
+{
+  "app_name": "Angler Intel",
+  "version": "v5.4-map-ranking-prep",
+  "installed_at": "2026-07-05T00:20:00-05:00",
+  "previous_version": "v5.3-target-species-profile",
+  "json_source_of_truth": true,
+  "sqlite_role": "mirror/read-only foundation until explicit migration",
+  "authority_flipped": false,
+  "target_species_ranking_enabled": true,
+  "ranked_waters_panel_enabled": true,
+  "map_data_target_annotations_enabled": true,
+  "top_waters_right_now_enabled": true,
+  "notes": [
+    "The map now ranks waters for the selected target species.",
+    "Map data includes target-fit annotations for each waterbody.",
+    "The map sidebar exposes a ranked waters panel for quick decisions."
+  ]
+}

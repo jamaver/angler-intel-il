@@ -203,6 +203,10 @@
   }
 
   function targetFitScore(water, targetSpecies) {
+    if (water && water.target_fit && Number.isFinite(Number(water.target_fit.score))) {
+      return Math.max(0, Math.min(100, Number(water.target_fit.score)));
+    }
+
     const target = String(targetSpecies || "").toLowerCase().trim();
     if (!target) return 0;
 
@@ -897,8 +901,11 @@
     try {
       const speciesFilter = byId("mapSpeciesFilter")?.value || "";
       const typeFilter = byId("mapTypeFilter")?.value || "";
+      const targetSpecies = currentTargetSpecies();
       setStatus("Loading map data...");
-      const data = await fetchJson("/api/map-data");
+      const params = new URLSearchParams();
+      if (targetSpecies) params.set("target_species", targetSpecies);
+      const data = await fetchJson(`/api/map-data${params.toString() ? `?${params.toString()}` : ""}`);
       state.catalog = {
         base_count: data.base_count || 0,
         custom_count: data.custom_count || 0,
@@ -931,6 +938,11 @@
         if (state.selectedId) {
           loadWaterIntel(state.selectedId);
         }
+      }
+      if (data.target_profile) {
+        state.targetProfile = data.target_profile;
+        syncTargetSelector();
+        renderTargetSummary();
       }
     } catch (error) {
       setStatus(`Unable to load map data: ${error.message || error}`);
