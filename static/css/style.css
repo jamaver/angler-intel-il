@@ -117,6 +117,22 @@ button {
   font-size: 14px;
 }
 
+.icon-mini,
+.legend-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  vertical-align: -3px;
+  margin-right: 6px;
+  flex: 0 0 auto;
+}
+
+.legend-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+}
+
 .lures {
   margin-top: 8px;
   line-height: 1.6;

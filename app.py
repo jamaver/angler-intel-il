@@ -111,7 +111,7 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v5.4-map-ranking-prep"
+APP_VERSION = "v5.5-realistic-icon-system"
 app.config["APP_VERSION"] = APP_VERSION
 
 

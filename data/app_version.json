@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel",
-  "version": "v5.4-map-ranking-prep",
-  "updated": "2026-07-05T00:20:00-05:00",
+  "version": "v5.5-realistic-icon-system",
+  "updated": "2026-07-05T19:00:04-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -33,7 +33,8 @@
     "sqlite_waterbody_migration_prep": "v5.1",
     "catch_learning": "v5.2",
     "target_species_profile": "v5.3",
-    "map_ranking_prep": "v5.4"
+    "map_ranking_prep": "v5.4",
+    "realistic_icon_system": "v5.5"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -61,6 +62,7 @@
     "v5.1 adds the first waterbody SQLite mirror and a dedicated waterbody migration preflight while keeping JSON as the source of truth.",
     "v5.2 adds catch-learning summaries by species and waterbody, plus a catch log path that records optional waterbody context.",
     "v5.3 adds a persisted target species profile, current trip target, and target-aware intelligence defaults.",
-    "v5.4 adds target-aware map ranking, ranked waters in view, and water-fit annotations from the map data endpoint."
+    "v5.4 adds target-aware map ranking, ranked waters in view, and water-fit annotations from the map data endpoint.",
+    "v5.5 adds a realistic icon system for waters, fish, and lures so the map and dashboard read more like a finished fishing product."
   ]
 }

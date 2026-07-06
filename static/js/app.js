@@ -23,6 +23,40 @@ function asList(value) {
   return [value];
 }
 
+function iconSlug(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function fishIconPath(value) {
+  return `/static/fish/${iconSlug(value).replace(/-/g, "_")}.svg`;
+}
+
+function lureIconPath(value) {
+  const text = String(value || "").toLowerCase();
+  if (text.includes("spinnerbait")) return "/static/lures/spinnerbait.svg";
+  if (text.includes("topwater")) return "/static/lures/topwater.svg";
+  if (text.includes("jig") && text.includes("micro")) return "/static/lures/microjig.svg";
+  if (text.includes("jig") && text.includes("walleye")) return "/static/lures/walleyejig.svg";
+  if (text.includes("jig")) return "/static/lures/jig.svg";
+  if (text.includes("minnow")) return "/static/lures/minnow.svg";
+  if (text.includes("catfish")) return "/static/lures/catfishbait.svg";
+  if (text.includes("spoon")) return "/static/lures/spoon.svg";
+  if (text.includes("worm")) return "/static/lures/worm.svg";
+  return "/static/lures/worm.svg";
+}
+
+function waterIconPath(name) {
+  const slug = iconSlug(name);
+  if (!slug) return "/static/icons/water/other.svg";
+  if (slug.includes("spillway") || slug.includes("tailwater") || slug.includes("tail-water")) return "/static/icons/water/spillway.svg";
+  if (slug.includes("trout") || slug.includes("stocked")) return "/static/icons/water/trout.svg";
+  return `/static/icons/water/${slug}.svg`;
+}
+
 if (form) {
   form.addEventListener("submit", e => {
     e.preventDefault();
@@ -192,9 +226,9 @@ async function loadCatchLog() {
 
     setHTML("catchLog", catches.slice(0, 20).map(c => `
       <div class="catch-row">
-        <b>${c.species}</b>
+        <b><img class="icon-mini" src="${fishIconPath(c.species)}" alt=""> ${c.species}</b>
         <div class="small">${c.timestamp} · ZIP ${c.zip || "unknown"}${c.waterbody ? ` · ${c.waterbody}` : ""}</div>
-        <div>🎣 ${c.lure || "No lure recorded"}</div>
+        <div><img class="icon-mini" src="${lureIconPath(c.lure || "worm")}" alt=""> ${c.lure || "No lure recorded"}</div>
         <div class="small">${c.notes || ""}</div>
         <button class="danger small-btn" onclick="deleteCatch('${c.id}')">Delete</button>
       </div>
@@ -310,16 +344,16 @@ function renderInsights(insights) {
     </div>
 
     <h3>Top Species</h3>
-    ${topSpecies.map(s => `<div class="pill-line">🐟 ${s.name}: ${s.count}</div>`).join("")}
+    ${topSpecies.map(s => `<div class="pill-line"><img class="icon-mini" src="${fishIconPath(s.name)}" alt=""> ${s.name}: ${s.count}</div>`).join("")}
 
     <h3>Top Lures</h3>
-    ${topLures.map(l => `<div class="pill-line">🎣 ${l.name}: ${l.count}</div>`).join("")}
+    ${topLures.map(l => `<div class="pill-line"><img class="icon-mini" src="${lureIconPath(l.name)}" alt=""> ${l.name}: ${l.count}</div>`).join("")}
 
     <h3>Top Waterbodies</h3>
-    ${topWaterbodies.map(w => `<div class="pill-line">📍 ${w.name}: ${w.count}</div>`).join("")}
+    ${topWaterbodies.map(w => `<div class="pill-line"><img class="icon-mini" src="${waterIconPath("target")}" alt=""> ${w.name}: ${w.count}</div>`).join("")}
 
     <h3>Local Waterbodies</h3>
-    ${localTopWaterbodies.map(w => `<div class="pill-line">📍 ${w.name}: ${w.count}</div>`).join("")}
+    ${localTopWaterbodies.map(w => `<div class="pill-line"><img class="icon-mini" src="${waterIconPath("history")}" alt=""> ${w.name}: ${w.count}</div>`).join("")}
 
     <div class="small">Sample quality: ${sampleQuality}</div>
   `;

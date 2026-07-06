@@ -148,6 +148,30 @@
       .filter(Boolean);
   }
 
+  function iconSlug(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/&/g, " and ")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
+  function waterIconPath(kind) {
+    const slug = iconSlug(kind);
+    if (!slug) return "/static/icons/water/other.svg";
+    if (slug.includes("river") || slug.includes("creek") || slug.includes("stream")) return "/static/icons/water/river.svg";
+    if (slug.includes("spillway") || slug.includes("tailwater") || slug.includes("tail-water")) return "/static/icons/water/spillway.svg";
+    if (slug.includes("trout") || slug.includes("stocked")) return "/static/icons/water/trout.svg";
+    if (slug.includes("reservoir")) return "/static/icons/water/reservoir.svg";
+    if (slug.includes("pond")) return "/static/icons/water/pond.svg";
+    if (slug.includes("lake")) return "/static/icons/water/lake.svg";
+    if (slug.includes("manual")) return "/static/icons/water/manual.svg";
+    if (slug.includes("favorite")) return "/static/icons/water/favorite.svg";
+    if (slug.includes("history")) return "/static/icons/water/history.svg";
+    if (slug.includes("target") || slug.includes("trout")) return "/static/icons/water/target.svg";
+    return "/static/icons/water/other.svg";
+  }
+
   function currentTargetSpecies() {
     const selected = byId("mapTargetSpecies")?.value || "";
     if (selected) return selected;
@@ -660,11 +684,18 @@
     list.innerHTML = waters.map(water => {
       const tier = confidenceTier(water);
       const fitScore = target ? targetFitScore(water, target) : 0;
+      const icon = water.manual || String(water.source || "").toLowerCase() === "manual"
+        ? waterIconPath("manual")
+        : water.favorite
+          ? waterIconPath("favorite")
+          : water.stocked_trout
+            ? waterIconPath("target")
+            : waterIconPath(water.type);
       const active = water.id === state.selectedId ? " active" : "";
       return `
         <button type="button" class="map-water-row${active}" data-water-id="${esc(water.id)}">
           <div class="map-water-row-head">
-            <strong>${esc(water.name || "Waterbody")}</strong>
+            <strong><img class="icon-mini" src="${icon}" alt=""> ${esc(water.name || "Waterbody")}</strong>
             <span class="map-water-tier ${esc(tier)}">${target ? `${fitScore}%` : esc(tier)}</span>
           </div>
           <div class="small">${waterRowMeta(water)}${target ? ` · Fit ${fitScore}%` : ""}</div>
@@ -697,10 +728,17 @@
     list.innerHTML = waters.map(water => {
       const score = targetFitScore(water, target);
       const label = targetFitLabel(score);
+      const icon = water.manual || String(water.source || "").toLowerCase() === "manual"
+        ? waterIconPath("manual")
+        : water.favorite
+          ? waterIconPath("favorite")
+          : water.stocked_trout
+            ? waterIconPath("target")
+            : waterIconPath(water.type);
       return `
         <button type="button" class="map-water-row${water.id === state.selectedId ? " active" : ""}" data-ranked-water-id="${esc(water.id)}">
           <div class="map-water-row-head">
-            <strong>${esc(water.name || "Waterbody")}</strong>
+            <strong><img class="icon-mini" src="${icon}" alt=""> ${esc(water.name || "Waterbody")}</strong>
             <span class="map-water-tier ${esc(label.toLowerCase())}">${score}%</span>
           </div>
           <div class="small">${label} target fit · ${waterRowMeta(water)}</div>

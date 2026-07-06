@@ -1,0 +1,22 @@
+{
+  "app_name": "Angler Intel",
+  "version": "v5.5-realistic-icon-system",
+  "installed_at": "2026-07-05T19:00:04-05:00",
+  "previous_version": "v5.4-map-ranking-prep",
+  "json_source_of_truth": true,
+  "sqlite_role": "mirror/read-only foundation until explicit migration",
+  "authority_flipped": false,
+  "target_species_ranking_enabled": true,
+  "ranked_waters_panel_enabled": true,
+  "map_data_target_annotations_enabled": true,
+  "top_waters_right_now_enabled": true,
+  "icon_system_enabled": true,
+  "water_icon_assets_enabled": true,
+  "fish_icon_assets_enabled": true,
+  "lure_icon_assets_enabled": true,
+  "notes": [
+    "Angler Intel now has a more realistic icon system for waters, fish, and lures.",
+    "Water markers and dashboard icon usage are aligned to the fishing product instead of prototype initials.",
+    "The map legend now exposes spillway and stocked-trout icon coverage for future waters."
+  ]
+}
