@@ -1,8 +1,11 @@
 <!doctype html>
 <html>
 <head>
-  <title>Angler Intel Water Intel</title>
+  <title>Angler Intel Water Detail</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% if data.water.lat is not none and data.water.lon is not none %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  {% endif %}
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
@@ -17,136 +20,255 @@
   <main class="app water-app">
     <header class="water-hero">
       <div>
-        <p class="eyebrow">Water Intel</p>
+        <p class="eyebrow">Waterbody profile</p>
         <h1>{{ data.water.name }}</h1>
         <p class="release-line">Current release: {{ data.version }}</p>
         <p class="small">
-          {{ data.water.type }}{% if data.water.city %} · {{ data.water.city }}{% endif %}{% if data.water.county %} · {{ data.water.county }}{% endif %}
+          {{ data.water.type }}
+          {% if data.water.city %} · {{ data.water.city }}{% endif %}
+          {% if data.water.county %} · {{ data.water.county }}{% endif %}
+          {% if data.water.state %} · {{ data.water.state }}{% endif %}
+          · {{ data.water_profile.source }}
         </p>
+        <div class="water-badge-row">
+          {% for badge in data.water_badges %}
+            <span class="map-chip">{{ badge }}</span>
+          {% endfor %}
+        </div>
       </div>
       <div class="water-hero-actions">
-        <a class="button-link" href="/map">Back to map</a>
+        <a class="button-link" href="{{ data.detail_actions.back_to_map }}">Back to map</a>
+        <a class="button-link secondary" href="{{ data.detail_actions.smart_picks }}">Open Smart Picks</a>
+        <a class="button-link secondary" href="{{ data.detail_actions.snapshot }}">Trip Snapshot</a>
       </div>
     </header>
 
     <section class="water-grid">
-      <section class="card water-card">
-        <h2>Waterbody</h2>
-        <div class="water-meta-grid">
-          <div><strong>Type</strong><br>{{ data.water.type }}</div>
-          <div><strong>Source</strong><br>{{ data.water.source }}</div>
-          <div><strong>Confidence</strong><br>{{ data.water.confidence }}</div>
-          <div><strong>Coordinates</strong><br>{% if data.water.lat is not none and data.water.lon is not none %}{{ data.water.lat }}, {{ data.water.lon }}{% else %}Unmapped{% endif %}</div>
-        </div>
+      <div class="water-stack">
+        <section class="card water-card">
+          <h2>Overview</h2>
+          <div class="water-meta-grid">
+            <div><strong>Type</strong><br>{{ data.water.type }}</div>
+            <div><strong>Source</strong><br>{{ data.water_profile.source }}</div>
+            <div><strong>Confidence</strong><br>{{ data.water.confidence }}</div>
+            <div><strong>Coordinates</strong><br>{% if data.water_profile.mapped %}{{ data.water.lat }}, {{ data.water.lon }}{% else %}Unmapped{% endif %}</div>
+          </div>
 
-        {% if data.water.species %}
-          <h3>Species</h3>
+          <h3>Target fit</h3>
+          <div class="water-detail-rail">
+            <div class="water-detail-stat">
+              <span class="water-detail-value">{{ data.water_profile.target_fit_score }}%</span>
+              <span class="small">{{ data.water_profile.target_fit_label }}</span>
+            </div>
+            <div class="water-detail-copy">
+              <strong>{{ data.target_species or "Auto target" }}</strong>
+              <p class="small">{{ data.target_fit.reason or "Target fit will follow the current trip target and local conditions." }}</p>
+            </div>
+          </div>
+
+          {% if data.water.species %}
+            <h3>Species</h3>
+            <div class="chip-row">
+              {% for item in data.water.species %}
+                <span class="map-chip map-chip-strong">{{ item }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          {% if data.water.habitat %}
+            <h3>Habitat</h3>
+            <div class="chip-row">
+              {% for item in data.water.habitat %}
+                <span class="map-chip habitat">{{ item }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          {% if data.water.access %}
+            <h3>Access</h3>
+            <div class="chip-row">
+              {% for item in data.water.access %}
+                <span class="map-chip habitat">{{ item }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          {% if data.water.notes %}
+            <p class="water-notes">{{ data.water.notes }}</p>
+          {% endif %}
+        </section>
+
+        <section class="card water-card">
+          <h2>Current Conditions</h2>
+          <div class="water-meta-grid">
+            <div><strong>Temperature</strong><br>{{ data.weather.temp }} F</div>
+            <div><strong>Wind</strong><br>{{ data.weather.wind }} mph</div>
+            <div><strong>Pressure</strong><br>{{ data.weather.pressure }}</div>
+            <div><strong>Cloud cover</strong><br>{{ data.weather.cloud }}%</div>
+          </div>
+
+          <h3>Smart signals</h3>
           <div class="chip-row">
-            {% for item in data.water.species %}
+            {% for item in data.smart_intelligence.condition_labels %}
               <span class="map-chip">{{ item }}</span>
             {% endfor %}
           </div>
-        {% endif %}
+          <p class="small">
+            Clarity:
+            <strong>{{ data.smart_intelligence.clarity_signal.label }}</strong>
+            {% if data.smart_intelligence.clarity_signal.inferred %} · inferred{% endif %}
+          </p>
+          <p class="small">{{ data.smart_intelligence.clarity_signal.basis }}</p>
+          <p class="small">{{ data.smart_intelligence.catch_history.summary }}</p>
+        </section>
 
-        {% if data.water.habitat %}
-          <h3>Habitat</h3>
-          <div class="chip-row">
-            {% for item in data.water.habitat %}
-              <span class="map-chip habitat">{{ item }}</span>
-            {% endfor %}
-          </div>
-        {% endif %}
-
-        {% if data.water.access %}
-          <h3>Access</h3>
-          <div class="chip-row">
-            {% for item in data.water.access %}
-              <span class="map-chip habitat">{{ item }}</span>
-            {% endfor %}
-          </div>
-        {% endif %}
-
-        {% if data.water.notes %}
-          <p class="water-notes">{{ data.water.notes }}</p>
-        {% endif %}
-      </section>
-
-      <section class="card water-card">
-        <h2>Smart Intelligence</h2>
-        <div class="map-intel-results">
-          <div class="map-intel-head">
-            <div>
-              <h3>{{ data.smart_intelligence.headline }}</h3>
-              <p class="small">{{ data.smart_intelligence.summary }}</p>
-            </div>
-            <div class="map-intel-score">
-              <span>{{ data.smart_intelligence.confidence.score }}</span>
-              <label>{{ data.smart_intelligence.confidence.label }}</label>
-            </div>
+        <section class="card water-card">
+          <h2>Catch History</h2>
+          <div class="water-meta-grid">
+            <div><strong>Total</strong><br>{{ data.catch_insights.total or 0 }}</div>
+            <div><strong>Local</strong><br>{{ data.catch_insights.local_total or 0 }}</div>
+            <div><strong>Quality</strong><br>{{ data.catch_insights.sample_quality or "unknown" }}</div>
+            <div><strong>Sample</strong><br>{{ data.smart_intelligence.catch_history.sample_size.local or 0 }}/{{ data.smart_intelligence.catch_history.sample_size.total or 0 }}</div>
           </div>
 
-          <div class="chip-row">
-            <span class="map-chip map-chip-strong">{{ data.selected_species }}</span>
-            <span class="map-chip">{{ data.area_type }}</span>
-            <span class="map-chip">{{ data.weather.temp }}F</span>
-            <span class="map-chip">{{ data.weather.wind }} mph wind</span>
-            <span class="map-chip">{{ data.weather.cloud }}% cloud</span>
-          </div>
-
-          <div class="map-intel-grid">
-            <div class="map-intel-panel">
-              <strong>Primary lure</strong>
-              <div>{{ data.best_bet.lure_name }}</div>
-              <p class="small">{{ data.best_bet.why }}</p>
-            </div>
-            <div class="map-intel-panel">
-              <strong>Clarity</strong>
-              <div>{{ data.smart_intelligence.clarity_signal.label }}</div>
-              <p class="small">{{ data.smart_intelligence.clarity_signal.basis }}</p>
-            </div>
-            <div class="map-intel-panel">
-              <strong>Catch history</strong>
-              <div>{{ data.smart_intelligence.catch_history.level }}</div>
-              <p class="small">{{ data.smart_intelligence.catch_history.summary }}</p>
-            </div>
-            <div class="map-intel-panel">
-              <strong>Recommendation</strong>
-              <div>{{ data.best_bet.species }}</div>
-              <p class="small">{{ data.best_bet.reasons[0] if data.best_bet.reasons else "" }}</p>
-            </div>
-          </div>
-
-          {% if data.smart_intelligence.positive_signals %}
-            <h3>Positive signals</h3>
+          {% if data.catch_insights.top_species %}
+            <h3>Top species</h3>
             <div class="chip-row">
-              {% for item in data.smart_intelligence.positive_signals %}
-                <span class="map-chip positive">{{ item }}</span>
+              {% for item in data.catch_insights.top_species[:5] %}
+                <span class="map-chip">{{ item.name }}{% if item.count is defined %} · {{ item.count }}{% endif %}</span>
               {% endfor %}
             </div>
           {% endif %}
 
-          {% if data.smart_intelligence.caution_signals %}
-            <h3>Caution signals</h3>
+          {% if data.catch_insights.top_waterbodies %}
+            <h3>Related waters</h3>
             <div class="chip-row">
-              {% for item in data.smart_intelligence.caution_signals %}
-                <span class="map-chip caution">{{ item }}</span>
+              {% for item in data.catch_insights.top_waterbodies[:5] %}
+                <span class="map-chip habitat">{{ item.name }}{% if item.count is defined %} · {{ item.count }}{% endif %}</span>
               {% endfor %}
             </div>
           {% endif %}
+        </section>
+      </div>
 
-          {% if data.smart_intelligence.explanation %}
-            <details class="intel-details">
-              <summary>Explanation</summary>
-              <ul>
-                {% for item in data.smart_intelligence.explanation %}
-                  <li>{{ item }}</li>
+      <div class="water-stack">
+        <section class="card water-card">
+          <h2>Map Preview</h2>
+          {% if data.water_profile.mapped %}
+            <div
+              id="waterMap"
+              class="water-map"
+              data-lat="{{ data.water.lat }}"
+              data-lon="{{ data.water.lon }}"
+              data-name="{{ data.water.name|e }}"
+            ></div>
+          {% else %}
+            <div class="water-map-empty">
+              This waterbody has no coordinates yet, so a map preview cannot be rendered.
+            </div>
+          {% endif %}
+        </section>
+
+        <section class="card water-card">
+          <h2>Water Intel</h2>
+          <p class="small">Smart Intelligence for the selected waterbody.</p>
+          <div class="map-intel-results">
+            <div class="map-intel-head">
+              <div>
+                <h3>{{ data.smart_intelligence.headline }}</h3>
+                <p class="small">{{ data.smart_intelligence.summary }}</p>
+              </div>
+              <div class="map-intel-score">
+                <span>{{ data.smart_intelligence.confidence.score }}</span>
+                <label>{{ data.smart_intelligence.confidence.label }}</label>
+              </div>
+            </div>
+
+            <div class="chip-row">
+              <span class="map-chip map-chip-strong">{{ data.selected_species }}</span>
+              <span class="map-chip">{{ data.area_type }}</span>
+              <span class="map-chip">{{ data.weather.temp }} F</span>
+              <span class="map-chip">{{ data.weather.wind }} mph wind</span>
+              <span class="map-chip">{{ data.weather.cloud }}% cloud</span>
+            </div>
+
+            <div class="map-intel-grid">
+              <div class="map-intel-panel">
+                <strong>Primary lure</strong>
+                <div>{{ data.best_bet.lure_name }}</div>
+                <p class="small">{{ data.best_bet.why }}</p>
+              </div>
+              <div class="map-intel-panel">
+                <strong>Recommendation</strong>
+                <div>{{ data.best_bet.species }}</div>
+                <p class="small">{{ data.best_bet.reasons[0] if data.best_bet.reasons else "" }}</p>
+              </div>
+              <div class="map-intel-panel">
+                <strong>Target fit</strong>
+                <div>{{ data.target_fit.label }}{% if data.target_fit.score is not none %} · {{ data.target_fit.score }}%{% endif %}</div>
+                <p class="small">{{ data.target_fit.reason }}</p>
+              </div>
+              <div class="map-intel-panel">
+                <strong>Catch history</strong>
+                <div>{{ data.smart_intelligence.catch_history.level }}</div>
+                <p class="small">{{ data.smart_intelligence.catch_history.summary }}</p>
+              </div>
+            </div>
+
+            {% if data.smart_intelligence.positive_signals %}
+              <h3>Positive signals</h3>
+              <div class="chip-row">
+                {% for item in data.smart_intelligence.positive_signals %}
+                  <span class="map-chip positive">{{ item }}</span>
                 {% endfor %}
-              </ul>
-            </details>
-          {% endif %}
-        </div>
-      </section>
+              </div>
+            {% endif %}
+
+            {% if data.smart_intelligence.caution_signals %}
+              <h3>Caution signals</h3>
+              <div class="chip-row">
+                {% for item in data.smart_intelligence.caution_signals %}
+                  <span class="map-chip caution">{{ item }}</span>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            {% if data.smart_intelligence.explanation %}
+              <details class="intel-details">
+                <summary>Explanation</summary>
+                <ul>
+                  {% for item in data.smart_intelligence.explanation %}
+                    <li>{{ item }}</li>
+                  {% endfor %}
+                </ul>
+              </details>
+            {% endif %}
+          </div>
+        </section>
+      </div>
     </section>
   </main>
+
+  {% if data.water_profile.mapped %}
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const node = document.getElementById("waterMap");
+        if (!node || typeof L === "undefined") return;
+
+        const lat = Number(node.dataset.lat);
+        const lon = Number(node.dataset.lon);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+
+        const map = L.map(node, { zoomControl: true, preferCanvas: true }).setView([lat, lon], 13);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; OpenStreetMap contributors",
+          maxZoom: 19
+        }).addTo(map);
+
+        L.marker([lat, lon]).addTo(map).bindPopup({{ data.water.name|tojson }}).openPopup();
+      });
+    </script>
+  {% endif %}
 </body>
 </html>

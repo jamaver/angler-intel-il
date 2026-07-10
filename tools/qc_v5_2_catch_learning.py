@@ -55,11 +55,12 @@ if app_version_path.exists():
         "v5.3-target-species-profile",
         "v5.4-map-ranking-prep",
         "v5.5-realistic-icon-system",
+        "v5.6-waterbody-detail-panels",
     }:
         errors.append("app_version.json is not aligned to v5.2")
 
 app_text = read("app.py")
-if 'APP_VERSION = "v5.2-catch-learning"' not in app_text and 'APP_VERSION = "v5.3-target-species-profile"' not in app_text and 'APP_VERSION = "v5.4-map-ranking-prep"' not in app_text and 'APP_VERSION = "v5.5-realistic-icon-system"' not in app_text:
+if 'APP_VERSION = "v5.2-catch-learning"' not in app_text and 'APP_VERSION = "v5.3-target-species-profile"' not in app_text and 'APP_VERSION = "v5.4-map-ranking-prep"' not in app_text and 'APP_VERSION = "v5.5-realistic-icon-system"' not in app_text and 'APP_VERSION = "v5.6-waterbody-detail-panels"' not in app_text:
     errors.append("app.py version string is not aligned to v5.2")
 for needle, message in [
     ("build_catch_learning_summary", "app.py should use catch learning summary helper"),

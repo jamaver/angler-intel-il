@@ -111,7 +111,7 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v5.5-realistic-icon-system"
+APP_VERSION = "v5.6-waterbody-detail-panels"
 app.config["APP_VERSION"] = APP_VERSION
 
 
@@ -554,6 +554,23 @@ def build_water_intel(water, target_species="", zip_code=""):
 
     smart_intelligence["location_label"] = location_label
 
+    water_badges = []
+    if water.get("manual") or str(water.get("source") or "").lower() == "manual":
+        water_badges.append("Manual waterbody")
+    if water.get("favorite"):
+        water_badges.append("Favorite")
+    if water.get("stocked_trout"):
+        water_badges.append("Stocked trout")
+    if water.get("catch_history_count"):
+        water_badges.append(f"Catch history {water.get('catch_history_count')}")
+    if has_coords:
+        water_badges.append("Mapped")
+    else:
+        water_badges.append("Unmapped")
+
+    target_fit_score = target_fit.get("score", 0)
+    target_fit_label = target_fit.get("label", "Auto")
+
     return {
         "version": APP_VERSION,
         "generated_at": datetime.now().strftime("%b %d, %Y %I:%M %p"),
@@ -562,6 +579,23 @@ def build_water_intel(water, target_species="", zip_code=""):
         "target_species_source": target_species_source,
         "target_profile": profile,
         "target_fit": target_fit,
+        "water_badges": water_badges,
+        "water_profile": {
+            "location_label": location_label,
+            "mapped": has_coords,
+            "source": water.get("source") or ("manual" if water.get("manual") else "starter"),
+            "manual": bool(water.get("manual") or str(water.get("source") or "").lower() == "manual"),
+            "favorite": bool(water.get("favorite")),
+            "stocked_trout": bool(water.get("stocked_trout")),
+            "catch_history_count": int(water.get("catch_history_count") or 0),
+            "target_fit_score": target_fit_score,
+            "target_fit_label": target_fit_label,
+        },
+        "detail_actions": {
+            "back_to_map": "/map",
+            "smart_picks": "/recommendations",
+            "snapshot": f"/snapshot?zip={zip_code}" if zip_code else "/snapshot",
+        },
         "selected_species": best_bet["species"],
         "best_bet": best_bet,
         "weather": weather_summary,
@@ -757,7 +791,7 @@ def api_water_intel():
 
 @app.route("/water/<water_id>")
 def water_detail(water_id):
-    target_species = str(request.args.get("species", "")).strip()
+    target_species = str(request.args.get("target_species") or request.args.get("species") or "").strip()
     zip_code = str(request.args.get("zip", "")).strip()
 
     water = get_water_record_by_id(water_id)

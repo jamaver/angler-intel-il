@@ -72,6 +72,7 @@ if app_version_path.exists():
         "v5.3-target-species-profile",
         "v5.4-map-ranking-prep",
         "v5.5-realistic-icon-system",
+        "v5.6-waterbody-detail-panels",
     }:
         errors.append("app_version.json is not aligned to the v5.0/v5.1 migration line")
 

@@ -58,11 +58,19 @@ Angler Intel is moving toward a map-first, waterbody-centered fishing intelligen
 - Map and dashboard icon consistency
 - Better fallback handling for missing icons
 
-## Future
+## v5.6 Waterbody Detail Panels
+
+- Rich waterbody profile pages
+- Target-fit context on selected waters
+- Small map preview for mapped waters
+- Clear action rail back to map and Smart Picks
+- Cleaner presentation for species, habitat, access, and catch history
 
 - Import/export waterbody datasets
 - Backup and restore coverage for structured data
 - Portable snapshots for migration and recovery
+
+## Future
 
 - Better lure recommendation logic
 - Optional offline-friendly tile strategy

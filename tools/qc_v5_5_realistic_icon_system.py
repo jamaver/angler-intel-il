@@ -55,14 +55,17 @@ if marker_path.exists():
             errors.append(f"v5.5 marker must set {key}=true")
 
 app_version = json.loads((APP_ROOT / "data" / "app_version.json").read_text(encoding="utf-8"))
-if app_version.get("version") != "v5.5-realistic-icon-system":
-    errors.append("app_version.json is not aligned to v5.5")
+if app_version.get("version") not in {
+    "v5.5-realistic-icon-system",
+    "v5.6-waterbody-detail-panels",
+}:
+    errors.append("app_version.json is not aligned to v5.5 or later")
 if app_version.get("modules", {}).get("realistic_icon_system") != "v5.5":
     errors.append("app_version.json missing realistic_icon_system module entry")
 
 app_text = read("app.py")
-if 'APP_VERSION = "v5.5-realistic-icon-system"' not in app_text:
-    errors.append("app.py version string is not aligned to v5.5")
+if 'APP_VERSION = "v5.5-realistic-icon-system"' not in app_text and 'APP_VERSION = "v5.6-waterbody-detail-panels"' not in app_text:
+    errors.append("app.py version string is not aligned to v5.5 or later")
 
 map_js = read("static/js/map_dashboard_v49.js")
 for needle in (

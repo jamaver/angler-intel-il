@@ -6,7 +6,7 @@ import math
 from pathlib import Path
 from typing import Any
 
-from flask import current_app, jsonify, render_template_string, request
+from flask import current_app, jsonify, render_template, render_template_string, request
 
 from intelligence.water_registry import load_water_catalog, load_water_records
 
@@ -590,7 +590,58 @@ def register_local_waters_routes_v40(app):
     def local_water_detail_page_v40(water_id: str):
         for water in load_water_records():
             if water.get("id") == water_id:
-                return _render_water_detail(water)
+                try:
+                    from app import build_water_intel
+
+                    target_species = str(request.args.get("target_species") or request.args.get("species") or "").strip()
+                    zip_code = str(request.args.get("zip", "")).strip()
+                    data = build_water_intel(water, target_species=target_species, zip_code=zip_code)
+                except Exception:
+                    data = {
+                        "version": _current_app_version(),
+                        "water": water,
+                        "target_species": "",
+                        "target_fit": {"score": 0, "label": "Auto", "reason": "Water detail data unavailable."},
+                        "water_badges": [],
+                        "water_profile": {
+                            "location_label": water.get("name") or "Selected waterbody",
+                            "mapped": bool(water.get("lat") is not None and water.get("lon") is not None),
+                            "source": water.get("source") or "starter",
+                            "manual": bool(water.get("manual") or str(water.get("source") or "").lower() == "manual"),
+                            "favorite": bool(water.get("favorite")),
+                            "stocked_trout": bool(water.get("stocked_trout")),
+                            "catch_history_count": int(water.get("catch_history_count") or 0),
+                            "target_fit_score": 0,
+                            "target_fit_label": "Auto",
+                        },
+                        "detail_actions": {
+                            "back_to_map": "/map",
+                            "smart_picks": "/recommendations",
+                            "snapshot": "/snapshot",
+                        },
+                        "selected_species": "",
+                        "best_bet": {"species": "", "lure_name": "", "why": "", "reasons": []},
+                        "weather": {"temp": "?", "wind": "?", "pressure": "?", "cloud": "?"},
+                        "area_type": water.get("type") or "water",
+                        "best_time": {},
+                        "best_hour": None,
+                        "lure_cards": [],
+                        "species": [],
+                        "smart_intelligence": {
+                            "headline": "Water intelligence unavailable",
+                            "summary": "Water detail data could not be built.",
+                            "confidence": {"score": 0, "label": "Unknown"},
+                            "clarity_signal": {"label": "unknown", "basis": "No water detail context available.", "inferred": False},
+                            "catch_history": {"level": "none", "summary": "No catch history context available.", "sample_size": {"local": 0, "total": 0}},
+                            "condition_labels": [],
+                            "positive_signals": [],
+                            "caution_signals": [],
+                            "explanation": [],
+                        },
+                        "catch_insights": {"total": 0, "local_total": 0, "sample_quality": "unknown", "top_species": [], "top_waterbodies": []},
+                    }
+
+                return render_template("water.html", data=data)
 
         return "<h1>Water not found</h1><p><a href='/waters'>Back to local waters</a></p>", 404
 
