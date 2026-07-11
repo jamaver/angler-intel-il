@@ -158,18 +158,18 @@
 
   function waterIconPath(kind) {
     const slug = iconSlug(kind);
-    if (!slug) return "/static/icons/water/other.svg";
-    if (slug.includes("river") || slug.includes("creek") || slug.includes("stream")) return "/static/icons/water/river.svg";
-    if (slug.includes("spillway") || slug.includes("tailwater") || slug.includes("tail-water")) return "/static/icons/water/spillway.svg";
-    if (slug.includes("trout") || slug.includes("stocked")) return "/static/icons/water/trout.svg";
-    if (slug.includes("reservoir")) return "/static/icons/water/reservoir.svg";
-    if (slug.includes("pond")) return "/static/icons/water/pond.svg";
-    if (slug.includes("lake")) return "/static/icons/water/lake.svg";
-    if (slug.includes("manual")) return "/static/icons/water/manual.svg";
-    if (slug.includes("favorite")) return "/static/icons/water/favorite.svg";
-    if (slug.includes("history")) return "/static/icons/water/history.svg";
-    if (slug.includes("target") || slug.includes("trout")) return "/static/icons/water/target.svg";
-    return "/static/icons/water/other.svg";
+    if (!slug) return "/static/icons/map/missing_coordinates.svg";
+    if (slug.includes("river") || slug.includes("creek") || slug.includes("stream")) return "/static/icons/map/river.svg";
+    if (slug.includes("spillway") || slug.includes("tailwater") || slug.includes("tail-water")) return "/static/icons/map/spillway.svg";
+    if (slug.includes("trout") || slug.includes("stocked")) return "/static/icons/map/high_confidence.svg";
+    if (slug.includes("reservoir")) return "/static/icons/map/reservoir.svg";
+    if (slug.includes("pond")) return "/static/icons/map/pond.svg";
+    if (slug.includes("lake")) return "/static/icons/map/lake.svg";
+    if (slug.includes("manual")) return "/static/icons/map/manual_water.svg";
+    if (slug.includes("favorite")) return "/static/icons/map/favorite_water.svg";
+    if (slug.includes("history")) return "/static/icons/map/catch_history.svg";
+    if (slug.includes("target") || slug.includes("confidence")) return "/static/icons/map/high_confidence.svg";
+    return "/static/icons/map/other.svg";
   }
 
   function currentTargetSpecies() {
@@ -695,7 +695,7 @@
       return `
         <button type="button" class="map-water-row${active}" data-water-id="${esc(water.id)}">
           <div class="map-water-row-head">
-            <strong><img class="icon-mini" src="${icon}" alt=""> ${esc(water.name || "Waterbody")}</strong>
+            <strong><img class="icon-mini ai-icon map-marker-icon" src="${icon}" alt=""> ${esc(water.name || "Waterbody")}</strong>
             <span class="map-water-tier ${esc(tier)}">${target ? `${fitScore}%` : esc(tier)}</span>
           </div>
           <div class="small">${waterRowMeta(water)}${target ? ` · Fit ${fitScore}%` : ""}</div>
@@ -738,7 +738,7 @@
       return `
         <button type="button" class="map-water-row${water.id === state.selectedId ? " active" : ""}" data-ranked-water-id="${esc(water.id)}">
           <div class="map-water-row-head">
-            <strong><img class="icon-mini" src="${icon}" alt=""> ${esc(water.name || "Waterbody")}</strong>
+            <strong><img class="icon-mini ai-icon map-marker-icon" src="${icon}" alt=""> ${esc(water.name || "Waterbody")}</strong>
             <span class="map-water-tier ${esc(label.toLowerCase())}">${score}%</span>
           </div>
           <div class="small">${label} target fit · ${waterRowMeta(water)}</div>

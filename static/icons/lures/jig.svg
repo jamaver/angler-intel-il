@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" role="img" aria-label="Jig icon">
+<defs>
+  <linearGradient id="head" x1="0" x2="1">
+    <stop offset="0%" stop-color="#e2e8f0"/>
+    <stop offset="100%" stop-color="#94a3b8"/>
+  </linearGradient>
+  <linearGradient id="skirt" x1="0" x2="1">
+    <stop offset="0%" stop-color="#1d4ed8"/>
+    <stop offset="55%" stop-color="#0f766e"/>
+    <stop offset="100%" stop-color="#0f172a"/>
+  </linearGradient>
+</defs>
+<path d="M274 96C304 75 336 74 366 96C352 125 352 158 366 187C336 209 304 209 274 187C288 158 288 125 274 96Z" fill="url(#head)"/>
+<path d="M295 103C260 108 228 129 198 148C228 167 260 188 295 193C286 158 286 138 295 103Z" fill="url(#skirt)"/>
+<path d="M349 103C384 108 416 129 446 148C416 167 384 188 349 193C358 158 358 138 349 103Z" fill="url(#skirt)"/>
+<path d="M267 120C230 123 197 132 161 148C197 164 230 173 267 176" stroke="url(#skirt)" stroke-width="7" stroke-linecap="round" opacity=".8" fill="none"/>
+<path d="M374 120C411 123 444 132 480 148C444 164 411 173 374 176" stroke="url(#skirt)" stroke-width="7" stroke-linecap="round" opacity=".8" fill="none"/>
+<path d="M322 188C322 212 320 234 318 257" stroke="#334155" stroke-width="5" stroke-linecap="round" fill="none"/>
+<path d="M318 257C330 270 344 273 357 269" stroke="#334155" stroke-width="5" stroke-linecap="round" fill="none"/>
+<circle cx="348" cy="118" r="11" fill="#f8fafc"/>
+<circle cx="351" cy="119" r="5" fill="#0f172a"/>
+<path d="M302 95C314 72 331 68 349 82C334 98 320 104 302 95Z" fill="#f97316" opacity=".85"/>
+<path d="M322 191C308 203 291 212 268 217" stroke="#0f172a" stroke-width="7" stroke-linecap="round" fill="none"/>
+</svg>

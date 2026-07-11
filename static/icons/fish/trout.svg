@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" role="img" aria-label="Rainbow trout icon">
+<defs>
+  <linearGradient id="body" x1="0" x2="1">
+    <stop offset="0%" stop-color="#dfe7f0"/>
+    <stop offset="50%" stop-color="#95a8bf"/>
+    <stop offset="100%" stop-color="#5e728d"/>
+  </linearGradient>
+  <linearGradient id="stripe" x1="0" x2="1">
+    <stop offset="0%" stop-color="#fb7185"/>
+    <stop offset="100%" stop-color="#8b5cf6"/>
+  </linearGradient>
+</defs>
+<path d="M132 150C176 84 294 68 404 102C458 119 496 141 525 150C496 159 458 181 404 198C294 232 176 216 132 150Z" fill="url(#body)"/>
+<path d="M517 150L604 98L582 150L604 202Z" fill="#7c90a8"/>
+<path d="M166 150C245 121 350 122 462 149" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity=".16" fill="none"/>
+<path d="M196 130C206 146 216 161 228 176" stroke="#4f6680" stroke-width="6" stroke-linecap="round" opacity=".28" fill="none"/>
+<path d="M238 117C247 133 257 148 268 162" stroke="#4f6680" stroke-width="6" stroke-linecap="round" opacity=".28" fill="none"/>
+<path d="M281 112C289 128 299 143 309 158" stroke="#4f6680" stroke-width="6" stroke-linecap="round" opacity=".28" fill="none"/>
+<path d="M323 113C331 129 341 144 351 159" stroke="#4f6680" stroke-width="6" stroke-linecap="round" opacity=".28" fill="none"/>
+<path d="M365 118C373 133 383 147 392 161" stroke="#4f6680" stroke-width="6" stroke-linecap="round" opacity=".28" fill="none"/>
+<path d="M186 170C265 144 362 146 443 161" stroke="url(#stripe)" stroke-width="9" stroke-linecap="round" opacity=".76" fill="none"/>
+<path d="M204 179C274 204 352 205 421 185" stroke="url(#stripe)" stroke-width="5" stroke-linecap="round" opacity=".35" fill="none"/>
+<circle cx="236" cy="138" r="14" fill="#f8fafc"/>
+<circle cx="239" cy="139" r="6" fill="#0f172a"/>
+<path d="M192 160C214 146 239 140 266 141C245 154 219 164 192 160Z" fill="#4f6680" opacity=".45"/>
+<circle cx="416" cy="123" r="4.5" fill="#0f172a" opacity=".72"/>
+<circle cx="354" cy="191" r="4.5" fill="#0f172a" opacity=".72"/>
+<circle cx="287" cy="129" r="4.5" fill="#0f172a" opacity=".72"/>
+<circle cx="386" cy="173" r="4.5" fill="#0f172a" opacity=".72"/>
+<circle cx="332" cy="129" r="4.5" fill="#0f172a" opacity=".72"/>
+<path d="M303 147C320 146 337 146 353 147" stroke="#f9a8d4" stroke-width="10" stroke-linecap="round" opacity=".65" fill="none"/>
+</svg>

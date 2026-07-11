@@ -1,0 +1,16 @@
+{
+  "app_name": "Angler Intel",
+  "version": "v5.3-icon-system",
+  "installed_at": "2026-07-11T16:59:01-05:00",
+  "previous_version": "v5.9-modern-ui-refresh",
+  "icon_update": true,
+  "fish_icons": true,
+  "lure_icons": true,
+  "map_icons": true,
+  "copied_fishbrain_assets": false,
+  "notes": [
+    "Fish, lure, and map icons now live under static/icons with fallback-safe mapping in the dashboard and map code.",
+    "Existing lower-level icon assets were reused and reorganized locally to keep the app Pi-friendly and self-hosted.",
+    "No Fishbrain assets or proprietary icon sources were used."
+  ]
+}

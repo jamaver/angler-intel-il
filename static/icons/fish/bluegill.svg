@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" role="img" aria-label="Bluegill icon">
+<defs>
+  <linearGradient id="body" x1="0" x2="1">
+    <stop offset="0%" stop-color="#4aa0d8"/>
+    <stop offset="52%" stop-color="#2563eb"/>
+    <stop offset="100%" stop-color="#163f8f"/>
+  </linearGradient>
+  <linearGradient id="belly" x1="0" x2="1">
+    <stop offset="0%" stop-color="#fcd34d"/>
+    <stop offset="100%" stop-color="#fb923c" stop-opacity=".65"/>
+  </linearGradient>
+</defs>
+<path d="M144 150C183 82 297 66 402 101C457 120 495 141 522 150C495 159 457 180 402 199C297 234 183 218 144 150Z" fill="url(#body)"/>
+<path d="M513 150L604 98L582 150L604 202Z" fill="url(#body)"/>
+<path d="M170 154C244 121 352 123 465 150" stroke="#dbeafe" stroke-width="9" stroke-linecap="round" opacity=".18" fill="none"/>
+<path d="M180 169C228 191 291 198 351 187C390 180 425 169 465 153" stroke="#0f172a" stroke-width="12" stroke-linecap="round" opacity=".35" fill="none"/>
+<path d="M217 114C232 96 255 88 275 91C269 113 253 126 217 114Z" fill="#1d4ed8" opacity=".95"/>
+<path d="M263 95C288 86 320 89 341 102C315 114 289 116 263 95Z" fill="#60a5fa" opacity=".82"/>
+<path d="M250 213C286 244 348 244 392 216C354 221 303 212 250 213Z" fill="#1d4ed8" opacity=".7"/>
+<path d="M219 147C225 162 233 176 245 188" stroke="#0f172a" stroke-width="7" stroke-linecap="round" opacity=".22" fill="none"/>
+<path d="M237 141C241 156 250 171 261 184" stroke="#0f172a" stroke-width="7" stroke-linecap="round" opacity=".22" fill="none"/>
+<path d="M255 137C259 151 267 167 280 180" stroke="#0f172a" stroke-width="7" stroke-linecap="round" opacity=".22" fill="none"/>
+<circle cx="232" cy="137" r="14" fill="#f8fafc"/>
+<circle cx="235" cy="138" r="6" fill="#0f172a"/>
+<path d="M184 160C205 146 231 141 260 141C240 154 216 164 184 160Z" fill="#0f172a" opacity=".45"/>
+<path d="M163 167C194 177 224 181 252 179" stroke="#0f172a" stroke-width="7" stroke-linecap="round" opacity=".28" fill="none"/>
+<path d="M368 100C396 114 429 130 463 149C426 151 392 136 368 100Z" fill="#f97316" opacity=".65"/>
+<path d="M301 149C316 150 331 151 345 149" stroke="url(#belly)" stroke-width="12" stroke-linecap="round" opacity=".9" fill="none"/>
+</svg>

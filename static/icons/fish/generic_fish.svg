@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" role="img" aria-label="White bass icon">
+<defs>
+  <linearGradient id="body" x1="0" x2="1">
+    <stop offset="0%" stop-color="#dfe7ee"/>
+    <stop offset="55%" stop-color="#a7b4c0"/>
+    <stop offset="100%" stop-color="#6f7f8c"/>
+  </linearGradient>
+  <linearGradient id="stripe" x1="0" x2="1">
+    <stop offset="0%" stop-color="#334155"/>
+    <stop offset="100%" stop-color="#0f172a"/>
+  </linearGradient>
+</defs>
+<path d="M130 150C173 88 286 72 400 101C454 115 500 136 534 150C500 164 454 185 400 199C286 228 173 212 130 150Z" fill="url(#body)"/>
+<path d="M528 150L614 103L596 150L614 197Z" fill="#8a96a3"/>
+<path d="M158 150C250 121 354 122 469 149" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity=".14" fill="none"/>
+<path d="M188 138C253 139 313 141 372 145" stroke="url(#stripe)" stroke-width="7" stroke-linecap="round" opacity=".54" fill="none"/>
+<path d="M180 157C248 161 308 165 369 173" stroke="url(#stripe)" stroke-width="7" stroke-linecap="round" opacity=".54" fill="none"/>
+<path d="M186 176C250 178 312 180 364 184" stroke="url(#stripe)" stroke-width="5" stroke-linecap="round" opacity=".35" fill="none"/>
+<circle cx="238" cy="138" r="14" fill="#f8fafc"/>
+<circle cx="241" cy="139" r="6" fill="#0f172a"/>
+<path d="M192 160C214 146 239 140 266 141C245 154 219 164 192 160Z" fill="#334155" opacity=".45"/>
+<path d="M302 148C319 146 336 146 353 148" stroke="#e2e8f0" stroke-width="10" stroke-linecap="round" opacity=".72" fill="none"/>
+<path d="M206 120C218 133 231 146 244 159" stroke="#334155" stroke-width="6" stroke-linecap="round" opacity=".28" fill="none"/>
+<path d="M255 113C268 127 281 141 295 154" stroke="#334155" stroke-width="6" stroke-linecap="round" opacity=".28" fill="none"/>
+<path d="M306 111C319 126 332 140 347 154" stroke="#334155" stroke-width="6" stroke-linecap="round" opacity=".28" fill="none"/>
+</svg>

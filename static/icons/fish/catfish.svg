@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" role="img" aria-label="Channel catfish icon">
+<defs>
+  <linearGradient id="body" x1="0" x2="1">
+    <stop offset="0%" stop-color="#7a8796"/>
+    <stop offset="55%" stop-color="#4d5a67"/>
+    <stop offset="100%" stop-color="#263341"/>
+  </linearGradient>
+  <linearGradient id="belly" x1="0" x2="1">
+    <stop offset="0%" stop-color="#d9e2ea"/>
+    <stop offset="100%" stop-color="#9aa6b2" stop-opacity=".55"/>
+  </linearGradient>
+</defs>
+<path d="M124 151C171 92 275 77 392 102C445 114 489 136 523 150C489 164 445 186 392 198C275 223 171 208 124 149Z" fill="url(#body)"/>
+<path d="M516 150L612 102L594 150L612 198Z" fill="url(#body)"/>
+<path d="M173 150C252 121 351 121 464 149" stroke="#f8fafc" stroke-width="10" stroke-linecap="round" opacity=".16" fill="none"/>
+<path d="M189 115C170 109 149 106 128 108" stroke="#283545" stroke-width="6" stroke-linecap="round" opacity=".72" fill="none"/>
+<path d="M189 130C169 127 151 128 132 133" stroke="#283545" stroke-width="5" stroke-linecap="round" opacity=".65" fill="none"/>
+<path d="M189 145C169 146 152 151 136 160" stroke="#283545" stroke-width="5" stroke-linecap="round" opacity=".65" fill="none"/>
+<path d="M189 160C169 165 150 173 134 185" stroke="#283545" stroke-width="5" stroke-linecap="round" opacity=".65" fill="none"/>
+<path d="M189 175C169 184 151 194 137 207" stroke="#283545" stroke-width="5" stroke-linecap="round" opacity=".65" fill="none"/>
+<ellipse cx="253" cy="140" rx="15" ry="12" fill="#f8fafc"/>
+<ellipse cx="256" cy="141" rx="6" ry="6" fill="#0f172a"/>
+<path d="M193 159C214 145 238 139 266 140C245 153 221 164 193 159Z" fill="#253241" opacity=".45"/>
+<path d="M236 211C262 233 303 237 343 228C309 220 271 213 236 211Z" fill="url(#belly)" opacity=".72"/>
+<path d="M220 195C236 209 252 220 267 229" stroke="#253241" stroke-width="7" stroke-linecap="round" opacity=".25" fill="none"/>
+</svg>

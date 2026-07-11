@@ -31,40 +31,96 @@ function iconSlug(value) {
     .replace(/^-+|-+$/g, "");
 }
 
+const FISH_ICON_MAP = {
+  largemouth_bass: "largemouth_bass",
+  smallmouth_bass: "smallmouth_bass",
+  crappie: "crappie",
+  bluegill: "bluegill",
+  catfish: "catfish",
+  channel_catfish: "catfish",
+  flathead_catfish: "catfish",
+  trout: "trout",
+  brown_trout: "trout",
+  rainbow_trout: "trout",
+  walleye: "walleye",
+  pike: "pike",
+  northern_pike: "pike",
+  muskie: "pike",
+  musky: "pike",
+  sauger: "walleye",
+  white_bass: "generic_fish",
+  yellow_perch: "generic_fish",
+  common_carp: "generic_fish",
+  generic_fish: "generic_fish",
+};
+
+const LURE_ICON_MAP = {
+  spinnerbait: "spinnerbait",
+  topwater: "topwater_popper",
+  topwater_popper: "topwater_popper",
+  frog: "frog",
+  jig: "jig",
+  microjig: "jig",
+  walleyejig: "drop_shot",
+  crankbait: "crankbait",
+  swimbait: "swimbait",
+  minnow: "crankbait",
+  inline_spinner: "inline_spinner",
+  spoon: "spoon",
+  drop_shot: "drop_shot",
+  worm: "soft_plastic_worm",
+  soft_plastic_worm: "soft_plastic_worm",
+  catfishbait: "bobber_live_bait",
+  bobber_live_bait: "bobber_live_bait",
+  generic_lure: "generic_lure",
+};
+
+function normalizedIconKey(value) {
+  return iconSlug(value).replace(/-/g, "_");
+}
+
 function fishIconPath(value) {
-  return `/static/fish/${iconSlug(value).replace(/-/g, "_")}.svg`;
+  const key = normalizedIconKey(value);
+  return `/static/icons/fish/${FISH_ICON_MAP[key] || "generic_fish"}.svg`;
 }
 
 function lureIconPath(value) {
   const text = String(value || "").toLowerCase();
-  if (text.includes("spinnerbait")) return "/static/lures/spinnerbait.svg";
-  if (text.includes("topwater")) return "/static/lures/topwater.svg";
-  if (text.includes("jig") && text.includes("micro")) return "/static/lures/microjig.svg";
-  if (text.includes("jig") && text.includes("walleye")) return "/static/lures/walleyejig.svg";
-  if (text.includes("jig")) return "/static/lures/jig.svg";
-  if (text.includes("minnow")) return "/static/lures/minnow.svg";
-  if (text.includes("catfish")) return "/static/lures/catfishbait.svg";
-  if (text.includes("spoon")) return "/static/lures/spoon.svg";
-  if (text.includes("worm")) return "/static/lures/worm.svg";
-  return "/static/lures/worm.svg";
+  if (text.includes("spinnerbait")) return "/static/icons/lures/spinnerbait.svg";
+  if (text.includes("topwater") && text.includes("popper")) return "/static/icons/lures/topwater_popper.svg";
+  if (text.includes("topwater")) return "/static/icons/lures/topwater_popper.svg";
+  if (text.includes("frog")) return "/static/icons/lures/frog.svg";
+  if ((text.includes("drop") && text.includes("shot")) || text.includes("dropshot")) return "/static/icons/lures/drop_shot.svg";
+  if (text.includes("inline spinner") || text.includes("rooster tail")) return "/static/icons/lures/inline_spinner.svg";
+  if (text.includes("swimbait")) return "/static/icons/lures/swimbait.svg";
+  if (text.includes("crankbait") || text.includes("jerkbait") || text.includes("minnow") || text.includes("shad")) return "/static/icons/lures/crankbait.svg";
+  if (text.includes("jig") && text.includes("micro")) return "/static/icons/lures/jig.svg";
+  if (text.includes("jig") && text.includes("walleye")) return "/static/icons/lures/drop_shot.svg";
+  if (text.includes("jig")) return "/static/icons/lures/jig.svg";
+  if (text.includes("spoon")) return "/static/icons/lures/spoon.svg";
+  if (text.includes("catfish") || text.includes("bait")) return "/static/icons/lures/bobber_live_bait.svg";
+  if (text.includes("worm") || text.includes("plastic") || text.includes("ned") || text.includes("finesse")) return "/static/icons/lures/soft_plastic_worm.svg";
+  const key = normalizedIconKey(value);
+  return `/static/icons/lures/${LURE_ICON_MAP[key] || "generic_lure"}.svg`;
 }
 
 function waterIconForRecord(water = {}) {
   const manual = String(water.manual || "").toLowerCase() === "true" || String(water.source || "").toLowerCase() === "manual";
-  if (manual) return "/static/icons/water/manual.svg";
-  if (water.favorite) return "/static/icons/water/favorite.svg";
-  if (water.stocked_trout) return "/static/icons/water/trout.svg";
+  if (manual) return "/static/icons/map/manual_water.svg";
+  if (water.favorite) return "/static/icons/map/favorite_water.svg";
+  if (water.stocked_trout) return "/static/icons/map/high_confidence.svg";
 
   const text = [water.type, water.name, water.label]
     .map(value => String(value || "").toLowerCase())
     .join(" ");
 
-  if (text.includes("spillway") || text.includes("tailwater") || text.includes("tail-water")) return "/static/icons/water/spillway.svg";
-  if (text.includes("reservoir")) return "/static/icons/water/reservoir.svg";
-  if (text.includes("pond")) return "/static/icons/water/pond.svg";
-  if (text.includes("river") || text.includes("creek") || text.includes("stream")) return "/static/icons/water/river.svg";
-  if (text.includes("lake") || text.includes("great lake")) return "/static/icons/water/lake.svg";
-  return "/static/icons/water/other.svg";
+  if (text.includes("spillway") || text.includes("tailwater") || text.includes("tail-water")) return "/static/icons/map/spillway.svg";
+  if (text.includes("reservoir")) return "/static/icons/map/reservoir.svg";
+  if (text.includes("pond")) return "/static/icons/map/pond.svg";
+  if (text.includes("river")) return "/static/icons/map/river.svg";
+  if (text.includes("creek") || text.includes("stream")) return "/static/icons/map/creek.svg";
+  if (text.includes("lake") || text.includes("great lake")) return "/static/icons/map/lake.svg";
+  return "/static/icons/map/missing_coordinates.svg";
 }
 
 function renderMetric(label, value, small = "") {
@@ -114,7 +170,7 @@ function renderDashboardBrief(data) {
 
   return `
     <div class="dashboard-brief-top">
-      <img class="dashboard-water-icon" src="${topWaterIcon}" alt="">
+      <img class="dashboard-water-icon ai-icon map-marker-icon" src="${topWaterIcon}" alt="">
       <div>
         <div class="small">Best nearby water</div>
         <h3>${topWater.name || "Selected waterbody"}</h3>
@@ -304,9 +360,9 @@ async function loadCatchLog() {
 
     setHTML("catchLog", catches.slice(0, 20).map(c => `
       <div class="catch-row">
-        <b><img class="icon-mini" src="${fishIconPath(c.species)}" alt=""> ${c.species}</b>
+        <b><img class="icon-mini ai-icon fish-icon" src="${fishIconPath(c.species)}" alt=""> ${c.species}</b>
         <div class="small">${c.timestamp} · ZIP ${c.zip || "unknown"}${c.waterbody ? ` · ${c.waterbody}` : ""}</div>
-        <div><img class="icon-mini" src="${lureIconPath(c.lure || "worm")}" alt=""> ${c.lure || "No lure recorded"}</div>
+        <div><img class="icon-mini ai-icon lure-icon" src="${lureIconPath(c.lure || "worm")}" alt=""> ${c.lure || "No lure recorded"}</div>
         <div class="small">${c.notes || ""}</div>
         <button class="danger small-btn" onclick="deleteCatch('${c.id}')">Delete</button>
       </div>
@@ -422,16 +478,16 @@ function renderInsights(insights) {
     </div>
 
     <h3>Top Species</h3>
-    ${topSpecies.map(s => `<div class="pill-line"><img class="icon-mini" src="${fishIconPath(s.name)}" alt=""> ${s.name}: ${s.count}</div>`).join("")}
+    ${topSpecies.map(s => `<div class="pill-line"><img class="icon-mini ai-icon fish-icon" src="${fishIconPath(s.name)}" alt=""> ${s.name}: ${s.count}</div>`).join("")}
 
     <h3>Top Lures</h3>
-    ${topLures.map(l => `<div class="pill-line"><img class="icon-mini" src="${lureIconPath(l.name)}" alt=""> ${l.name}: ${l.count}</div>`).join("")}
+    ${topLures.map(l => `<div class="pill-line"><img class="icon-mini ai-icon lure-icon" src="${lureIconPath(l.name)}" alt=""> ${l.name}: ${l.count}</div>`).join("")}
 
     <h3>Top Waterbodies</h3>
-    ${topWaterbodies.map(w => `<div class="pill-line"><img class="icon-mini" src="${waterIconForRecord({ type: w.type || w.name, name: w.name })}" alt=""> ${w.name}: ${w.count}</div>`).join("")}
+    ${topWaterbodies.map(w => `<div class="pill-line"><img class="icon-mini ai-icon map-marker-icon" src="${waterIconForRecord({ type: w.type || w.name, name: w.name })}" alt=""> ${w.name}: ${w.count}</div>`).join("")}
 
     <h3>Local Waterbodies</h3>
-    ${localTopWaterbodies.map(w => `<div class="pill-line"><img class="icon-mini" src="${waterIconForRecord({ type: w.type || w.name, name: w.name, manual: w.manual })}" alt=""> ${w.name}: ${w.count}</div>`).join("")}
+    ${localTopWaterbodies.map(w => `<div class="pill-line"><img class="icon-mini ai-icon map-marker-icon" src="${waterIconForRecord({ type: w.type || w.name, name: w.name, manual: w.manual })}" alt=""> ${w.name}: ${w.count}</div>`).join("")}
 
     <div class="small">Sample quality: ${sampleQuality}</div>
   `;
@@ -580,7 +636,7 @@ function render(data) {
   if (best) {
     setHTML("bestBet", `
       <div class="best-bet-layout">
-        <img class="fish-img" src="${best.fish_image}" alt="${best.species}">
+      <img class="fish-img ai-icon fish-icon" src="${best.fish_image}" alt="${best.species}">
         <div>
           <h3>${best.species}</h3>
           <div class="score">${best.species_score}%</div>
@@ -624,7 +680,7 @@ function render(data) {
         <span class="mini">${l.speed}</span>
         <span class="mini">${l.size}</span>
       </div>
-      <img class="lure-img" src="${l.image}" alt="${l.name}">
+      <img class="lure-img ai-icon lure-icon" src="${l.image}" alt="${l.name}">
       <h3>${l.name}</h3>
       <div class="lure-sub">Good for ${l.species} · ${l.species_score}% species score</div>
       <div class="color-row">${colorPills(l.colors)}</div>
@@ -652,7 +708,7 @@ function render(data) {
 
   setHTML("species", (data.species || []).slice(0, 8).map(s => `
     <div class="species-card species-with-image">
-      <img class="fish-thumb" src="${s.fish_image}" alt="${s.name}">
+      <img class="fish-thumb ai-icon fish-icon" src="${s.fish_image}" alt="${s.name}">
       <div>
         <h3>${s.name}</h3>
         <div class="score">${s.score}%</div>
@@ -679,7 +735,7 @@ function render(data) {
   } else {
     setHTML("waters", data.waters.map(w => `
       <div class="water-row">
-        <img class="icon-mini" src="${waterIconForRecord(w)}" alt="">
+        <img class="icon-mini ai-icon map-marker-icon" src="${waterIconForRecord(w)}" alt="">
         <div class="water-row-meta">
           <b>${w.name}</b>
           <div class="small">${w.type}${w.distance ? ` - ${w.distance} mi` : ""}${w.city ? ` · ${w.city}` : ""}</div>

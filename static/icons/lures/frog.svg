@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" role="img" aria-label="Topwater lure icon">
+<defs>
+  <linearGradient id="body" x1="0" x2="1">
+    <stop offset="0%" stop-color="#22c55e"/>
+    <stop offset="55%" stop-color="#16a34a"/>
+    <stop offset="100%" stop-color="#166534"/>
+  </linearGradient>
+</defs>
+<path d="M178 150C217 121 278 110 341 113C391 115 434 129 460 150C434 171 391 185 341 187C278 190 217 179 178 150Z" fill="url(#body)"/>
+<path d="M230 124C241 115 255 110 270 109C262 123 250 131 230 124Z" fill="#86efac" opacity=".75"/>
+<path d="M230 176C241 185 255 190 270 191C262 177 250 169 230 176Z" fill="#86efac" opacity=".75"/>
+<path d="M455 150L527 137L520 150L527 163Z" fill="#14532d"/>
+<path d="M520 150L585 146L572 150L585 154Z" fill="#14532d"/>
+<path d="M266 120L262 93" stroke="#475569" stroke-width="5" stroke-linecap="round" fill="none"/>
+<path d="M359 180L371 207" stroke="#475569" stroke-width="5" stroke-linecap="round" fill="none"/>
+<path d="M260 93C255 77 258 66 269 58" stroke="#475569" stroke-width="4" stroke-linecap="round" fill="none"/>
+<circle cx="315" cy="150" r="14" fill="#f8fafc"/>
+<circle cx="318" cy="151" r="6" fill="#0f172a"/>
+<path d="M296 122C313 118 332 118 347 123C332 131 312 132 296 122Z" fill="#0f172a" opacity=".3"/>
+</svg>

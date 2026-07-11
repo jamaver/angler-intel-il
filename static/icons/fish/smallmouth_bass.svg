@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" role="img" aria-label="Smallmouth bass icon">
+<defs>
+  <linearGradient id="body" x1="0" x2="1">
+    <stop offset="0%" stop-color="#cf9446"/>
+    <stop offset="60%" stop-color="#8f5c20"/>
+    <stop offset="100%" stop-color="#533414"/>
+  </linearGradient>
+  <linearGradient id="belly" x1="0" x2="1">
+    <stop offset="0%" stop-color="#f3ddb0" stop-opacity=".95"/>
+    <stop offset="100%" stop-color="#c98d44" stop-opacity=".25"/>
+  </linearGradient>
+</defs>
+<path d="M132 150C176 86 315 68 442 104C505 122 539 143 565 150C539 157 505 178 442 196C315 232 176 214 132 150Z" fill="url(#body)"/>
+<path d="M558 150L613 95L595 150L613 205Z" fill="url(#body)"/>
+<path d="M163 136C236 109 359 108 486 147" stroke="#f4d8aa" stroke-width="10" stroke-linecap="round" opacity=".23" fill="none"/>
+<path d="M190 123C205 106 221 96 242 96C236 119 224 131 190 123Z" fill="#b3712a" opacity=".95"/>
+<path d="M282 100C303 88 336 87 355 100C331 113 306 115 282 100Z" fill="#d6a25a" opacity=".8"/>
+<path d="M271 212C306 242 357 241 398 215C363 219 316 209 271 212Z" fill="#cf9046" opacity=".72"/>
+<path d="M204 117C206 146 205 177 201 203" stroke="#5b3a16" stroke-width="7" stroke-linecap="round" opacity=".25"/>
+<path d="M246 112C247 147 245 181 239 208" stroke="#5b3a16" stroke-width="7" stroke-linecap="round" opacity=".25"/>
+<path d="M288 109C289 146 286 179 280 207" stroke="#5b3a16" stroke-width="7" stroke-linecap="round" opacity=".25"/>
+<path d="M329 110C329 145 326 178 320 205" stroke="#5b3a16" stroke-width="7" stroke-linecap="round" opacity=".25"/>
+<path d="M371 115C369 148 368 176 364 198" stroke="#5b3a16" stroke-width="7" stroke-linecap="round" opacity=".25"/>
+<ellipse cx="244" cy="136" rx="15" ry="12" fill="#f8fafc"/>
+<ellipse cx="247" cy="137" rx="6" ry="6" fill="#0f172a"/>
+<path d="M190 162C212 146 235 140 260 140C240 154 219 164 190 162Z" fill="#5b3a16" opacity=".55"/>
+<path d="M146 165C175 174 206 179 231 178" stroke="#5b3a16" stroke-width="8" stroke-linecap="round" opacity=".35" fill="none"/>
+</svg>

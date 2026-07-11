@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" role="img" aria-label="Northern pike icon">
+<defs>
+  <linearGradient id="body" x1="0" x2="1">
+    <stop offset="0%" stop-color="#8fb760"/>
+    <stop offset="55%" stop-color="#527136"/>
+    <stop offset="100%" stop-color="#2d3f1f"/>
+  </linearGradient>
+  <linearGradient id="belly" x1="0" x2="1">
+    <stop offset="0%" stop-color="#e1efb8"/>
+    <stop offset="100%" stop-color="#b7d077" stop-opacity=".55"/>
+  </linearGradient>
+</defs>
+<path d="M118 150C165 91 277 74 401 101C458 114 503 137 535 150C503 163 458 186 401 199C277 226 165 209 118 150Z" fill="url(#body)"/>
+<path d="M528 150L614 102L596 150L614 198Z" fill="url(#body)"/>
+<path d="M158 150C246 121 352 122 469 149" stroke="#f0f7d2" stroke-width="10" stroke-linecap="round" opacity=".15" fill="none"/>
+<circle cx="238" cy="138" r="14" fill="#f8fafc"/>
+<circle cx="241" cy="139" r="6" fill="#0f172a"/>
+<path d="M188 160C213 146 239 140 268 140C245 153 220 164 188 160Z" fill="#2e3f1f" opacity=".45"/>
+<path d="M167 119C181 115 197 112 213 111" stroke="#2e3f1f" stroke-width="6" stroke-linecap="round" opacity=".65" fill="none"/>
+<path d="M167 132C181 131 198 130 216 132" stroke="#2e3f1f" stroke-width="6" stroke-linecap="round" opacity=".65" fill="none"/>
+<path d="M167 146C181 148 198 151 214 156" stroke="#2e3f1f" stroke-width="6" stroke-linecap="round" opacity=".65" fill="none"/>
+<path d="M166 160C181 166 197 174 211 184" stroke="#2e3f1f" stroke-width="6" stroke-linecap="round" opacity=".65" fill="none"/>
+<path d="M166 174C181 183 194 193 207 206" stroke="#2e3f1f" stroke-width="6" stroke-linecap="round" opacity=".65" fill="none"/>
+<circle cx="344" cy="120" r="4.5" fill="#f8fafc" opacity=".9"/>
+<circle cx="387" cy="166" r="4.5" fill="#f8fafc" opacity=".9"/>
+<circle cx="439" cy="129" r="4.5" fill="#f8fafc" opacity=".9"/>
+<circle cx="292" cy="183" r="4.5" fill="#f8fafc" opacity=".9"/>
+<circle cx="475" cy="171" r="4.5" fill="#f8fafc" opacity=".9"/>
+<path d="M310 147C328 146 346 146 364 147" stroke="url(#belly)" stroke-width="10" stroke-linecap="round" opacity=".72" fill="none"/>
+</svg>
