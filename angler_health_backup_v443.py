@@ -93,7 +93,7 @@ def register_health_backup_routes_v443(app):
         files = _backup_files()
         return jsonify({
             "ok": True,
-            "version": "v5.8-structured-backup-restore",
+            "version": "v5.9-modern-ui-refresh",
             "count": len(files),
             "backups": files,
         })
@@ -128,7 +128,7 @@ def register_health_backup_routes_v443(app):
 
             return jsonify({
                 "ok": True,
-                "version": "v5.8-structured-backup-restore",
+                "version": "v5.9-modern-ui-refresh",
                 "backup": {
                     "filename": archive_path.name,
                     "path": str(archive_path),
