@@ -1,8 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300">
-<rect width="100%" height="100%" rx="30" fill="#0f1b2d"/>
-<circle cx="260" cy="150" r="28" fill="#ef4444"/>
-<path d="M285 150 C360 120,450 125,535 150 C450 175,360 180,285 150Z" fill="#fbbf24"/>
-<path d="M300 160 L530 210" stroke="#a3e635" stroke-width="7"/>
-<path d="M300 145 L540 145" stroke="#22d3ee" stroke-width="7"/>
-<path d="M255 120 C300 70,360 80,390 120" fill="none" stroke="#cbd5e1" stroke-width="6"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" role="img" aria-label="Micro jig icon">
+<defs>
+  <linearGradient id="head" x1="0" x2="1">
+    <stop offset="0%" stop-color="#f8fafc"/>
+    <stop offset="100%" stop-color="#cbd5e1"/>
+  </linearGradient>
+  <linearGradient id="skirt" x1="0" x2="1">
+    <stop offset="0%" stop-color="#60a5fa"/>
+    <stop offset="100%" stop-color="#2563eb"/>
+  </linearGradient>
+</defs>
+<path d="M281 114C301 99 319 98 339 114C330 132 330 153 339 171C319 187 301 187 281 171C290 153 290 132 281 114Z" fill="url(#head)"/>
+<path d="M293 119C270 123 250 136 231 149C250 162 270 175 293 179C286 154 286 143 293 119Z" fill="url(#skirt)"/>
+<path d="M328 119C351 123 371 136 390 149C371 162 351 175 328 179C335 154 335 143 328 119Z" fill="url(#skirt)"/>
+<path d="M319 171C319 196 318 219 317 244" stroke="#475569" stroke-width="4" stroke-linecap="round" fill="none"/>
+<path d="M316 244C329 256 342 258 353 255" stroke="#475569" stroke-width="4" stroke-linecap="round" fill="none"/>
+<circle cx="333" cy="128" r="8" fill="#f8fafc"/>
+<circle cx="336" cy="129" r="4" fill="#0f172a"/>
+<path d="M299 116C307 100 318 98 329 108C319 119 310 124 299 116Z" fill="#22c55e" opacity=".75"/>
 </svg>

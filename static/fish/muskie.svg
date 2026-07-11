@@ -1,10 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300">
-<rect width="100%" height="100%" rx="30" fill="#0f172a"/>
-<ellipse cx="315" cy="150" rx="185" ry="72" fill="#14532d"/>
-<path d="M475 150 L590 82 L560 150 L590 218 Z" fill="#14532d"/>
-<ellipse cx="245" cy="135" rx="18" ry="14" fill="#020617"/>
-<path d="M185 175 C265 218,395 215,490 162" stroke="#86efac" stroke-width="12" fill="none"/>
-<path d="M270 78 C315 35,390 45,420 92" fill="#86efac" opacity=".75"/>
-<path d="M285 225 C340 260,405 246,430 205" fill="#86efac" opacity=".75"/>
-<text x="320" y="278" text-anchor="middle" font-size="32" font-family="Arial" fill="#f8fafc">Muskie</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" role="img" aria-label="Muskie icon">
+<defs>
+  <linearGradient id="body" x1="0" x2="1">
+    <stop offset="0%" stop-color="#8cab59"/>
+    <stop offset="55%" stop-color="#556f31"/>
+    <stop offset="100%" stop-color="#2e3f1b"/>
+  </linearGradient>
+  <linearGradient id="belly" x1="0" x2="1">
+    <stop offset="0%" stop-color="#d6e4a5"/>
+    <stop offset="100%" stop-color="#9ebd63" stop-opacity=".45"/>
+  </linearGradient>
+</defs>
+<path d="M114 150C165 89 284 68 409 103C465 119 505 140 538 150C505 160 465 181 409 197C284 232 165 211 114 150Z" fill="url(#body)"/>
+<path d="M529 150L615 98L595 150L615 202Z" fill="url(#body)"/>
+<path d="M156 148C250 118 360 119 471 150" stroke="#f3f9d5" stroke-width="10" stroke-linecap="round" opacity=".14" fill="none"/>
+<path d="M202 123C217 139 233 154 248 168" stroke="#2e3f1b" stroke-width="6" stroke-linecap="round" opacity=".25" fill="none"/>
+<path d="M251 112C265 127 281 142 296 157" stroke="#2e3f1b" stroke-width="6" stroke-linecap="round" opacity=".25" fill="none"/>
+<path d="M301 107C316 123 331 138 347 153" stroke="#2e3f1b" stroke-width="6" stroke-linecap="round" opacity=".25" fill="none"/>
+<path d="M350 110C365 126 379 140 395 155" stroke="#2e3f1b" stroke-width="6" stroke-linecap="round" opacity=".25" fill="none"/>
+<path d="M399 119C413 134 428 147 444 160" stroke="#2e3f1b" stroke-width="6" stroke-linecap="round" opacity=".25" fill="none"/>
+<circle cx="236" cy="137" r="14" fill="#f8fafc"/>
+<circle cx="239" cy="138" r="6" fill="#0f172a"/>
+<path d="M188 160C212 146 238 140 265 141C244 154 219 164 188 160Z" fill="#2e3f1b" opacity=".42"/>
+<path d="M164 169C194 177 223 182 251 181" stroke="#2e3f1b" stroke-width="7" stroke-linecap="round" opacity=".28" fill="none"/>
+<circle cx="392" cy="119" r="4.5" fill="#0f172a" opacity=".72"/>
+<circle cx="345" cy="183" r="4.5" fill="#0f172a" opacity=".72"/>
+<circle cx="292" cy="128" r="4.5" fill="#0f172a" opacity=".72"/>
+<circle cx="441" cy="164" r="4.5" fill="#0f172a" opacity=".72"/>
+<path d="M318 147C336 146 354 146 372 147" stroke="url(#belly)" stroke-width="10" stroke-linecap="round" opacity=".7" fill="none"/>
 </svg>

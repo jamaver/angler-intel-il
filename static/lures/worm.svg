@@ -1,7 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300">
-<rect width="100%" height="100%" rx="30" fill="#0f1b2d"/>
-<path d="M100 160 C180 100,260 210,340 150 S510 120,560 160" fill="none" stroke="#111827" stroke-width="44" stroke-linecap="round"/>
-<path d="M100 160 C180 100,260 210,340 150 S510 120,560 160" fill="none" stroke="#2563eb" stroke-width="10" stroke-linecap="round" opacity=".6"/>
-<path d="M450 140 C500 90,560 90,590 120" fill="none" stroke="#cbd5e1" stroke-width="8"/>
-<path d="M590 120 C610 140,610 170,585 185" fill="none" stroke="#cbd5e1" stroke-width="8"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" role="img" aria-label="Soft plastic worm icon">
+<defs>
+  <linearGradient id="body" x1="0" x2="1">
+    <stop offset="0%" stop-color="#fb7185"/>
+    <stop offset="55%" stop-color="#db2777"/>
+    <stop offset="100%" stop-color="#86198f"/>
+  </linearGradient>
+</defs>
+<path d="M154 174C193 138 224 123 258 122C283 121 301 129 321 139C341 149 359 157 383 156C412 156 438 144 471 123C495 107 519 95 548 94" stroke="url(#body)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<path d="M200 152C231 156 257 165 283 180" stroke="#fbcfe8" stroke-width="6" stroke-linecap="round" opacity=".3" fill="none"/>
+<path d="M329 139C350 147 369 154 392 155" stroke="#fbcfe8" stroke-width="6" stroke-linecap="round" opacity=".3" fill="none"/>
+<path d="M474 124C495 116 513 103 529 88" stroke="#fbcfe8" stroke-width="6" stroke-linecap="round" opacity=".3" fill="none"/>
+<path d="M313 188C319 208 328 223 341 238" stroke="#475569" stroke-width="5" stroke-linecap="round" fill="none"/>
+<path d="M343 238C355 246 368 248 381 244" stroke="#475569" stroke-width="5" stroke-linecap="round" fill="none"/>
+<path d="M301 136C291 126 281 120 270 114" stroke="#0f172a" stroke-width="6" stroke-linecap="round" opacity=".45" fill="none"/>
+<circle cx="338" cy="152" r="8" fill="#f8fafc"/>
+<circle cx="340" cy="153" r="4" fill="#0f172a"/>
 </svg>

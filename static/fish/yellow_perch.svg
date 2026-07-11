@@ -1,10 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300">
-<rect width="100%" height="100%" rx="30" fill="#0f172a"/>
-<ellipse cx="315" cy="150" rx="185" ry="72" fill="#facc15"/>
-<path d="M475 150 L590 82 L560 150 L590 218 Z" fill="#facc15"/>
-<ellipse cx="245" cy="135" rx="18" ry="14" fill="#020617"/>
-<path d="M185 175 C265 218,395 215,490 162" stroke="#166534" stroke-width="12" fill="none"/>
-<path d="M270 78 C315 35,390 45,420 92" fill="#166534" opacity=".75"/>
-<path d="M285 225 C340 260,405 246,430 205" fill="#166534" opacity=".75"/>
-<text x="320" y="278" text-anchor="middle" font-size="32" font-family="Arial" fill="#f8fafc">Yellow Perch</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" role="img" aria-label="Yellow perch icon">
+<defs>
+  <linearGradient id="body" x1="0" x2="1">
+    <stop offset="0%" stop-color="#f5d45b"/>
+    <stop offset="55%" stop-color="#d29d24"/>
+    <stop offset="100%" stop-color="#8a5b13"/>
+  </linearGradient>
+  <linearGradient id="belly" x1="0" x2="1">
+    <stop offset="0%" stop-color="#fff0a6"/>
+    <stop offset="100%" stop-color="#f6c453" stop-opacity=".55"/>
+  </linearGradient>
+</defs>
+<path d="M132 150C176 86 296 68 402 102C456 120 494 141 523 150C494 159 456 180 402 198C296 232 176 214 132 150Z" fill="url(#body)"/>
+<path d="M516 150L604 99L582 150L604 201Z" fill="#c4891f"/>
+<path d="M167 150C247 122 350 123 462 149" stroke="#fff7c8" stroke-width="10" stroke-linecap="round" opacity=".18" fill="none"/>
+<path d="M198 121C213 137 229 152 246 167" stroke="#55330d" stroke-width="6" stroke-linecap="round" opacity=".28" fill="none"/>
+<path d="M248 114C263 129 278 144 294 158" stroke="#55330d" stroke-width="6" stroke-linecap="round" opacity=".28" fill="none"/>
+<path d="M299 111C314 126 329 141 345 155" stroke="#55330d" stroke-width="6" stroke-linecap="round" opacity=".28" fill="none"/>
+<path d="M351 115C365 129 379 143 393 157" stroke="#55330d" stroke-width="6" stroke-linecap="round" opacity=".28" fill="none"/>
+<path d="M404 123C417 137 430 149 444 161" stroke="#55330d" stroke-width="6" stroke-linecap="round" opacity=".28" fill="none"/>
+<path d="M196 131C208 148 221 164 236 178" stroke="#55330d" stroke-width="7" stroke-linecap="round" opacity=".24" fill="none"/>
+<path d="M230 126C241 143 252 159 265 175" stroke="#55330d" stroke-width="7" stroke-linecap="round" opacity=".24" fill="none"/>
+<path d="M263 123C275 140 287 157 301 173" stroke="#55330d" stroke-width="7" stroke-linecap="round" opacity=".24" fill="none"/>
+<circle cx="238" cy="138" r="14" fill="#f8fafc"/>
+<circle cx="241" cy="139" r="6" fill="#0f172a"/>
+<path d="M192 160C214 146 239 140 266 141C245 154 219 164 192 160Z" fill="#55330d" opacity=".45"/>
+<path d="M302 148C319 146 336 146 353 148" stroke="url(#belly)" stroke-width="10" stroke-linecap="round" opacity=".75" fill="none"/>
 </svg>

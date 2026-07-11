@@ -1,10 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300">
-<rect width="100%" height="100%" rx="30" fill="#0f172a"/>
-<ellipse cx="315" cy="150" rx="185" ry="72" fill="#4d7c0f"/>
-<path d="M475 150 L590 82 L560 150 L590 218 Z" fill="#4d7c0f"/>
-<ellipse cx="245" cy="135" rx="18" ry="14" fill="#020617"/>
-<path d="M185 175 C265 218,395 215,490 162" stroke="#bef264" stroke-width="12" fill="none"/>
-<path d="M270 78 C315 35,390 45,420 92" fill="#bef264" opacity=".75"/>
-<path d="M285 225 C340 260,405 246,430 205" fill="#bef264" opacity=".75"/>
-<text x="320" y="278" text-anchor="middle" font-size="32" font-family="Arial" fill="#f8fafc">Largemouth Bass</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" role="img" aria-label="Largemouth bass icon">
+<defs>
+  <linearGradient id="body" x1="0" x2="1">
+    <stop offset="0%" stop-color="#7db343"/>
+    <stop offset="60%" stop-color="#3e6f25"/>
+    <stop offset="100%" stop-color="#213418"/>
+  </linearGradient>
+  <linearGradient id="belly" x1="0" x2="1">
+    <stop offset="0%" stop-color="#d9efb2" stop-opacity=".95"/>
+    <stop offset="100%" stop-color="#94b85a" stop-opacity=".35"/>
+  </linearGradient>
+</defs>
+<path d="M128 150C174 83 316 65 441 103C504 122 538 143 564 150C538 157 504 178 441 197C316 235 174 217 128 150Z" fill="url(#body)"/>
+<path d="M558 150L613 95L595 150L613 205Z" fill="url(#body)"/>
+<path d="M156 150C239 115 364 114 488 149" stroke="#dff5b7" stroke-width="10" stroke-linecap="round" opacity=".22" fill="none"/>
+<path d="M205 171C280 194 386 192 468 160" stroke="#203418" stroke-width="12" stroke-linecap="round" opacity=".35" fill="none"/>
+<path d="M226 131C247 104 270 91 300 100C282 118 260 132 226 131Z" fill="#74ac3c" opacity=".95"/>
+<path d="M262 104C286 89 322 88 341 102C318 114 288 118 262 104Z" fill="#88bf4c" opacity=".78"/>
+<path d="M270 213C302 243 357 242 397 215C363 218 315 208 270 213Z" fill="#86b94a" opacity=".7"/>
+<path d="M264 151C279 155 296 156 313 151C296 145 279 144 264 151Z" fill="url(#belly)" opacity=".95"/>
+<ellipse cx="246" cy="136" rx="15" ry="12" fill="#f8fafc"/>
+<ellipse cx="249" cy="137" rx="6" ry="6" fill="#0f172a"/>
+<path d="M190 159C209 146 231 140 259 140C240 152 218 162 190 159Z" fill="#203418" opacity=".65"/>
+<path d="M146 164C175 175 205 180 232 178" stroke="#203418" stroke-width="8" stroke-linecap="round" opacity=".35" fill="none"/>
+<path d="M381 112C417 118 455 132 487 148C450 153 410 150 381 112Z" fill="#203418" opacity=".22"/>
 </svg>

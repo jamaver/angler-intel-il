@@ -1,10 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300">
-<rect width="100%" height="100%" rx="30" fill="#0f172a"/>
-<ellipse cx="315" cy="150" rx="185" ry="72" fill="#92400e"/>
-<path d="M475 150 L590 82 L560 150 L590 218 Z" fill="#92400e"/>
-<ellipse cx="245" cy="135" rx="18" ry="14" fill="#020617"/>
-<path d="M185 175 C265 218,395 215,490 162" stroke="#fbbf24" stroke-width="12" fill="none"/>
-<path d="M270 78 C315 35,390 45,420 92" fill="#fbbf24" opacity=".75"/>
-<path d="M285 225 C340 260,405 246,430 205" fill="#fbbf24" opacity=".75"/>
-<text x="320" y="278" text-anchor="middle" font-size="32" font-family="Arial" fill="#f8fafc">Common Carp</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" role="img" aria-label="Common carp icon">
+<defs>
+  <linearGradient id="body" x1="0" x2="1">
+    <stop offset="0%" stop-color="#b38a5e"/>
+    <stop offset="55%" stop-color="#8a643c"/>
+    <stop offset="100%" stop-color="#563b21"/>
+  </linearGradient>
+  <linearGradient id="belly" x1="0" x2="1">
+    <stop offset="0%" stop-color="#e0c49a"/>
+    <stop offset="100%" stop-color="#b98f5f" stop-opacity=".55"/>
+  </linearGradient>
+</defs>
+<path d="M126 150C167 88 284 74 403 101C458 114 503 136 536 150C503 164 458 186 403 199C284 226 167 212 126 150Z" fill="url(#body)"/>
+<path d="M530 150L614 104L596 150L614 196Z" fill="url(#body)"/>
+<path d="M170 150C252 123 355 123 471 149" stroke="#f2e1c8" stroke-width="10" stroke-linecap="round" opacity=".14" fill="none"/>
+<path d="M196 123C210 106 232 95 256 94C250 117 234 131 196 123Z" fill="#8b673f" opacity=".95"/>
+<path d="M258 99C285 90 319 91 342 103C314 114 286 116 258 99Z" fill="#b48656" opacity=".8"/>
+<path d="M294 210C330 237 388 236 434 212C398 219 343 212 294 210Z" fill="url(#belly)" opacity=".76"/>
+<circle cx="239" cy="139" r="14" fill="#f8fafc"/>
+<circle cx="242" cy="140" r="6" fill="#0f172a"/>
+<path d="M185 161C208 147 234 141 262 141C241 154 217 164 185 161Z" fill="#3f2b1c" opacity=".45"/>
+<path d="M174 173C187 168 201 166 214 167" stroke="#3f2b1c" stroke-width="6" stroke-linecap="round" opacity=".72" fill="none"/>
+<path d="M207 172C220 168 233 166 246 167" stroke="#3f2b1c" stroke-width="6" stroke-linecap="round" opacity=".72" fill="none"/>
+<path d="M244 167C257 168 270 171 283 176" stroke="#3f2b1c" stroke-width="5" stroke-linecap="round" opacity=".72" fill="none"/>
+<path d="M166 173C196 186 226 192 255 191" stroke="#f6e4cb" stroke-width="7" stroke-linecap="round" opacity=".12" fill="none"/>
 </svg>

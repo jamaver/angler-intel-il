@@ -1,7 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300">
-<rect width="100%" height="100%" rx="30" fill="#0f1b2d"/>
-<path d="M120 150 C210 80,390 80,500 150 C390 220,210 220,120 150Z" fill="#94a3b8"/>
-<path d="M500 150 L580 105 L560 150 L580 195 Z" fill="#64748b"/>
-<circle cx="210" cy="135" r="12" fill="#020617"/>
-<path d="M160 170 C260 200,370 195,470 160" stroke="#e2e8f0" stroke-width="7" fill="none"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" role="img" aria-label="Minnow lure icon">
+<defs>
+  <linearGradient id="body" x1="0" x2="1">
+    <stop offset="0%" stop-color="#f8fafc"/>
+    <stop offset="45%" stop-color="#cbd5e1"/>
+    <stop offset="100%" stop-color="#64748b"/>
+  </linearGradient>
+  <linearGradient id="stripe" x1="0" x2="1">
+    <stop offset="0%" stop-color="#38bdf8"/>
+    <stop offset="100%" stop-color="#1d4ed8"/>
+  </linearGradient>
+</defs>
+<path d="M124 150C183 102 278 92 376 113C434 126 484 141 520 150C484 159 434 174 376 187C278 208 183 198 124 150Z" fill="url(#body)"/>
+<path d="M518 150L603 110L584 150L603 190Z" fill="#94a3b8"/>
+<path d="M150 150C241 126 344 127 460 149" stroke="#ffffff" stroke-width="9" stroke-linecap="round" opacity=".25" fill="none"/>
+<path d="M175 135C250 124 327 125 406 139" stroke="url(#stripe)" stroke-width="8" stroke-linecap="round" opacity=".7" fill="none"/>
+<circle cx="228" cy="136" r="13" fill="#f8fafc"/>
+<circle cx="231" cy="137" r="6" fill="#0f172a"/>
+<path d="M194 160C218 149 242 143 267 142C245 154 219 164 194 160Z" fill="#475569" opacity=".42"/>
+<path d="M258 119C267 136 276 150 286 164" stroke="#475569" stroke-width="6" stroke-linecap="round" opacity=".3" fill="none"/>
+<path d="M335 120C344 136 353 150 363 164" stroke="#475569" stroke-width="6" stroke-linecap="round" opacity=".3" fill="none"/>
+<path d="M327 171C327 190 326 208 325 227" stroke="#334155" stroke-width="4" stroke-linecap="round" fill="none"/>
+<path d="M323 227C334 236 345 239 355 238" stroke="#334155" stroke-width="4" stroke-linecap="round" fill="none"/>
+<path d="M179 149C168 144 160 141 150 138" stroke="#1e293b" stroke-width="5" stroke-linecap="round" opacity=".4" fill="none"/>
 </svg>

@@ -1,0 +1,17 @@
+{
+  "app_name": "Angler Intel",
+  "version": "v5.9.1-icon-realism-polish",
+  "installed_at": "2026-07-10T21:16:42-05:00",
+  "previous_version": "v5.9-modern-ui-refresh",
+  "json_source_of_truth": true,
+  "sqlite_role": "mirror/read-only foundation until explicit migration",
+  "authority_flipped": false,
+  "fish_icon_assets_refreshed": true,
+  "lure_icon_assets_refreshed": true,
+  "ui_release_label_aligned": true,
+  "notes": [
+    "Fish and lure SVGs were refreshed with more realistic silhouettes and bait shapes.",
+    "The release badge and app version were aligned to the icon polish pass.",
+    "Existing icon filenames were preserved so the dashboard and map continue to resolve assets without code changes."
+  ]
+}

@@ -1,7 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300">
-<rect width="100%" height="100%" rx="30" fill="#0f1b2d"/>
-<circle cx="235" cy="145" r="35" fill="#facc15"/>
-<path d="M270 145 C340 105,450 105,540 145 C450 185,340 185,270 145Z" fill="#fef3c7"/>
-<path d="M270 145 C340 125,450 125,540 145" stroke="#f59e0b" stroke-width="8" fill="none"/>
-<path d="M230 105 C290 55,370 65,395 110" fill="none" stroke="#cbd5e1" stroke-width="7"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" role="img" aria-label="Walleye jig icon">
+<defs>
+  <linearGradient id="head" x1="0" x2="1">
+    <stop offset="0%" stop-color="#f8fafc"/>
+    <stop offset="100%" stop-color="#cbd5e1"/>
+  </linearGradient>
+  <linearGradient id="tail" x1="0" x2="1">
+    <stop offset="0%" stop-color="#f5d45b"/>
+    <stop offset="100%" stop-color="#d97706"/>
+  </linearGradient>
+</defs>
+<path d="M279 112C298 98 319 97 339 112C329 132 329 151 339 171C319 186 298 186 279 171C289 151 289 132 279 112Z" fill="url(#head)"/>
+<path d="M291 119C266 125 246 138 227 150C246 162 266 175 291 181C285 157 285 143 291 119Z" fill="url(#tail)"/>
+<path d="M330 119C355 125 375 138 394 150C375 162 355 175 330 181C336 157 336 143 330 119Z" fill="url(#tail)"/>
+<path d="M319 171C319 195 318 217 317 242" stroke="#475569" stroke-width="4" stroke-linecap="round" fill="none"/>
+<path d="M316 242C329 253 342 256 353 253" stroke="#475569" stroke-width="4" stroke-linecap="round" fill="none"/>
+<circle cx="333" cy="128" r="8" fill="#f8fafc"/>
+<circle cx="336" cy="129" r="4" fill="#0f172a"/>
+<path d="M299 116C307 100 318 98 329 108C319 119 310 124 299 116Z" fill="#22c55e" opacity=".65"/>
 </svg>

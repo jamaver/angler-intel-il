@@ -111,7 +111,7 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v5.9-modern-ui-refresh"
+APP_VERSION = "v5.9.1-icon-realism-polish"
 app.config["APP_VERSION"] = APP_VERSION
 # modern_ui_refresh release marker
 
