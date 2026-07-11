@@ -27,6 +27,86 @@ header {
   align-items: end;
 }
 
+.dashboard-v59 {
+  max-width: 1200px;
+}
+
+.dashboard-hero-copy {
+  max-width: 52rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.35rem;
+  color: #7dd3fc;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.hero-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.6rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  background: #22c55e;
+  color: #052e16;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.hero-action.secondary-link {
+  background: rgba(59, 130, 246, 0.16);
+  color: #dbeafe;
+  border: 1px solid rgba(125, 211, 252, 0.22);
+}
+
+.dashboard-summary {
+  min-width: min(100%, 26rem);
+}
+
+.dashboard-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.dashboard-metric {
+  background: rgba(7, 18, 34, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 14px;
+  padding: 0.9rem;
+}
+
+.dashboard-metric span {
+  display: block;
+  color: #93c5fd;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 0.2rem;
+}
+
+.dashboard-metric strong {
+  display: block;
+  font-size: 1.15rem;
+  line-height: 1.15;
+}
+
+.dashboard-metric small {
+  display: block;
+  margin-top: 0.2rem;
+  color: #cbd5e1;
+}
+
 .release-line {
   margin: 0.35rem 0 0;
   color: #93c5fd;
@@ -83,6 +163,62 @@ button {
   gap: 12px;
 }
 
+.control-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.dashboard-brief-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 12px;
+}
+
+.dashboard-brief-card {
+  min-height: 100%;
+}
+
+.dashboard-brief {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.dashboard-brief-top {
+  display: flex;
+  gap: 0.85rem;
+  align-items: center;
+}
+
+.dashboard-water-icon {
+  width: 3.2rem;
+  height: 3.2rem;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.dashboard-brief-top h3 {
+  margin: 0;
+}
+
+.dashboard-brief-pills,
+.dashboard-brief-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.dashboard-brief-empty {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.dashboard-status-card {
+  min-height: 100%;
+}
+
 .dashboard-primary {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
@@ -104,6 +240,31 @@ button {
   background: #22314d;
   border-radius: 14px;
   padding: 14px;
+}
+
+.water-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.water-row b {
+  display: block;
+}
+
+.water-row-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.2rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.16);
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  color: #dbeafe;
+  text-decoration: none;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .score {
@@ -155,6 +316,23 @@ button {
 
   .dashboard-primary {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-brief-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-hero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-metric-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .water-row {
+    align-items: flex-start;
   }
 
   .forecast {

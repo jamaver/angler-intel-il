@@ -278,6 +278,7 @@ def _render_waters_page() -> str:
 <body class="local-waters-page">
   <nav class="ai-main-tabs" aria-label="Angler Intel navigation">
   <a class="ai-main-tab" href="/">Dashboard</a>
+  <a class="ai-main-tab" href="/map">Map</a>
   <a class="ai-main-tab active" href="/waters">Local Waters</a>
   <a class="ai-main-tab" href="/reports">Saved Reports</a>
   <a class="ai-main-tab" href="/app-health">App Health</a>
@@ -321,6 +322,7 @@ def _render_waters_page() -> str:
 
   <p>
     <a href="/">Dashboard</a> |
+    <a href="/map">Map</a> |
     <a href="/app-health">App Health</a>
   </p>
 

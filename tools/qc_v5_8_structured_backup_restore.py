@@ -51,16 +51,14 @@ if marker_path.exists():
             errors.append(f"v5.8 marker must set {key}=true")
 
 app_version = json.loads((APP_ROOT / "data" / "app_version.json").read_text(encoding="utf-8"))
-if app_version.get("version") != "v5.8-structured-backup-restore":
-    errors.append("app_version.json is not aligned to v5.8")
+if app_version.get("version") not in {"v5.8-structured-backup-restore", "v5.9-modern-ui-refresh"}:
+    errors.append("app_version.json is not aligned to v5.8 or later")
 
 app_text = read("app.py")
-for needle, message in [
-    ('APP_VERSION = "v5.8-structured-backup-restore"', "app.py version string is not aligned to v5.8"),
-    ("structured_backup_restore", "app.py should record the structured backup restore module"),
-]:
-    if needle not in app_text:
-        errors.append(message)
+if 'APP_VERSION = "v5.8-structured-backup-restore"' not in app_text and 'APP_VERSION = "v5.9-modern-ui-refresh"' not in app_text:
+    errors.append("app.py version string is not aligned to v5.8 or later")
+if "structured_backup_restore" not in app_text and "modern_ui_refresh" not in app_text:
+    errors.append("app.py should record the structured backup restore or modern UI refresh module")
 
 backup_text = read("angler_health_backup_v443.py")
 for needle, message in [

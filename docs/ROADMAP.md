@@ -80,6 +80,14 @@ Angler Intel is moving toward a map-first, waterbody-centered fishing intelligen
 - App Health restore controls for recent backups
 - Path safety and backup naming checks
 
+## v5.9 Modern UI Refresh
+
+- Map-first dashboard shell
+- More prominent target species and current conditions summary
+- Nearby-water preview and faster map entry points
+- Cleaner mobile layout and card hierarchy
+- Stronger icon and action button presentation
+
 - Import/export waterbody datasets
 - Backup and restore coverage for structured data
 - Portable snapshots for migration and recovery

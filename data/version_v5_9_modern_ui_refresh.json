@@ -1,0 +1,18 @@
+{
+  "app_name": "Angler Intel",
+  "version": "v5.9-modern-ui-refresh",
+  "installed_at": "2026-07-10T19:35:00-05:00",
+  "previous_version": "v5.8-structured-backup-restore",
+  "json_source_of_truth": true,
+  "sqlite_role": "mirror/read-only foundation until explicit migration",
+  "authority_flipped": false,
+  "modern_ui_refresh_enabled": true,
+  "dashboard_map_first_shell": true,
+  "hero_quick_actions_enabled": true,
+  "nearby_water_preview_enabled": true,
+  "notes": [
+    "The dashboard shell now surfaces map-first quick actions, a clearer target-fish area, and nearby-water preview cards.",
+    "The change is visual and structural only; it does not change map data or SQLite authority.",
+    "The app remains Raspberry Pi friendly and keeps App Health as maintenance only."
+  ]
+}

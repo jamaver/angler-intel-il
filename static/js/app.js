@@ -49,12 +49,90 @@ function lureIconPath(value) {
   return "/static/lures/worm.svg";
 }
 
-function waterIconPath(name) {
-  const slug = iconSlug(name);
-  if (!slug) return "/static/icons/water/other.svg";
-  if (slug.includes("spillway") || slug.includes("tailwater") || slug.includes("tail-water")) return "/static/icons/water/spillway.svg";
-  if (slug.includes("trout") || slug.includes("stocked")) return "/static/icons/water/trout.svg";
-  return `/static/icons/water/${slug}.svg`;
+function waterIconForRecord(water = {}) {
+  const manual = String(water.manual || "").toLowerCase() === "true" || String(water.source || "").toLowerCase() === "manual";
+  if (manual) return "/static/icons/water/manual.svg";
+  if (water.favorite) return "/static/icons/water/favorite.svg";
+  if (water.stocked_trout) return "/static/icons/water/trout.svg";
+
+  const text = [water.type, water.name, water.label]
+    .map(value => String(value || "").toLowerCase())
+    .join(" ");
+
+  if (text.includes("spillway") || text.includes("tailwater") || text.includes("tail-water")) return "/static/icons/water/spillway.svg";
+  if (text.includes("reservoir")) return "/static/icons/water/reservoir.svg";
+  if (text.includes("pond")) return "/static/icons/water/pond.svg";
+  if (text.includes("river") || text.includes("creek") || text.includes("stream")) return "/static/icons/water/river.svg";
+  if (text.includes("lake") || text.includes("great lake")) return "/static/icons/water/lake.svg";
+  return "/static/icons/water/other.svg";
+}
+
+function renderMetric(label, value, small = "") {
+  return `
+    <div class="dashboard-metric">
+      <span>${label}</span>
+      <strong>${value}</strong>
+      ${small ? `<small>${small}</small>` : ""}
+    </div>
+  `;
+}
+
+function renderDashboardSummary(data) {
+  const waters = data.waters || [];
+  const weather = data.weather || {};
+  const target = data.target_species || currentTargetSpecies() || "Auto";
+  const topWater = waters[0] || {};
+  const topWaterLabel = topWater.name ? `${topWater.name}${topWater.distance ? ` · ${topWater.distance} mi` : ""}` : "No waters in range";
+
+  return `
+    <div class="dashboard-metric-grid">
+      ${renderMetric("Target", target, data.target_species_source || "profile")}
+      ${renderMetric("Score", `${data.overall?.score ?? "?"}/100`, data.overall?.rating || "")}
+      ${renderMetric("Wind", `${weather.wind ?? "?"} mph`, weather.fallback ? "fallback weather" : "live weather")}
+      ${renderMetric("Waters", `${waters.length}`, topWaterLabel)}
+    </div>
+  `;
+}
+
+function renderDashboardBrief(data) {
+  const waters = data.waters || [];
+  const topWater = waters[0];
+  const secondWater = waters[1];
+  const target = data.target_species || currentTargetSpecies() || "Auto";
+
+  if (!topWater) {
+    return `
+      <div class="dashboard-brief-empty">
+        <p>No waters matched this search radius.</p>
+        <a class="hero-action" href="/map">Open Map</a>
+      </div>
+    `;
+  }
+
+  const topWaterIcon = waterIconForRecord(topWater);
+  const secondWaterLabel = secondWater ? `${secondWater.name}${secondWater.distance ? ` · ${secondWater.distance} mi` : ""}` : "";
+
+  return `
+    <div class="dashboard-brief-top">
+      <img class="dashboard-water-icon" src="${topWaterIcon}" alt="">
+      <div>
+        <div class="small">Best nearby water</div>
+        <h3>${topWater.name || "Selected waterbody"}</h3>
+        <div class="small">${topWater.type || "water"}${topWater.city ? ` · ${topWater.city}` : ""}${topWater.distance ? ` · ${topWater.distance} mi` : ""}</div>
+      </div>
+    </div>
+    <div class="dashboard-brief-pills">
+      <span class="mini">${target}</span>
+      <span class="mini">${topWater.local_score ?? "?"} score</span>
+      <span class="mini">${topWater.favorite ? "Favorite" : "Near you"}</span>
+      ${secondWaterLabel ? `<span class="mini">Next: ${secondWaterLabel}</span>` : ""}
+    </div>
+    <div class="dashboard-brief-actions">
+      <a class="hero-action" href="/map">Open Map</a>
+      <a class="hero-action secondary-link" href="/waters">Local Waters</a>
+      <a class="hero-action secondary-link" href="/water/${encodeURIComponent(topWater.id)}">Water Intel</a>
+    </div>
+  `;
 }
 
 if (form) {
@@ -350,10 +428,10 @@ function renderInsights(insights) {
     ${topLures.map(l => `<div class="pill-line"><img class="icon-mini" src="${lureIconPath(l.name)}" alt=""> ${l.name}: ${l.count}</div>`).join("")}
 
     <h3>Top Waterbodies</h3>
-    ${topWaterbodies.map(w => `<div class="pill-line"><img class="icon-mini" src="${waterIconPath("target")}" alt=""> ${w.name}: ${w.count}</div>`).join("")}
+    ${topWaterbodies.map(w => `<div class="pill-line"><img class="icon-mini" src="${waterIconForRecord({ type: w.type || w.name, name: w.name })}" alt=""> ${w.name}: ${w.count}</div>`).join("")}
 
     <h3>Local Waterbodies</h3>
-    ${localTopWaterbodies.map(w => `<div class="pill-line"><img class="icon-mini" src="${waterIconPath("history")}" alt=""> ${w.name}: ${w.count}</div>`).join("")}
+    ${localTopWaterbodies.map(w => `<div class="pill-line"><img class="icon-mini" src="${waterIconForRecord({ type: w.type || w.name, name: w.name, manual: w.manual })}" alt=""> ${w.name}: ${w.count}</div>`).join("")}
 
     <div class="small">Sample quality: ${sampleQuality}</div>
   `;
@@ -494,6 +572,8 @@ function render(data) {
       </div>
     </div>
   `);
+  setHTML("dashboardSummary", renderDashboardSummary(data));
+  setHTML("dashboardBrief", renderDashboardBrief(data));
 
   const best = data.best_bet;
 
@@ -599,8 +679,12 @@ function render(data) {
   } else {
     setHTML("waters", data.waters.map(w => `
       <div class="water-row">
-        📍 <b>${w.name}</b>
-        <div class="small">${w.type}${w.distance ? ` - ${w.distance} mi` : ""}</div>
+        <img class="icon-mini" src="${waterIconForRecord(w)}" alt="">
+        <div>
+          <b>${w.name}</b>
+          <div class="small">${w.type}${w.distance ? ` - ${w.distance} mi` : ""}</div>
+        </div>
+        <a class="water-row-link" href="/water/${encodeURIComponent(w.id)}">Open Intel</a>
       </div>
     `).join(""));
   }

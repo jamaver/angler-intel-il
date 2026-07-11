@@ -9,22 +9,37 @@
 <!-- Angler Intel v4.0.1 main navigation tabs -->
 <nav class="ai-main-tabs" aria-label="Angler Intel navigation">
   <a class="ai-main-tab active" href="/">Dashboard</a>
+  <a class="ai-main-tab" href="/map">Map</a>
   <a class="ai-main-tab" href="/waters">Local Waters</a>
   <a class="ai-main-tab" href="/reports">Saved Reports</a>
   <a class="ai-main-tab" href="/app-health">App Health</a>
 </nav>
 <!-- end v4.0.1 main navigation tabs -->
 
-  <div class="app dashboard-shell">
+  <div class="app dashboard-shell dashboard-v59">
     <header class="dashboard-hero">
-      <div>
+      <div class="dashboard-hero-copy">
+        <p class="eyebrow">Map-first fishing intelligence</p>
         <h1>Angler Intel</h1>
-        <p>Smart fishing intelligence for local waters, weather, species, lures, and trip planning</p>
+        <p>Choose a target fish, review nearby waters, and jump into map or intel views without losing context.</p>
         <p class="release-line">Current release: {{ app_version }}</p>
+        <div class="hero-actions">
+          <a class="hero-action" href="/map">Open Map</a>
+          <a class="hero-action secondary-link" href="/waters">Local Waters</a>
+          <a class="hero-action secondary-link" href="/reports">Saved Reports</a>
+        </div>
       </div>
+      <div id="dashboardSummary" class="dashboard-summary"></div>
     </header>
 
     <section class="card control-panel">
+      <div class="control-head">
+        <div>
+          <h2>Target fish</h2>
+          <p class="small">Set a current trip target or save a favorite species.</p>
+        </div>
+        <div id="targetProfileSummary" class="small"></div>
+      </div>
       <form id="searchForm" class="search">
         <input id="zipInput" name="zip" value="60543" placeholder="Enter ZIP code">
         <button type="submit">Search</button>
@@ -56,7 +71,14 @@
       <div id="favorites" class="favorites"></div>
     </section>
 
-    <section id="status" class="card">Loading...</section>
+    <section class="dashboard-brief-grid">
+      <section class="card dashboard-brief-card">
+        <h2>Map Brief</h2>
+        <div id="dashboardBrief" class="dashboard-brief"></div>
+      </section>
+
+      <section id="status" class="card dashboard-status-card">Loading...</section>
+    </section>
 
     <section class="dashboard-primary">
       <section class="card best-bet-card">

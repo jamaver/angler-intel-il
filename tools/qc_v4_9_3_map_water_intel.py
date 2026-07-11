@@ -66,6 +66,7 @@ if app_version_path.exists():
         "v5.6-waterbody-detail-panels",
         "v5.7-waterbody-dataset-import-export",
         "v5.8-structured-backup-restore",
+        "v5.9-modern-ui-refresh",
     }:
         errors.append("app_version.json is not aligned to the map-water-intel line")
 

@@ -60,13 +60,14 @@ if app_version.get("version") not in {
     "v5.6-waterbody-detail-panels",
     "v5.7-waterbody-dataset-import-export",
     "v5.8-structured-backup-restore",
+        "v5.9-modern-ui-refresh",
 }:
     errors.append("app_version.json is not aligned to v5.5 or later")
 if app_version.get("modules", {}).get("realistic_icon_system") != "v5.5":
     errors.append("app_version.json missing realistic_icon_system module entry")
 
 app_text = read("app.py")
-if 'APP_VERSION = "v5.5-realistic-icon-system"' not in app_text and 'APP_VERSION = "v5.6-waterbody-detail-panels"' not in app_text and 'APP_VERSION = "v5.7-waterbody-dataset-import-export"' not in app_text and 'APP_VERSION = "v5.8-structured-backup-restore"' not in app_text:
+if 'APP_VERSION = "v5.5-realistic-icon-system"' not in app_text and 'APP_VERSION = "v5.6-waterbody-detail-panels"' not in app_text and 'APP_VERSION = "v5.7-waterbody-dataset-import-export"' not in app_text and 'APP_VERSION = "v5.8-structured-backup-restore"' not in app_text and 'APP_VERSION = "v5.9-modern-ui-refresh"' not in app_text:
     errors.append("app.py version string is not aligned to v5.5 or later")
 
 map_js = read("static/js/map_dashboard_v49.js")

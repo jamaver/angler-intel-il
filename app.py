@@ -111,9 +111,9 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v5.8-structured-backup-restore"
+APP_VERSION = "v5.9-modern-ui-refresh"
 app.config["APP_VERSION"] = APP_VERSION
-# structured_backup_restore release marker
+# modern_ui_refresh release marker
 
 
 @app.context_processor

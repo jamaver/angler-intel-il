@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel",
-  "version": "v5.8-structured-backup-restore",
-  "updated": "2026-07-10T19:20:00-05:00",
+  "version": "v5.9-modern-ui-refresh",
+  "updated": "2026-07-10T19:35:00-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -37,7 +37,8 @@
     "realistic_icon_system": "v5.5",
     "waterbody_detail_panels": "v5.6",
     "waterbody_dataset_import_export": "v5.7",
-    "structured_backup_restore": "v5.8"
+    "structured_backup_restore": "v5.8",
+    "modern_ui_refresh": "v5.9"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -69,6 +70,7 @@
     "v5.5 adds a realistic icon system for waters, fish, and lures so the map and dashboard read more like a finished fishing product.",
     "v5.6 adds a richer waterbody detail page with target-fit context, a small map preview, and a clearer action rail.",
     "v5.7 adds editable waterbody dataset export/import for manual waters through the local waters workflow.",
-    "v5.8 adds a structured backup restore path for user-data archives with pre-restore safety copies and App Health restore controls."
+    "v5.8 adds a structured backup restore path for user-data archives with pre-restore safety copies and App Health restore controls.",
+    "v5.9 refreshes the dashboard shell into a more map-first layout with stronger target-species, conditions, and nearby-water emphasis."
   ]
 }
