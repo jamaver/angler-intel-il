@@ -680,9 +680,15 @@ function render(data) {
     setHTML("waters", data.waters.map(w => `
       <div class="water-row">
         <img class="icon-mini" src="${waterIconForRecord(w)}" alt="">
-        <div>
+        <div class="water-row-meta">
           <b>${w.name}</b>
-          <div class="small">${w.type}${w.distance ? ` - ${w.distance} mi` : ""}</div>
+          <div class="small">${w.type}${w.distance ? ` - ${w.distance} mi` : ""}${w.city ? ` · ${w.city}` : ""}</div>
+          <div class="water-row-chips">
+            <span class="mini">${w.local_score ?? "?"} score</span>
+            ${w.favorite ? `<span class="mini">Favorite</span>` : ""}
+            ${w.stocked_trout ? `<span class="mini">Trout</span>` : ""}
+            ${w.manual || String(w.source || "").toLowerCase() === "manual" ? `<span class="mini">Manual</span>` : ""}
+          </div>
         </div>
         <a class="water-row-link" href="/water/${encodeURIComponent(w.id)}">Open Intel</a>
       </div>

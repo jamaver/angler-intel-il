@@ -171,6 +171,59 @@ button {
   flex-wrap: wrap;
 }
 
+.control-head-note {
+  max-width: 28rem;
+  color: #cbd5e1;
+}
+
+.target-control {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.95rem;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(7, 18, 34, 0.36);
+}
+
+.target-control label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 800;
+}
+
+.target-control select {
+  min-height: 2.75rem;
+}
+
+.target-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.target-actions button,
+.favorite-add button,
+.search button {
+  min-height: 2.7rem;
+}
+
+.control-profile-summary {
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(148, 163, 184, 0.08);
+  color: #dbeafe;
+  font-size: 0.92rem;
+}
+
+.favorite-add {
+  margin-top: 0;
+}
+
+.favorites {
+  padding-top: 0.1rem;
+}
+
 .dashboard-brief-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
@@ -247,6 +300,19 @@ button {
   gap: 0.75rem;
   align-items: center;
   justify-content: space-between;
+}
+
+.water-row-meta {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.water-row-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
 }
 
 .water-row b {
@@ -331,12 +397,22 @@ button {
     grid-template-columns: 1fr 1fr;
   }
 
+  .target-actions,
+  .water-row-chips {
+    width: 100%;
+  }
+
   .water-row {
     align-items: flex-start;
+    gap: 0.6rem;
   }
 
   .forecast {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .water-row-link {
+    margin-left: auto;
   }
 
   h1 {
