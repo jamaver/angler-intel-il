@@ -1,0 +1,18 @@
+{
+  "app_name": "Angler Intel",
+  "version": "v5.7-waterbody-dataset-import-export",
+  "installed_at": "2026-07-10T18:00:50-05:00",
+  "previous_version": "v5.6-waterbody-detail-panels",
+  "json_source_of_truth": true,
+  "sqlite_role": "mirror/read-only foundation until explicit migration",
+  "authority_flipped": false,
+  "waterbody_dataset_export_enabled": true,
+  "waterbody_dataset_import_enabled": true,
+  "manual_waters_untouched": true,
+  "catalog_refresh_after_import": true,
+  "notes": [
+    "Manual waters can now be exported from Local Waters and imported back as JSON.",
+    "Starter waters remain untouched by import operations.",
+    "The local catalog refreshes after a successful import so the map and list stay current."
+  ]
+}

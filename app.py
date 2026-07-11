@@ -111,8 +111,9 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v5.6-waterbody-detail-panels"
+APP_VERSION = "v5.8-structured-backup-restore"
 app.config["APP_VERSION"] = APP_VERSION
+# structured_backup_restore release marker
 
 
 @app.context_processor

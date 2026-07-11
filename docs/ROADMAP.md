@@ -66,6 +66,20 @@ Angler Intel is moving toward a map-first, waterbody-centered fishing intelligen
 - Clear action rail back to map and Smart Picks
 - Cleaner presentation for species, habitat, access, and catch history
 
+## v5.7 Waterbody Dataset Import/Export
+
+- Export the editable manual waterbody dataset
+- Import manual waters from JSON
+- Keep starter waters untouched
+- Refresh the local catalog after import
+
+## v5.8 Structured Backup and Restore
+
+- Restore structured data from app backups
+- Pre-restore safety copy for JSON and SQLite data
+- App Health restore controls for recent backups
+- Path safety and backup naming checks
+
 - Import/export waterbody datasets
 - Backup and restore coverage for structured data
 - Portable snapshots for migration and recovery

@@ -1069,9 +1069,47 @@ button {
   color: #102417;
 }
 
+.ai-health-backup-row-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.ai-health-backup-row-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-top: 0.45rem;
+}
+
 .ai-health-backup-row a {
   color: #1f8f45;
   font-weight: 800;
+}
+
+.ai-health-backup-row .ai-health-backup-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.2rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid #5fa66f;
+  background: #f4fff6;
+  color: #102417;
+  text-decoration: none;
+}
+
+.ai-health-backup-row button {
+  min-height: 2.2rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #df7c4f;
+  background: #fff4ed;
+  color: #7d3414;
+  font-weight: 800;
+  cursor: pointer;
 }
 /* end Angler Intel IL v4.4.3 App Health backup panel */
 
@@ -1586,6 +1624,23 @@ button {
   flex-wrap: wrap;
   gap: 0.35rem;
   margin-top: 0.75rem;
+}
+
+.dataset-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  margin: 0.75rem 0;
+}
+
+.dataset-tools input[type="file"] {
+  max-width: 100%;
+  padding: 0.55rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid #334155;
+  background: #f8fff9;
+  color: #102417;
 }
 
 .water-grid {

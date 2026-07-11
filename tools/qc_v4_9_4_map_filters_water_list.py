@@ -63,6 +63,8 @@ if app_version_path.exists():
         "v5.4-map-ranking-prep",
         "v5.5-realistic-icon-system",
         "v5.6-waterbody-detail-panels",
+        "v5.7-waterbody-dataset-import-export",
+        "v5.8-structured-backup-restore",
     }:
         errors.append("app_version.json is not aligned to v4.9.4 or later")
 
@@ -78,7 +80,7 @@ for needle, message in [
     if needle not in app_text:
         errors.append(message)
 
-if 'APP_VERSION = "v4.9.4-map-filters-water-list"' not in app_text and 'APP_VERSION = "v5.0-sqlite-authority-migration"' not in app_text and 'APP_VERSION = "v5.1-sqlite-waterbody-migration-prep"' not in app_text and 'APP_VERSION = "v5.2-catch-learning"' not in app_text and 'APP_VERSION = "v5.3-target-species-profile"' not in app_text and 'APP_VERSION = "v5.4-map-ranking-prep"' not in app_text and 'APP_VERSION = "v5.5-realistic-icon-system"' not in app_text and 'APP_VERSION = "v5.6-waterbody-detail-panels"' not in app_text:
+if 'APP_VERSION = "v4.9.4-map-filters-water-list"' not in app_text and 'APP_VERSION = "v5.0-sqlite-authority-migration"' not in app_text and 'APP_VERSION = "v5.1-sqlite-waterbody-migration-prep"' not in app_text and 'APP_VERSION = "v5.2-catch-learning"' not in app_text and 'APP_VERSION = "v5.3-target-species-profile"' not in app_text and 'APP_VERSION = "v5.4-map-ranking-prep"' not in app_text and 'APP_VERSION = "v5.5-realistic-icon-system"' not in app_text and 'APP_VERSION = "v5.6-waterbody-detail-panels"' not in app_text and 'APP_VERSION = "v5.7-waterbody-dataset-import-export"' not in app_text and 'APP_VERSION = "v5.8-structured-backup-restore"' not in app_text:
     errors.append("app.py version is not aligned to the map filters release line")
 
 for needle, message in [

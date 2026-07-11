@@ -8,7 +8,12 @@ from typing import Any
 
 from flask import current_app, jsonify, render_template, render_template_string, request
 
-from intelligence.water_registry import load_water_catalog, load_water_records
+from intelligence.water_registry import (
+    export_waterbody_dataset,
+    import_waterbody_dataset,
+    load_water_catalog,
+    load_water_records,
+)
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -291,6 +296,18 @@ def _render_waters_page() -> str:
     <button onclick="loadAllWaters()">Show all waters</button>
   </div>
 
+  <div class="card">
+    <h2>Dataset Tools</h2>
+    <p class="muted">Export the editable manual waterbody dataset, or import a JSON file with manual waters.</p>
+    <div class="dataset-tools">
+      <button type="button" onclick="exportWaterDataset('manual')">Export manual waters</button>
+      <button type="button" class="secondary" onclick="exportWaterDataset('merged')">Export merged waters</button>
+      <input id="waterDatasetFile" type="file" accept="application/json,.json">
+      <button type="button" class="secondary" onclick="importWaterDataset()">Import manual waters</button>
+    </div>
+    <div id="waterDatasetStatus" class="muted">No dataset export or import has run yet.</div>
+  </div>
+
   <div class="card waters-results-card">
     <h2>Results</h2>
     <div id="summary" class="muted">Search to load waters.</div>
@@ -323,6 +340,73 @@ async function loadWaters() {
 
 async function loadAllWaters() {
   await fetchAndRender("/api/waters/all");
+}
+
+function setDatasetStatus(message, kind = "muted") {
+  const status = document.getElementById("waterDatasetStatus");
+  if (!status) return;
+  status.className = kind;
+  status.textContent = message;
+}
+
+async function exportWaterDataset(scope) {
+  try {
+    setDatasetStatus("Exporting waterbody dataset...");
+    const res = await fetch(`/api/waters/export?scope=${encodeURIComponent(scope || "manual")}`);
+    const data = await res.json();
+
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || "Unable to export waterbody dataset");
+    }
+
+    const filename = `angler-intel-waterbodies-${scope || "manual"}-${Date.now()}.json`;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    setDatasetStatus(`Exported ${data.manual_count ?? 0} manual water(s).`);
+  } catch (err) {
+    setDatasetStatus(`Export failed: ${err.message || err}`, "error-text");
+  }
+}
+
+async function importWaterDataset() {
+  const fileNode = document.getElementById("waterDatasetFile");
+  if (!fileNode || !fileNode.files || !fileNode.files.length) {
+    setDatasetStatus("Choose a JSON file before importing.", "error-text");
+    return;
+  }
+
+  try {
+    setDatasetStatus("Importing manual waters...");
+    const text = await fileNode.files[0].text();
+    const payload = JSON.parse(text);
+    const res = await fetch("/api/waters/import", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        mode: "replace",
+        ...payload
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || "Unable to import waterbody dataset");
+    }
+
+    setDatasetStatus(`Imported ${data.import?.imported_count ?? 0} manual water(s). Refreshing catalog...`);
+    await loadAllWaters();
+    await loadWaters();
+  } catch (err) {
+    setDatasetStatus(`Import failed: ${err.message || err}`, "error-text");
+  }
 }
 
 async function fetchAndRender(url) {
@@ -569,6 +653,41 @@ def register_local_waters_routes_v40(app):
                 "custom_waters": catalog.get("custom_count", 0),
             },
         })
+
+    @app.route("/api/waters/export")
+    def local_waters_export_api_v40():
+        scope = str(request.args.get("scope", "manual")).strip().lower()
+        payload = export_waterbody_dataset(scope=scope)
+        payload["ok"] = True
+        payload["version"] = _current_app_version()
+        return jsonify(payload)
+
+    @app.route("/api/waters/import", methods=["POST"])
+    def local_waters_import_api_v40():
+        payload = request.get_json(silent=True) or {}
+        mode = str(payload.get("mode", "replace")).strip().lower()
+
+        try:
+            result = import_waterbody_dataset(payload, mode=mode)
+            try:
+                from intelligence.sqlite_foundation import initialize_and_mirror
+
+                mirror_result = initialize_and_mirror()
+            except Exception as exc:
+                mirror_result = {"ok": False, "error": str(exc)}
+
+            return jsonify({
+                "ok": True,
+                "version": _current_app_version(),
+                "import": result,
+                "mirror": mirror_result,
+            })
+        except Exception as exc:
+            return jsonify({
+                "ok": False,
+                "version": _current_app_version(),
+                "error": str(exc),
+            }), 400
 
     @app.route("/api/water/<water_id>")
     def local_water_detail_api_v40(water_id: str):

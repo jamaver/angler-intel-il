@@ -378,3 +378,85 @@ def append_custom_water_record(payload: dict[str, Any]) -> dict[str, Any]:
     _write_json(CUSTOM_WATERS_PATH, records)
 
     return record
+
+
+def export_waterbody_dataset(scope: str = "manual") -> dict[str, Any]:
+    catalog = load_water_catalog()
+    scope = str(scope or "manual").strip().lower()
+    manual_records = load_custom_water_records()
+
+    payload: dict[str, Any] = {
+        "app_name": "Angler Intel",
+        "dataset": "waterbodies",
+        "export_scope": "merged" if scope == "merged" else "manual",
+        "exported_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "source_of_truth": "json",
+        "starter_count": catalog.get("base_count", 0),
+        "manual_count": catalog.get("custom_count", 0),
+        "total_count": catalog.get("total_count", 0),
+        "source_path": catalog.get("source_path"),
+        "custom_source_path": catalog.get("custom_source_path"),
+        "manual_waters": manual_records,
+    }
+
+    if scope == "merged":
+        payload["waters"] = catalog.get("records", [])
+
+    return payload
+
+
+def import_waterbody_dataset(payload: dict[str, Any], mode: str = "replace") -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        raise ValueError("Import payload must be an object")
+
+    mode = str(mode or "replace").strip().lower()
+    if mode not in {"replace", "append", "merge"}:
+        raise ValueError("Import mode must be replace, append, or merge")
+
+    source_items = payload.get("manual_waters")
+    if not isinstance(source_items, list):
+        source_items = payload.get("waters")
+    if not isinstance(source_items, list):
+        source_items = payload.get("records")
+    if not isinstance(source_items, list):
+        raise ValueError("Import payload must include a manual_waters, waters, or records list")
+
+    normalized: list[dict[str, Any]] = []
+    skipped: list[str] = []
+
+    for item in source_items:
+        if not isinstance(item, dict):
+            skipped.append("non-object item")
+            continue
+
+        source = str(item.get("source") or "manual").strip().lower()
+        if source not in {"manual", "user", "user-added", "imported"} and not item.get("manual"):
+            skipped.append(str(item.get("name") or item.get("id") or "unknown"))
+            continue
+
+        normalized.append(normalize_custom_water_record(item))
+
+    existing = load_custom_water_records()
+
+    if mode == "replace":
+        merged = normalized
+    else:
+        merged_by_id: dict[str, dict[str, Any]] = {}
+        for item in existing:
+            merged_by_id[str(item.get("id") or "").strip()] = item
+        for item in normalized:
+            merged_by_id[str(item.get("id") or "").strip()] = item
+        merged = list(merged_by_id.values())
+
+    merged.sort(key=lambda item: (str(item.get("county") or ""), str(item.get("name") or "")))
+    _write_json(CUSTOM_WATERS_PATH, merged)
+
+    return {
+        "ok": True,
+        "mode": mode,
+        "imported_count": len(normalized),
+        "skipped_count": len(skipped),
+        "skipped": skipped[:10],
+        "manual_count": len(merged),
+        "manual_waters_path": str(CUSTOM_WATERS_PATH.relative_to(APP_ROOT)),
+    }

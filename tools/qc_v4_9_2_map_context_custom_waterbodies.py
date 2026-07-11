@@ -74,6 +74,8 @@ if app_version_path.exists():
         "v5.4-map-ranking-prep",
         "v5.5-realistic-icon-system",
         "v5.6-waterbody-detail-panels",
+        "v5.7-waterbody-dataset-import-export",
+        "v5.8-structured-backup-restore",
     }:
         errors.append("app_version.json is not aligned to v4.9.2 or later")
 

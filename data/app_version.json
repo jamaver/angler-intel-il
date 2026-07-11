@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel",
-  "version": "v5.6-waterbody-detail-panels",
-  "updated": "2026-07-10T18:00:50-05:00",
+  "version": "v5.8-structured-backup-restore",
+  "updated": "2026-07-10T19:20:00-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -35,7 +35,9 @@
     "target_species_profile": "v5.3",
     "map_ranking_prep": "v5.4",
     "realistic_icon_system": "v5.5",
-    "waterbody_detail_panels": "v5.6"
+    "waterbody_detail_panels": "v5.6",
+    "waterbody_dataset_import_export": "v5.7",
+    "structured_backup_restore": "v5.8"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -65,6 +67,8 @@
     "v5.3 adds a persisted target species profile, current trip target, and target-aware intelligence defaults.",
     "v5.4 adds target-aware map ranking, ranked waters in view, and water-fit annotations from the map data endpoint.",
     "v5.5 adds a realistic icon system for waters, fish, and lures so the map and dashboard read more like a finished fishing product.",
-    "v5.6 adds a richer waterbody detail page with target-fit context, a small map preview, and a clearer action rail."
+    "v5.6 adds a richer waterbody detail page with target-fit context, a small map preview, and a clearer action rail.",
+    "v5.7 adds editable waterbody dataset export/import for manual waters through the local waters workflow.",
+    "v5.8 adds a structured backup restore path for user-data archives with pre-restore safety copies and App Health restore controls."
   ]
 }

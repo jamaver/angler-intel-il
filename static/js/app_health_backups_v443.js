@@ -63,11 +63,20 @@
 
       list.innerHTML = backups.slice(0, 12).map(b => `
         <div class="ai-health-backup-row">
-          <strong>${esc(b.filename)}</strong><br>
-          <span class="muted">${esc(b.modified)} · ${esc(b.size_mb)} MB</span><br>
-          <a href="${esc(b.download_url)}">Download</a>
+          <div class="ai-health-backup-row-head">
+            <strong>${esc(b.filename)}</strong>
+            <span class="muted">${esc(b.modified)} · ${esc(b.size_mb)} MB</span>
+          </div>
+          <div class="ai-health-backup-row-actions">
+            <a class="ai-health-backup-link" href="${esc(b.download_url)}">Download</a>
+            <button type="button" data-restore-backup="${esc(b.filename)}">Restore</button>
+          </div>
         </div>
       `).join("");
+
+      panel.querySelectorAll("[data-restore-backup]").forEach(button => {
+        button.addEventListener("click", () => restoreBackup(button.getAttribute("data-restore-backup") || ""));
+      });
     } catch (err) {
       status.textContent = "Unable to load backups: " + err;
     }
@@ -92,6 +101,43 @@
       loadBackups();
     } catch (err) {
       status.textContent = "Backup failed: " + err;
+    }
+  }
+
+  async function restoreBackup(filename) {
+    const panel = ensurePanel();
+    const status = panel.querySelector("#aiHealthBackupStatus");
+
+    if (!filename) {
+      status.textContent = "Restore failed: missing backup filename.";
+      return;
+    }
+
+    if (!confirm(`Restore backup ${filename}? This will copy current data aside first.`)) {
+      return;
+    }
+
+    status.textContent = "Restoring backup...";
+
+    try {
+      const res = await fetch("/api/app-health/backups/restore", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ filename })
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        status.textContent = "Restore failed: " + (data.error || "unknown error");
+        return;
+      }
+
+      status.textContent = `Restored ${filename}. Current data was copied aside first.`;
+      loadBackups();
+    } catch (err) {
+      status.textContent = "Restore failed: " + err;
     }
   }
 

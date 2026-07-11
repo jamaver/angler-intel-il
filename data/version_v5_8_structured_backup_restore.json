@@ -1,0 +1,17 @@
+{
+  "app_name": "Angler Intel",
+  "version": "v5.8-structured-backup-restore",
+  "installed_at": "2026-07-10T19:20:00-05:00",
+  "previous_version": "v5.7-waterbody-dataset-import-export",
+  "json_source_of_truth": true,
+  "sqlite_role": "mirror/read-only foundation until explicit migration",
+  "authority_flipped": false,
+  "structured_backup_restore_enabled": true,
+  "restore_precheck_snapshot_enabled": true,
+  "app_health_restore_controls_enabled": true,
+  "notes": [
+    "User-data backups can now be restored through a structured helper that snapshots current JSON and SQLite-related roots first.",
+    "App Health exposes restore controls for recent backups while keeping the normal navigation unchanged.",
+    "The restore flow remains local, Raspberry Pi friendly, and does not flip SQLite authority."
+  ]
+}
