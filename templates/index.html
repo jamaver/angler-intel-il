@@ -20,13 +20,15 @@
     <header class="dashboard-hero">
       <div class="dashboard-hero-copy">
         <p class="eyebrow">Map-first fishing intelligence</p>
-        <h1>Angler Intel</h1>
-        <p>Choose a target fish, review nearby waters, and jump into map or intel views without losing context.</p>
-        <p class="release-line">Current release: {{ app_version }}</p>
+        <div class="dashboard-title-row">
+          <h1>Angler Intel</h1>
+          <p class="release-line">Current release: {{ app_version }}</p>
+        </div>
+        <p class="dashboard-subtitle">Choose a target fish, review nearby waters, and jump into map or intel views without losing context.</p>
         <div class="hero-actions">
           <a class="hero-action" href="/map">Open Map</a>
-          <a class="hero-action secondary-link" href="/waters">Local Waters</a>
-          <a class="hero-action secondary-link" href="/reports">Saved Reports</a>
+          <a class="hero-action secondary-link" href="/waters">Waters</a>
+          <a class="hero-action secondary-link" href="/reports">Reports</a>
         </div>
       </div>
       <div id="dashboardSummary" class="dashboard-summary"></div>
@@ -40,35 +42,37 @@
         </div>
         <div class="small control-head-note">Trip target and favorites update the ranking and Smart Intelligence defaults.</div>
       </div>
-      <form id="searchForm" class="search">
-        <input id="zipInput" name="zip" value="60543" placeholder="Enter ZIP code">
-        <button type="submit">Search</button>
-      </form>
+      <div class="control-grid">
+        <form id="searchForm" class="search control-search">
+          <input id="zipInput" name="zip" value="60543" placeholder="Enter ZIP code">
+          <button type="submit">Search</button>
+        </form>
 
-      <div class="target-control">
-        <label>
-          Target fish
-          <select id="targetSpecies">
-            <option value="">Auto from profile</option>
-            {% for species in target_species_options %}
-              <option value="{{ species }}">{{ species }}</option>
-            {% endfor %}
-          </select>
-        </label>
-        <div class="target-actions">
-          <button type="button" id="setTripTarget">Use for Trip</button>
-          <button type="button" class="secondary-button" id="setDefaultTarget">Set Default</button>
-          <button type="button" class="secondary-button" id="favoriteTarget">Favorite</button>
+        <div class="target-control">
+          <label>
+            Target fish
+            <select id="targetSpecies">
+              <option value="">Auto from profile</option>
+              {% for species in target_species_options %}
+                <option value="{{ species }}">{{ species }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <div class="target-actions">
+            <button type="button" id="setTripTarget">Use for Trip</button>
+            <button type="button" class="secondary-button" id="setDefaultTarget">Set Default</button>
+            <button type="button" class="secondary-button" id="favoriteTarget">Favorite</button>
+          </div>
+          <div id="targetProfileSummary" class="control-profile-summary"></div>
         </div>
-        <div id="targetProfileSummary" class="control-profile-summary"></div>
-      </div>
 
-      <div class="favorite-add">
-        <input id="favoriteName" placeholder="Favorite name">
-        <button onclick="saveFavorite()" type="button">Save ZIP</button>
-      </div>
+        <div class="favorite-add">
+          <input id="favoriteName" placeholder="Favorite name">
+          <button onclick="saveFavorite()" type="button">Save ZIP</button>
+        </div>
 
-      <div id="favorites" class="favorites"></div>
+        <div id="favorites" class="favorites"></div>
+      </div>
     </section>
 
     <section class="dashboard-brief-grid">
