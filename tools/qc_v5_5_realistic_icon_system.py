@@ -72,39 +72,39 @@ if 'APP_VERSION = "v5.5-realistic-icon-system"' not in app_text and 'APP_VERSION
 
 map_js = read("static/js/map_dashboard_v49.js")
 for needle in (
-    "/static/icons/map/spillway.svg",
-    "/static/icons/map/high_confidence.svg",
+    "/static/icons/water/spillway.svg",
+    "/static/icons/water/trout.svg",
 ):
     if needle not in map_js:
         errors.append(f"map JS missing icon mapping for {needle}")
 
 map_template = read("templates/map.html")
 for needle in (
-    "/static/icons/map/spillway.svg",
-    "/static/icons/map/high_confidence.svg",
+    "/static/icons/water/spillway.svg",
+    "/static/icons/water/trout.svg",
 ):
     if needle not in map_template:
         errors.append(f"map template missing legend icon {needle}")
 
-icon_dir = APP_ROOT / "static" / "icons" / "map"
+icon_dir = APP_ROOT / "static" / "icons" / "water"
 required_icons = {
     "lake.svg",
     "pond.svg",
     "river.svg",
     "reservoir.svg",
     "creek.svg",
-    "manual_water.svg",
-    "favorite_water.svg",
-    "catch_history.svg",
-    "high_confidence.svg",
+    "manual.svg",
+    "favorite.svg",
+    "history.svg",
+    "target.svg",
     "other.svg",
     "spillway.svg",
-    "missing_coordinates.svg",
+    "trout.svg",
 }
 present = {path.name for path in icon_dir.glob("*.svg")}
 missing_icons = sorted(required_icons - present)
 if missing_icons:
-    errors.append(f"Missing map icons: {', '.join(missing_icons)}")
+    errors.append(f"Missing water icons: {', '.join(missing_icons)}")
 
 for rel in ("static/fish", "static/lures"):
     if not (APP_ROOT / rel).exists():

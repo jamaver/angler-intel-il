@@ -111,7 +111,7 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v5.9-modern-ui-refresh"
+APP_VERSION = "v5.9.1-icon-realism-polish"
 app.config["APP_VERSION"] = APP_VERSION
 # modern_ui_refresh release marker
 
@@ -178,96 +178,8 @@ def slugify_species(name):
     )
 
 
-FISH_ICON_OVERRIDES = {
-    "largemouth_bass": "largemouth_bass",
-    "smallmouth_bass": "smallmouth_bass",
-    "crappie": "crappie",
-    "bluegill": "bluegill",
-    "channel_catfish": "catfish",
-    "flathead_catfish": "catfish",
-    "catfish": "catfish",
-    "brown_trout": "trout",
-    "rainbow_trout": "trout",
-    "trout": "trout",
-    "walleye": "walleye",
-    "northern_pike": "pike",
-    "muskie": "pike",
-    "musky": "pike",
-    "pike": "pike",
-    "sauger": "walleye",
-    "white_bass": "generic_fish",
-    "yellow_perch": "generic_fish",
-    "common_carp": "generic_fish",
-    "generic_fish": "generic_fish",
-}
-
-
-LURE_ICON_OVERRIDES = {
-    "spinnerbait": "spinnerbait",
-    "topwater": "topwater_popper",
-    "topwater_popper": "topwater_popper",
-    "frog": "frog",
-    "jig": "jig",
-    "microjig": "jig",
-    "walleyejig": "drop_shot",
-    "crankbait": "crankbait",
-    "swimbait": "swimbait",
-    "minnow": "crankbait",
-    "inline_spinner": "inline_spinner",
-    "spoon": "spoon",
-    "drop_shot": "drop_shot",
-    "worm": "soft_plastic_worm",
-    "soft_plastic_worm": "soft_plastic_worm",
-    "catfishbait": "bobber_live_bait",
-    "bobber_live_bait": "bobber_live_bait",
-    "generic_lure": "generic_lure",
-}
-
-
-def fish_icon_name(name):
-    slug = slugify_species(name)
-    return FISH_ICON_OVERRIDES.get(slug, "generic_fish")
-
-
-def lure_icon_name(name):
-    text = slugify_species(name).replace("_", " ")
-    if "spinnerbait" in text:
-        return "spinnerbait"
-    if "topwater" in text and "popper" in text:
-        return "topwater_popper"
-    if "topwater" in text:
-        return "topwater_popper"
-    if "frog" in text:
-        return "frog"
-    if "drop shot" in text or "dropshot" in text:
-        return "drop_shot"
-    if "inline spinner" in text or "rooster tail" in text:
-        return "inline_spinner"
-    if "swimbait" in text:
-        return "swimbait"
-    if "crankbait" in text or "jerkbait" in text or "minnow" in text or "shad" in text:
-        return "crankbait"
-    if "walleye" in text and "jig" in text:
-        return "drop_shot"
-    if "micro" in text and "jig" in text:
-        return "jig"
-    if "jig" in text:
-        return "jig"
-    if "spoon" in text:
-        return "spoon"
-    if "catfish" in text or "bait" in text:
-        return "bobber_live_bait"
-    if "worm" in text or "plastic" in text or "ned" in text or "finesse" in text:
-        return "soft_plastic_worm"
-    return LURE_ICON_OVERRIDES.get(iconSlug(name).replace("-", "_"), "generic_lure")
-
-
 def fish_image(name):
-    return f"/static/icons/fish/{fish_icon_name(name)}.svg"
-
-
-def lure_image(name):
-    return f"/static/icons/lures/{lure_icon_name(name)}.svg"
+    return f"/static/fish/{slugify_species(name)}.svg"
 
 
 def species_key(name):
@@ -342,12 +254,12 @@ def build_best_bet(species_ranked, best_time, best_hour, base_score, temp_f, win
         return {
             "species": "Target Species",
             "species_score": 0,
-            "fish_image": "/static/icons/fish/largemouth_bass.svg",
+            "fish_image": "/static/fish/largemouth_bass.svg",
             "time_label": safe_best_time.get("label") or "Any time",
             "time_range": safe_best_time.get("time") or "Any time",
             "best_hour": format_hour_label(safe_best_hour.get("hour")) if safe_best_hour else None,
             "lure_name": "General-purpose lure",
-            "lure_image": "/static/icons/lures/soft_plastic_worm.svg",
+            "lure_image": "/static/lures/worm.svg",
             "speed": "Slow speed",
             "size": "3-5 in",
             "colors": ["Natural", "White"],
@@ -364,7 +276,7 @@ def build_best_bet(species_ranked, best_time, best_hour, base_score, temp_f, win
     lures = top.get("lures") if isinstance(top.get("lures"), dict) else {}
     top_name = top.get("name", "Target Species")
     top_score = top.get("score", 0)
-    top_image = top.get("fish_image", "/static/icons/fish/generic_fish.svg")
+    top_image = top.get("fish_image", "/static/fish/largemouth_bass.svg")
 
     cards = lures.get("cards", {})
     best_lure = None
@@ -380,7 +292,7 @@ def build_best_bet(species_ranked, best_time, best_hour, base_score, temp_f, win
     if not best_lure:
         best_lure = {
             "name": lures.get("evening", "Spinnerbait"),
-            "image": "/static/icons/lures/spinnerbait.svg",
+            "image": "/static/lures/spinnerbait.svg",
             "speed": "Medium speed",
             "size": "3/8 oz",
             "colors": ["White", "Chartreuse"],

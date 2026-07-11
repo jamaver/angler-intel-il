@@ -1,7 +1,7 @@
 LURE_DB = {
     "topwater": {
         "name": "Topwater frog or popper",
-        "image": "/static/icons/lures/topwater_popper.svg",
+        "image": "/static/lures/topwater.svg",
         "speed": "Slow to medium",
         "size": "2-3 in",
         "colors": ["Black", "Bone", "Green", "White"],
@@ -9,7 +9,7 @@ LURE_DB = {
     },
     "spinnerbait": {
         "name": "White/chartreuse spinnerbait",
-        "image": "/static/icons/lures/spinnerbait.svg",
+        "image": "/static/lures/spinnerbait.svg",
         "speed": "Medium speed",
         "size": "3/8 oz",
         "colors": ["White", "Chartreuse", "Gold", "Bluegill"],
@@ -17,7 +17,7 @@ LURE_DB = {
     },
     "texas_rig": {
         "name": "Texas rig worm or jig",
-        "image": "/static/icons/lures/soft_plastic_worm.svg",
+        "image": "/static/lures/worm.svg",
         "speed": "Slow speed",
         "size": "4-7 in",
         "colors": ["Green pumpkin", "Black/blue", "Junebug", "Watermelon"],
@@ -25,7 +25,7 @@ LURE_DB = {
     },
     "crappie_jig": {
         "name": "Small tube jig",
-        "image": "/static/icons/lures/jig.svg",
+        "image": "/static/lures/jig.svg",
         "speed": "Slow speed",
         "size": "1/32-1/16 oz",
         "colors": ["White", "Chartreuse", "Pink", "Glow"],
@@ -33,7 +33,7 @@ LURE_DB = {
     },
     "minnow_float": {
         "name": "Minnow under slip float",
-        "image": "/static/icons/lures/bobber_live_bait.svg",
+        "image": "/static/lures/minnow.svg",
         "speed": "Dead slow",
         "size": "1-2 in",
         "colors": ["Natural", "Silver", "White"],
@@ -41,7 +41,7 @@ LURE_DB = {
     },
     "micro_jig": {
         "name": "Micro jig",
-        "image": "/static/icons/lures/jig.svg",
+        "image": "/static/lures/microjig.svg",
         "speed": "Slow speed",
         "size": "1/64-1/32 oz",
         "colors": ["Red", "Natural", "Black", "Chartreuse"],
@@ -49,7 +49,7 @@ LURE_DB = {
     },
     "catfish_bait": {
         "name": "Cut bait / stink bait",
-        "image": "/static/icons/lures/bobber_live_bait.svg",
+        "image": "/static/lures/catfishbait.svg",
         "speed": "Still bait",
         "size": "Hook size 2/0-5/0",
         "colors": ["Natural"],
@@ -57,7 +57,7 @@ LURE_DB = {
     },
     "walleye_jig": {
         "name": "Jig and minnow",
-        "image": "/static/icons/lures/drop_shot.svg",
+        "image": "/static/lures/walleyejig.svg",
         "speed": "Slow lift/drop",
         "size": "1/8-1/4 oz",
         "colors": ["Gold", "Silver", "Firetiger", "White"],
@@ -65,7 +65,7 @@ LURE_DB = {
     },
     "spoon": {
         "name": "Small spoon / inline spinner",
-        "image": "/static/icons/lures/spoon.svg",
+        "image": "/static/lures/spoon.svg",
         "speed": "Medium speed",
         "size": "1/8-1/4 oz",
         "colors": ["Silver", "Gold", "Orange", "Rainbow"],
@@ -73,7 +73,7 @@ LURE_DB = {
     },
     "default": {
         "name": "Soft plastic",
-        "image": "/static/icons/lures/generic_lure.svg",
+        "image": "/static/lures/worm.svg",
         "speed": "Slow speed",
         "size": "3-5 in",
         "colors": ["Green pumpkin", "Natural", "Black", "White"],
