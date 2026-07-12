@@ -1,0 +1,11 @@
+{
+  "version": "v5.9.2-lure-variant-assets",
+  "previous_version": "v5.9-modern-ui-refresh",
+  "lure_assets": true,
+  "color_variants": true,
+  "smart_intelligence_lure_images": true,
+  "source_sheets_preserved": true,
+  "fish_images_preserved": true,
+  "copied_fishbrain_assets": false,
+  "installed_at": "2026-07-12T00:00:00-05:00"
+}

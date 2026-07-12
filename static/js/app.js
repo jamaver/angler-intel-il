@@ -65,16 +65,72 @@ function speciesIconClass(size = "md") {
 
 function lureIconPath(value) {
   const text = String(value || "").toLowerCase();
-  if (text.includes("spinnerbait")) return "/static/lures/spinnerbait.svg";
-  if (text.includes("topwater")) return "/static/lures/topwater.svg";
-  if (text.includes("jig") && text.includes("micro")) return "/static/lures/microjig.svg";
-  if (text.includes("jig") && text.includes("walleye")) return "/static/lures/walleyejig.svg";
-  if (text.includes("jig")) return "/static/lures/jig.svg";
-  if (text.includes("minnow")) return "/static/lures/minnow.svg";
-  if (text.includes("catfish")) return "/static/lures/catfishbait.svg";
-  if (text.includes("spoon")) return "/static/lures/spoon.svg";
-  if (text.includes("worm")) return "/static/lures/worm.svg";
-  return "/static/lures/worm.svg";
+  if (text.includes("spinnerbait")) {
+    if (text.includes("black") && text.includes("night")) return "/static/lures/spinnerbait/black_night.png";
+    if (text.includes("bluegill")) return "/static/lures/spinnerbait/bluegill.png";
+    if (text.includes("gold")) return "/static/lures/spinnerbait/gold_shiner.png";
+    if (text.includes("chartreuse")) return "/static/lures/spinnerbait/chartreuse_white.png";
+    return "/static/lures/spinnerbait/white_silver.png";
+  }
+  if (text.includes("topwater") || text.includes("popper")) {
+    if (text.includes("chrome") && text.includes("blue")) return "/static/lures/topwater_popper/chrome_blue.png";
+    if (text.includes("frog") && text.includes("green")) return "/static/lures/topwater_popper/frog_green.png";
+    if (text.includes("black")) return "/static/lures/topwater_popper/black.png";
+    if (text.includes("shad")) return "/static/lures/topwater_popper/shad.png";
+    return "/static/lures/topwater_popper/bone.png";
+  }
+  if (text.includes("jig")) {
+    if (text.includes("black") && text.includes("blue")) return "/static/lures/jig/black_blue.png";
+    if (text.includes("brown") && text.includes("craw")) return "/static/lures/jig/brown_orange_craw.png";
+    if (text.includes("pbj")) return "/static/lures/jig/pbj.png";
+    if (text.includes("white")) return "/static/lures/jig/white_shad.png";
+    return "/static/lures/jig/green_pumpkin.png";
+  }
+  if (text.includes("crankbait") || text.includes("crank")) {
+    if (text.includes("firetiger")) return "/static/lures/crankbait/firetiger.png";
+    if (text.includes("chartreuse") && text.includes("black")) return "/static/lures/crankbait/chartreuse_black_back.png";
+    if (text.includes("bluegill")) return "/static/lures/crankbait/bluegill.png";
+    if (text.includes("craw")) return "/static/lures/crankbait/craw_red.png";
+    if (text.includes("sexy shad")) return "/static/lures/crankbait/sexy_shad.png";
+    return "/static/lures/crankbait/shad.png";
+  }
+  if (text.includes("swimbait") || text.includes("paddle tail") || text.includes("paddletail")) {
+    if (text.includes("ayu")) return "/static/lures/swimbait/ayu.png";
+    if (text.includes("green") && text.includes("pumpkin")) return "/static/lures/swimbait/green_pumpkin.png";
+    if (text.includes("bluegill")) return "/static/lures/swimbait/bluegill.png";
+    if (text.includes("pearl") || text.includes("white")) return "/static/lures/swimbait/pearl_white.png";
+    return "/static/lures/swimbait/shad.png";
+  }
+  if (text.includes("frog")) {
+    if (text.includes("leopard")) return "/static/lures/frog/leopard_frog.png";
+    if (text.includes("brown")) return "/static/lures/frog/brown_frog.png";
+    if (text.includes("black")) return "/static/lures/frog/black_frog.png";
+    if (text.includes("white")) return "/static/lures/frog/white_frog.png";
+    return "/static/lures/frog/green_frog.png";
+  }
+  if (text.includes("spoon")) {
+    if (text.includes("blue") && text.includes("silver")) return "/static/lures/spoon/blue_silver.png";
+    if (text.includes("firetiger")) return "/static/lures/spoon/firetiger.png";
+    if (text.includes("chartreuse")) return "/static/lures/spoon/chartreuse.png";
+    if (text.includes("gold")) return "/static/lures/spoon/gold.png";
+    return "/static/lures/spoon/silver.png";
+  }
+  if (text.includes("inline spinner") || text.includes("rooster tail") || text.includes("spinner")) {
+    if (text.includes("firetiger")) return "/static/lures/inline_spinner/firetiger.png";
+    if (text.includes("chartreuse")) return "/static/lures/inline_spinner/chartreuse.png";
+    if (text.includes("gold")) return "/static/lures/inline_spinner/gold.png";
+    return "/static/lures/inline_spinner/silver.png";
+  }
+  if (text.includes("drop shot") || text.includes("dropshot") || text.includes("finesse rig")) {
+    if (text.includes("morning dawn")) return "/static/lures/drop_shot/morning_dawn.png";
+    if (text.includes("watermelon") && text.includes("red")) return "/static/lures/drop_shot/watermelon_red.png";
+    if (text.includes("shad")) return "/static/lures/drop_shot/shad.png";
+    return "/static/lures/drop_shot/green_pumpkin.png";
+  }
+  if (text.includes("minnow")) return "/static/lures/swimbait/shad.png";
+  if (text.includes("worm")) return "/static/lures/soft_plastic_worm/green_pumpkin.png";
+  if (text.includes("catfish")) return "/static/lures/generic_lure.png";
+  return "/static/lures/generic_lure.png";
 }
 
 function waterIconForRecord(water = {}) {
@@ -334,7 +390,7 @@ async function loadCatchLog() {
       <div class="catch-row">
         <b><img class="${speciesIconClass("sm")} icon-mini" src="${fishIconPath(c.species)}" alt=""> ${c.species}</b>
         <div class="small">${c.timestamp} · ZIP ${c.zip || "unknown"}${c.waterbody ? ` · ${c.waterbody}` : ""}</div>
-        <div><img class="icon-mini" src="${lureIconPath(c.lure || "worm")}" alt=""> ${c.lure || "No lure recorded"}</div>
+        <div><img class="icon-mini lure-art lure-art-sm" src="${lureIconPath(c.lure || "worm")}" alt=""> ${c.lure || "No lure recorded"}</div>
         <div class="small">${c.notes || ""}</div>
         <button class="danger small-btn" onclick="deleteCatch('${c.id}')">Delete</button>
       </div>
@@ -453,7 +509,7 @@ function renderInsights(insights) {
     ${topSpecies.map(s => `<div class="pill-line"><img class="${speciesIconClass("sm")} icon-mini" src="${fishIconPath(s.name)}" alt=""> ${s.name}: ${s.count}</div>`).join("")}
 
     <h3>Top Lures</h3>
-    ${topLures.map(l => `<div class="pill-line"><img class="icon-mini" src="${lureIconPath(l.name)}" alt=""> ${l.name}: ${l.count}</div>`).join("")}
+    ${topLures.map(l => `<div class="pill-line"><img class="icon-mini lure-art lure-art-sm" src="${lureIconPath(l.name)}" alt=""> ${l.name}: ${l.count}</div>`).join("")}
 
     <h3>Top Waterbodies</h3>
     ${topWaterbodies.map(w => `<div class="pill-line"><img class="icon-mini" src="${waterIconForRecord({ type: w.type || w.name, name: w.name })}" alt=""> ${w.name}: ${w.count}</div>`).join("")}
@@ -508,6 +564,7 @@ function renderSmartIntelligence(intel) {
   const catchHistory = intel.catch_history || {};
   const sampleSize = catchHistory.sample_size || {};
   const catchMeta = [];
+  const lureRecommendation = intel.lure_recommendation || intel.lure_asset || {};
   if (sampleSize.local !== undefined || sampleSize.total !== undefined) {
     catchMeta.push(`Sample ${sampleSize.local || 0}/${sampleSize.total || 0}`);
   }
@@ -519,6 +576,16 @@ function renderSmartIntelligence(intel) {
     <h3>${intel.headline || "Fishing pattern"}</h3>
     <p>${intel.summary || ""}</p>
     ${intel.ok === false ? `<div class="status-warn">Fallback intelligence is active.</div>` : ""}
+    ${lureRecommendation.path ? `
+      <div class="intel-recommendation lure-recommendation">
+        <img class="recommendation-lure-art lure-art lure-art-md" src="${lureRecommendation.path}" alt="${lureRecommendation.label || "Lure"}">
+        <div>
+          <b>Primary lure</b>
+          <div>${lureRecommendation.label || intel.recommendations?.[1]?.value || "Lure"}</div>
+          <div class="small">${intel.recommendations?.[1]?.why || "Chosen from the current lure plan."}</div>
+        </div>
+      </div>
+    ` : ""}
     <div class="intel-signal-row">${labels}</div>
     <div class="intel-grid">
       <div class="intel-recommendation">

@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from intelligence.lure_assets import resolve_lure_asset
+
 
 TRANSITION_DIRECTION = {
     "stage": "v4.6.1-hardening",
@@ -383,6 +385,11 @@ def _base_payload(
     daypart = time_of_day_for_hour()
     species = _safe_text(safe_best_bet.get("species"), "Target species")
     lure = _safe_text(safe_best_bet.get("lure_name"), "general-purpose lure")
+    lure_asset = resolve_lure_asset(
+        recommendation_text=lure,
+        lure_type=safe_best_bet.get("lure_type"),
+        color=safe_best_bet.get("lure_color"),
+    )
     water_type = _safe_text(area_type, "nearby water")
     best_time_label = _safe_text(safe_best_time.get("label"), daypart.title())
     catch_signal = _catch_history_signal(safe_catch_insights, zip_code, species)
@@ -505,6 +512,7 @@ def _base_payload(
         "strategy": strategy,
         "recommendations": recommendations,
         "catch_history": catch_signal,
+        "lure_recommendation": lure_asset,
         "next_actions": [
             "Open Smart Picks for water and rig detail before leaving.",
             "Log catches after the trip so future intelligence can learn from results.",

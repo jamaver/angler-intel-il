@@ -10,6 +10,7 @@ from intelligence.weather import get_weather, f_temp, mph, inhg
 from intelligence.waters import detect_water, infer_area_type
 from intelligence.species import SPECIES, score_species
 from intelligence.species_assets import get_species_image
+from intelligence.lure_assets import resolve_lure_asset
 from intelligence.lures import choose_lure
 from intelligence.scoring import overall_score, time_blocks, rating, hourly_bite_forecast
 from intelligence.smart_intelligence import build_smart_intelligence, build_smart_intelligence_fallback
@@ -253,6 +254,11 @@ def build_best_bet(species_ranked, best_time, best_hour, base_score, temp_f, win
     if not species_ranked:
         safe_best_time = best_time if isinstance(best_time, dict) else {}
         safe_best_hour = best_hour if isinstance(best_hour, dict) else {}
+        lure_asset = resolve_lure_asset(
+            recommendation_text="General-purpose lure",
+            lure_type="soft_plastic_worm",
+            color="green_pumpkin",
+        )
         return {
             "species": "Target Species",
             "species_score": 0,
@@ -261,7 +267,10 @@ def build_best_bet(species_ranked, best_time, best_hour, base_score, temp_f, win
             "time_range": safe_best_time.get("time") or "Any time",
             "best_hour": format_hour_label(safe_best_hour.get("hour")) if safe_best_hour else None,
             "lure_name": "General-purpose lure",
-            "lure_image": "/static/lures/worm.svg",
+            "lure_image": lure_asset["path"],
+            "lure_asset": lure_asset,
+            "lure_type": "soft_plastic_worm",
+            "lure_color": "green_pumpkin",
             "speed": "Slow speed",
             "size": "3-5 in",
             "colors": ["Natural", "White"],
@@ -294,12 +303,19 @@ def build_best_bet(species_ranked, best_time, best_hour, base_score, temp_f, win
     if not best_lure:
         best_lure = {
             "name": lures.get("evening", "Spinnerbait"),
-            "image": "/static/lures/spinnerbait.svg",
+            "type": "spinnerbait",
+            "color": "chartreuse_white",
             "speed": "Medium speed",
             "size": "3/8 oz",
             "colors": ["White", "Chartreuse"],
             "why": "Best general recommendation based on current species and bite window."
         }
+
+    lure_asset = resolve_lure_asset(
+        recommendation_text=best_lure.get("name"),
+        lure_type=best_lure.get("type"),
+        color=best_lure.get("color"),
+    )
 
     reasons = []
 
@@ -344,7 +360,10 @@ def build_best_bet(species_ranked, best_time, best_hour, base_score, temp_f, win
         "time_range": safe_best_time.get("time") or "Any time",
         "best_hour": format_hour_label(safe_best_hour.get("hour")) if safe_best_hour else None,
         "lure_name": best_lure["name"],
-        "lure_image": best_lure["image"],
+        "lure_image": lure_asset["path"],
+        "lure_asset": lure_asset,
+        "lure_type": best_lure.get("type"),
+        "lure_color": best_lure.get("color"),
         "speed": best_lure["speed"],
         "size": best_lure["size"],
         "colors": best_lure["colors"],

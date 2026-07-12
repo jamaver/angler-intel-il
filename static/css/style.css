@@ -610,6 +610,52 @@ button {
   margin: 16px 0;
 }
 
+.lure-art {
+  display: inline-block;
+  object-fit: contain;
+  background: transparent;
+  vertical-align: middle;
+  flex: 0 0 auto;
+}
+
+.lure-art-sm {
+  width: 28px;
+  height: 28px;
+}
+
+.lure-art-md {
+  width: 72px;
+  height: 72px;
+}
+
+.lure-art-lg {
+  width: 120px;
+  height: 120px;
+}
+
+.recommendation-lure-art {
+  width: 88px;
+  height: 88px;
+  margin-right: 12px;
+}
+
+.lure-recommendation {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  margin: 12px 0 8px;
+  border-radius: 14px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(96, 165, 250, 0.18);
+}
+
+.lure-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .lure-card h3 {
   font-size: 28px;
   margin: 8px 0 4px;

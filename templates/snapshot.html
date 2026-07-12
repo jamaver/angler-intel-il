@@ -239,7 +239,7 @@
           {% if data.best_bet.best_hour %}
           <p><b>Best Hour:</b> {{ data.best_bet.best_hour }}</p>
           {% endif %}
-          <p><b>Throw:</b> {{ data.best_bet.lure_name }}</p>
+          <p class="lure-inline"><img class="lure-art lure-art-sm" src="{{ data.best_bet.lure_image }}" alt=""> <b>Throw:</b> {{ data.best_bet.lure_name }}</p>
           <p><b>Retrieve:</b> {{ data.best_bet.speed }} · <b>Size:</b> {{ data.best_bet.size }}</p>
           <div class="pill-row">
             {% for color in data.best_bet.colors %}
@@ -297,6 +297,7 @@
       <h2>Top Lures</h2>
       <table>
         <tr>
+          <th>Art</th>
           <th>Species</th>
           <th>Lure</th>
           <th>Speed</th>
@@ -304,6 +305,7 @@
         </tr>
         {% for l in data.lure_cards[:4] %}
         <tr>
+          <td><img class="lure-art lure-art-sm" src="{{ l.image }}" alt="{{ l.name }}"></td>
           <td>{{ l.species }}</td>
           <td>{{ l.name }}</td>
           <td>{{ l.speed }}</td>
