@@ -31,8 +31,36 @@ function iconSlug(value) {
     .replace(/^-+|-+$/g, "");
 }
 
+const FISH_ICON_MAP = {
+  largemouth_bass: "largemouth_bass.png",
+  smallmouth_bass: "smallmouth_bass.png",
+  crappie: "crappie.png",
+  bluegill: "bluegill.png",
+  catfish: "channel_catfish.png",
+  channel_catfish: "channel_catfish.png",
+  flathead_catfish: "channel_catfish.png",
+  trout: "rainbow_trout.png",
+  rainbow_trout: "rainbow_trout.png",
+  brown_trout: "rainbow_trout.png",
+  walleye: "walleye.png",
+  sauger: "sauger.png",
+  white_bass: "white_bass.png",
+  northern_pike: "northern_pike.png",
+  pike: "northern_pike.png",
+  muskie: "northern_pike.png",
+  musky: "northern_pike.png",
+  common_carp: "generic_fish.png",
+  yellow_perch: "generic_fish.png",
+  generic_fish: "generic_fish.png",
+};
+
 function fishIconPath(value) {
-  return `/static/fish/${iconSlug(value).replace(/-/g, "_")}.svg`;
+  const key = iconSlug(value).replace(/-/g, "_");
+  return `/static/fish/${FISH_ICON_MAP[key] || "generic_fish.png"}`;
+}
+
+function speciesIconClass(size = "md") {
+  return `species-icon species-icon-${size}`;
 }
 
 function lureIconPath(value) {
@@ -304,7 +332,7 @@ async function loadCatchLog() {
 
     setHTML("catchLog", catches.slice(0, 20).map(c => `
       <div class="catch-row">
-        <b><img class="icon-mini" src="${fishIconPath(c.species)}" alt=""> ${c.species}</b>
+        <b><img class="${speciesIconClass("sm")} icon-mini" src="${fishIconPath(c.species)}" alt=""> ${c.species}</b>
         <div class="small">${c.timestamp} · ZIP ${c.zip || "unknown"}${c.waterbody ? ` · ${c.waterbody}` : ""}</div>
         <div><img class="icon-mini" src="${lureIconPath(c.lure || "worm")}" alt=""> ${c.lure || "No lure recorded"}</div>
         <div class="small">${c.notes || ""}</div>
@@ -422,7 +450,7 @@ function renderInsights(insights) {
     </div>
 
     <h3>Top Species</h3>
-    ${topSpecies.map(s => `<div class="pill-line"><img class="icon-mini" src="${fishIconPath(s.name)}" alt=""> ${s.name}: ${s.count}</div>`).join("")}
+    ${topSpecies.map(s => `<div class="pill-line"><img class="${speciesIconClass("sm")} icon-mini" src="${fishIconPath(s.name)}" alt=""> ${s.name}: ${s.count}</div>`).join("")}
 
     <h3>Top Lures</h3>
     ${topLures.map(l => `<div class="pill-line"><img class="icon-mini" src="${lureIconPath(l.name)}" alt=""> ${l.name}: ${l.count}</div>`).join("")}
@@ -580,7 +608,7 @@ function render(data) {
   if (best) {
     setHTML("bestBet", `
       <div class="best-bet-layout">
-        <img class="fish-img" src="${best.fish_image}" alt="${best.species}">
+        <img class="${speciesIconClass("lg")} fish-img" src="${best.fish_image}" alt="${best.species}">
         <div>
           <h3>${best.species}</h3>
           <div class="score">${best.species_score}%</div>
@@ -652,7 +680,7 @@ function render(data) {
 
   setHTML("species", (data.species || []).slice(0, 8).map(s => `
     <div class="species-card species-with-image">
-      <img class="fish-thumb" src="${s.fish_image}" alt="${s.name}">
+      <img class="${speciesIconClass("md")} fish-thumb" src="${s.fish_image}" alt="${s.name}">
       <div>
         <h3>${s.name}</h3>
         <div class="score">${s.score}%</div>

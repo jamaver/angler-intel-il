@@ -9,6 +9,7 @@ from intelligence.location import get_coords
 from intelligence.weather import get_weather, f_temp, mph, inhg
 from intelligence.waters import detect_water, infer_area_type
 from intelligence.species import SPECIES, score_species
+from intelligence.species_assets import get_species_image
 from intelligence.lures import choose_lure
 from intelligence.scoring import overall_score, time_blocks, rating, hourly_bite_forecast
 from intelligence.smart_intelligence import build_smart_intelligence, build_smart_intelligence_fallback
@@ -111,7 +112,7 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v5.9.1-icon-realism-polish"
+APP_VERSION = "v5.9-modern-ui-refresh"
 app.config["APP_VERSION"] = APP_VERSION
 # modern_ui_refresh release marker
 
@@ -121,6 +122,7 @@ def inject_app_version():
     return {
         "app_version": APP_VERSION,
         "target_species_options": available_target_species(),
+        "fish_image": fish_image,
     }
 
 DATA_DIR = Path("data")
@@ -179,7 +181,7 @@ def slugify_species(name):
 
 
 def fish_image(name):
-    return f"/static/fish/{slugify_species(name)}.svg"
+    return get_species_image(name)
 
 
 def species_key(name):
@@ -254,7 +256,7 @@ def build_best_bet(species_ranked, best_time, best_hour, base_score, temp_f, win
         return {
             "species": "Target Species",
             "species_score": 0,
-            "fish_image": "/static/fish/largemouth_bass.svg",
+            "fish_image": "/static/fish/largemouth_bass.png",
             "time_label": safe_best_time.get("label") or "Any time",
             "time_range": safe_best_time.get("time") or "Any time",
             "best_hour": format_hour_label(safe_best_hour.get("hour")) if safe_best_hour else None,
@@ -276,7 +278,7 @@ def build_best_bet(species_ranked, best_time, best_hour, base_score, temp_f, win
     lures = top.get("lures") if isinstance(top.get("lures"), dict) else {}
     top_name = top.get("name", "Target Species")
     top_score = top.get("score", 0)
-    top_image = top.get("fish_image", "/static/fish/largemouth_bass.svg")
+    top_image = top.get("fish_image", "/static/fish/generic_fish.png")
 
     cards = lures.get("cards", {})
     best_lure = None

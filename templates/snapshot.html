@@ -232,7 +232,7 @@
     <div class="card">
       <h2>Best Bet Today</h2>
       <div class="hero-grid">
-        <img class="fish" src="{{ data.best_bet.fish_image }}" alt="{{ data.best_bet.species }}">
+        <img class="species-icon species-icon-lg fish" src="{{ data.best_bet.fish_image }}" alt="{{ data.best_bet.species }}">
         <div>
           <h3>{{ data.best_bet.species }} — {{ data.best_bet.species_score }}%</h3>
           <p><b>Best Window:</b> {{ data.best_bet.time_label }} · {{ data.best_bet.time_range }}</p>
@@ -282,7 +282,10 @@
         </tr>
         {% for s in data.species[:6] %}
         <tr>
-          <td>{{ s.name }}</td>
+          <td>
+            <img class="species-icon species-icon-sm" src="{{ fish_image(s.name) }}" alt="">
+            {{ s.name }}
+          </td>
           <td>{{ s.score }}%</td>
           <td>{{ s.rating }}</td>
         </tr>

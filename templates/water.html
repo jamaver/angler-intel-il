@@ -61,7 +61,14 @@
               <span class="small">{{ data.water_profile.target_fit_label }}</span>
             </div>
             <div class="water-detail-copy">
-              <strong>{{ data.target_species or "Auto target" }}</strong>
+              <strong>
+                {% if data.target_species %}
+                  <img class="species-icon species-icon-sm" src="{{ fish_image(data.target_species) }}" alt="">
+                  {{ data.target_species }}
+                {% else %}
+                  Auto target
+                {% endif %}
+              </strong>
               <p class="small">{{ data.target_fit.reason or "Target fit will follow the current trip target and local conditions." }}</p>
             </div>
           </div>
@@ -70,7 +77,10 @@
             <h3>Species</h3>
             <div class="chip-row">
               {% for item in data.water.species %}
-                <span class="map-chip map-chip-strong">{{ item }}</span>
+                <span class="map-chip map-chip-strong">
+                  <img class="species-icon species-icon-sm" src="{{ fish_image(item) }}" alt="">
+                  {{ item }}
+                </span>
               {% endfor %}
             </div>
           {% endif %}
@@ -185,7 +195,10 @@
             </div>
 
             <div class="chip-row">
-              <span class="map-chip map-chip-strong">{{ data.selected_species }}</span>
+              <span class="map-chip map-chip-strong">
+                <img class="species-icon species-icon-sm" src="{{ fish_image(data.selected_species) }}" alt="">
+                {{ data.selected_species }}
+              </span>
               <span class="map-chip">{{ data.area_type }}</span>
               <span class="map-chip">{{ data.weather.temp }} F</span>
               <span class="map-chip">{{ data.weather.wind }} mph wind</span>
