@@ -19,7 +19,7 @@
 
   <main class="app water-app">
     <header class="water-hero">
-      <div>
+      <div class="water-hero-copy">
         <p class="eyebrow">Waterbody profile</p>
         <h1>{{ data.water.name }}</h1>
         <p class="release-line">Current release: {{ data.version }}</p>
@@ -46,7 +46,12 @@
     <section class="water-grid">
       <div class="water-stack">
         <section class="card water-card">
-          <h2>Overview</h2>
+          <div class="section-head compact">
+            <div>
+              <p class="eyebrow section-eyebrow">Profile</p>
+              <h2>Overview</h2>
+            </div>
+          </div>
           <div class="water-meta-grid">
             <div><strong>Type</strong><br>{{ data.water.type }}</div>
             <div><strong>Source</strong><br>{{ data.water_profile.source }}</div>
@@ -109,7 +114,12 @@
         </section>
 
         <section class="card water-card">
-          <h2>Current Conditions</h2>
+          <div class="section-head compact">
+            <div>
+              <p class="eyebrow section-eyebrow">Conditions</p>
+              <h2>Current Conditions</h2>
+            </div>
+          </div>
           <div class="water-meta-grid">
             <div><strong>Temperature</strong><br>{{ data.weather.temp }} F</div>
             <div><strong>Wind</strong><br>{{ data.weather.wind }} mph</div>
@@ -133,7 +143,12 @@
         </section>
 
         <section class="card water-card">
-          <h2>Catch History</h2>
+          <div class="section-head compact">
+            <div>
+              <p class="eyebrow section-eyebrow">Learning</p>
+              <h2>Catch History</h2>
+            </div>
+          </div>
           <div class="water-meta-grid">
             <div><strong>Total</strong><br>{{ data.catch_insights.total or 0 }}</div>
             <div><strong>Local</strong><br>{{ data.catch_insights.local_total or 0 }}</div>
@@ -163,7 +178,12 @@
 
       <div class="water-stack">
         <section class="card water-card">
-          <h2>Map Preview</h2>
+          <div class="section-head compact">
+            <div>
+              <p class="eyebrow section-eyebrow">Location</p>
+              <h2>Map Preview</h2>
+            </div>
+          </div>
           {% if data.water_profile.mapped %}
             <div
               id="waterMap"
@@ -180,7 +200,12 @@
         </section>
 
         <section class="card water-card">
-          <h2>Water Intel</h2>
+          <div class="section-head compact">
+            <div>
+              <p class="eyebrow section-eyebrow">Intel</p>
+              <h2>Water Intel</h2>
+            </div>
+          </div>
           <p class="small">Smart Intelligence for the selected waterbody.</p>
           <div class="map-intel-results">
             <div class="map-intel-head">
