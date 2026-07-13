@@ -24,6 +24,9 @@ DEFAULT_APP_VERSION = "v4.9.2-map-context-custom-waterbodies"
 
 def _current_app_version() -> str:
     try:
+        release = current_app.config.get("APP_RELEASE")
+        if release:
+            return str(release)
         version = current_app.config.get("APP_VERSION")
         if version:
             return str(version)

@@ -704,7 +704,7 @@ def register_report_routes_v38(app):
   </nav>
 
   <h1 class="page-title">Saved Offline Reports</h1>
-  <p>v3.8 saves local fishing reports on this Pi using your current Angler Intel data.</p>
+  <p>Saved reports keep local fishing trip snapshots on this Pi using your current Angler Intel data.</p>
 
   <div class="card">
     <h2>Create report from ZIP</h2>

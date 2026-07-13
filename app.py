@@ -114,14 +114,18 @@ except Exception as exc:
 
 
 APP_VERSION = "v5.9-modern-ui-refresh"
+APP_RELEASE = "v6.1-trip-plan-focus"
 app.config["APP_VERSION"] = APP_VERSION
-# modern_ui_refresh release marker
+app.config["APP_RELEASE"] = APP_RELEASE
+# Keep the core version marker stable for compatibility while surfacing the
+# current visible release label in the UI.
+# modern_ui_refresh compatibility marker
 
 
 @app.context_processor
 def inject_app_version():
     return {
-        "app_version": APP_VERSION,
+        "app_version": app.config.get("APP_RELEASE", APP_VERSION),
         "target_species_options": available_target_species(),
         "fish_image": fish_image,
     }

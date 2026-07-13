@@ -546,7 +546,7 @@ def _render_health_html(payload: dict[str, Any]) -> str:
   <a class="ai-main-tab active" href="/app-health">App Health</a>
 </nav>
   <h1>Angler Intel App Health</h1>
-  <p>v3.9 diagnostics and cleanup readiness check.</p>
+  <p>Diagnostics and cleanup readiness check.</p>
 
   <div class="card">
     <h2>Status: {_status_badge(status_ok, payload.get("status", "unknown"))}</h2>
