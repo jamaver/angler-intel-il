@@ -3,345 +3,601 @@
 <head>
   <title>Angler Intel Trip Snapshot</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/css/style.css">
   <style>
     :root {
       color-scheme: light;
       --ink: #102417;
-      --muted: #52635a;
-      --line: #d6e3da;
+      --muted: #55656a;
+      --line: #d9e4dc;
       --panel: #ffffff;
-      --soft: #f3faf5;
+      --soft: #f4faf6;
       --accent: #1f8f45;
       --accent-dark: #145c2b;
     }
 
     body {
-      font-family: Arial, sans-serif;
       margin: 0;
       padding: 20px;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #eef6f0;
       color: var(--ink);
     }
 
-    .snapshot {
-      max-width: 980px;
-      margin: auto;
+    .trip-report {
+      max-width: 1060px;
+      margin: 0 auto;
     }
 
-    .snapshot-header {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 1rem;
-      align-items: end;
-      padding: 20px 0 10px;
-    }
-
-    h1 {
-      margin: 0 0 6px;
-      font-size: 34px;
-    }
-
-    h2 {
-      margin: 0 0 10px;
-      font-size: 20px;
-    }
-
-    h3 {
-      margin: 0.4rem 0;
-    }
-
-    .muted {
-      color: var(--muted);
-      margin-top: 4px;
-    }
-
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 16px;
-      margin: 14px 0;
-      break-inside: avoid;
-      box-shadow: 0 8px 22px rgba(16, 36, 23, 0.08);
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-      gap: 14px;
-    }
-
-    .hero-grid {
-      display: grid;
-      grid-template-columns: minmax(180px, 260px) 1fr;
-      gap: 18px;
-      align-items: center;
-    }
-
-    .metric {
-      background: var(--soft);
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 12px;
-    }
-
-    .score {
-      font-size: 32px;
-      font-weight: bold;
-      color: var(--accent);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 8px;
-    }
-
-    th, td {
-      border-bottom: 1px solid var(--line);
-      text-align: left;
-      padding: 8px;
-      vertical-align: top;
-    }
-
-    .actions {
+    .report-hero {
       display: flex;
-      gap: 10px;
-      margin: 14px 0;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: flex-end;
+      margin-bottom: 14px;
+    }
+
+    .report-hero h1 {
+      margin: 0;
+      font-size: 2rem;
+      line-height: 1.05;
+    }
+
+    .report-subtitle {
+      margin: 0.35rem 0 0;
+      color: var(--muted);
+    }
+
+    .report-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .report-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.4rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    .report-actions {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
       justify-content: flex-end;
     }
 
-    button {
-      padding: 12px 16px;
+    .report-actions button {
+      padding: 0.8rem 1rem;
       border: 0;
       border-radius: 10px;
       background: var(--accent);
-      color: white;
-      font-weight: bold;
+      color: #fff;
+      font-weight: 800;
       cursor: pointer;
     }
 
-    button.secondary {
+    .report-actions .secondary {
       background: #dcefe2;
       color: var(--accent-dark);
     }
 
-    .fish {
-      width: 100%;
-      max-width: 260px;
-      display: block;
-      margin: 8px 0;
-      border-radius: 12px;
-      background: #f8fafc;
+    .report-summary-grid,
+    .report-condition-grid,
+    .report-species-grid,
+    .report-lure-grid {
+      display: grid;
+      gap: 14px;
     }
 
-    .pill-row {
+    .report-summary-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin: 18px 0;
+    }
+
+    .report-condition-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .report-species-grid {
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .report-lure-grid {
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+
+    .report-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 8px 22px rgba(16, 36, 23, 0.08);
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .report-card h2 {
+      margin: 0 0 10px;
+      font-size: 1.1rem;
+    }
+
+    .report-card h3 {
+      margin: 0;
+    }
+
+    .report-metric {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .report-metric label {
+      display: block;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 0.2rem;
+    }
+
+    .report-metric strong {
+      display: block;
+      font-size: 1.02rem;
+      line-height: 1.25;
+    }
+
+    .report-summary-score {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      margin-top: 0.15rem;
+    }
+
+    .report-best-bet,
+    .report-condition,
+    .report-species-row,
+    .report-lure-row,
+    .report-outlook-row,
+    .report-water-row {
+      display: grid;
+      gap: 0.8rem;
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .report-media {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      gap: 0.85rem;
+      align-items: center;
+    }
+
+    .report-fish-art {
+      width: 100%;
+      height: auto;
+      max-width: 96px;
+      border-radius: 12px;
+      object-fit: contain;
+      background: transparent;
+    }
+
+    .report-lure-art {
+      width: 84px;
+      height: 84px;
+      object-fit: contain;
+      background: transparent;
+      justify-self: start;
+    }
+
+    .report-row-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      align-items: baseline;
+    }
+
+    .report-score-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2rem;
+      padding: 0.1rem 0.6rem;
+      border-radius: 999px;
+      background: #e6f5eb;
+      color: var(--accent-dark);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .report-muted {
+      color: var(--muted);
+      margin-top: 0.25rem;
+      line-height: 1.45;
+    }
+
+    .report-pill-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      margin: 10px 0;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
     }
 
-    .pill {
-      display: inline-block;
-      background: #e6f5eb;
-      border: 1px solid #b9ddc5;
+    .report-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.35rem 0.6rem;
       border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 13px;
+      border: 1px solid #bfd7c6;
+      background: #fff;
+      font-size: 0.84rem;
       font-weight: 700;
     }
 
-    .notes-box {
-      min-height: 110px;
-      border: 1px dashed #a8b8ad;
-      border-radius: 10px;
+    .report-reasons {
+      margin: 0.4rem 0 0;
+      padding-left: 1.1rem;
+    }
+
+    .report-reasons li + li {
+      margin-top: 0.25rem;
+    }
+
+    .report-outlook-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .report-outlook-table th,
+    .report-outlook-table td {
+      text-align: left;
+      padding: 0.7rem 0.55rem;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    .report-empty {
+      color: var(--muted);
+      padding: 0.4rem 0;
+    }
+
+    .report-debug-json {
+      margin-top: 14px;
+    }
+
+    .report-debug-json summary {
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .report-debug-json pre {
+      margin: 12px 0 0;
       padding: 12px;
-      background: #fbfdfb;
+      border-radius: 12px;
+      background: #0e1722;
+      color: #e8f0f7;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 32rem;
+      font-size: 0.84rem;
+      line-height: 1.45;
     }
 
-    ul {
-      padding-left: 1.2rem;
-    }
-
-    @media (max-width: 720px) {
-      body {
-        padding: 12px;
+    @media (max-width: 900px) {
+      .report-summary-grid,
+      .report-condition-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .snapshot-header,
-      .hero-grid {
-        grid-template-columns: 1fr;
+      .report-hero {
+        flex-direction: column;
+        align-items: flex-start;
       }
 
-      .actions {
+      .report-actions {
         justify-content: flex-start;
       }
     }
 
-    @media print {
-      .actions {
-        display: none;
+    @media (max-width: 640px) {
+      body {
+        padding: 12px;
       }
 
+      .report-summary-grid,
+      .report-condition-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .report-media {
+        grid-template-columns: 1fr;
+      }
+
+      .report-fish-art,
+      .report-lure-art {
+        max-width: 88px;
+      }
+    }
+
+    @media print {
       body {
         background: white;
         padding: 0;
       }
 
-      .card {
+      .report-actions {
+        display: none;
+      }
+
+      .report-card,
+      .report-best-bet,
+      .report-condition,
+      .report-species-row,
+      .report-lure-row,
+      .report-outlook-row,
+      .report-water-row {
         box-shadow: none;
+      }
+
+      .report-debug-json pre {
+        background: white;
+        color: black;
+        border: 1px solid #ddd;
       }
     }
   </style>
 </head>
 <body>
-  <div class="snapshot">
-    <div class="snapshot-header">
+  <div class="trip-report">
+    <header class="report-hero">
       <div>
-        <h1>Trip Snapshot</h1>
-        <p class="muted">Generated {{ data.generated_at }} · Angler Intel {{ data.version }}</p>
-      </div>
-
-      <div class="actions">
-        <button onclick="window.print()">Print / Save PDF</button>
-        <button class="secondary" onclick="history.back()">Back</button>
-      </div>
-    </div>
-
-    <div class="grid">
-      <div class="card">
-        <h2>{{ data.location.city }}, {{ data.location.state }}</h2>
-        <p class="muted">ZIP {{ data.location.zip }} · {{ data.area_type }} pattern</p>
-        <div class="score">{{ data.overall.score }}/100</div>
-        <p>{{ data.overall.rating }}</p>
-      </div>
-
-      <div class="card">
-        <h2>Conditions</h2>
-        <p>Temperature: {{ data.weather.temp }}°F</p>
-        <p>Wind: {{ data.weather.wind }} mph</p>
-        <p>Pressure: {{ data.weather.pressure }} inHg</p>
-        <p>Cloud Cover: {{ data.weather.cloud }}%</p>
-        {% if data.weather.fallback %}
-        <p class="muted">Fallback weather estimate in use.</p>
-        {% endif %}
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Best Bet Today</h2>
-      <div class="hero-grid">
-        <img class="species-icon species-icon-lg fish" src="{{ data.best_bet.fish_image }}" alt="{{ data.best_bet.species }}">
-        <div>
-          <h3>{{ data.best_bet.species }} — {{ data.best_bet.species_score }}%</h3>
-          <p><b>Best Window:</b> {{ data.best_bet.time_label }} · {{ data.best_bet.time_range }}</p>
-          {% if data.best_bet.best_hour %}
-          <p><b>Best Hour:</b> {{ data.best_bet.best_hour }}</p>
-          {% endif %}
-          <p class="lure-inline"><img class="lure-art lure-art-sm" src="{{ data.best_bet.lure_image }}" alt=""> <b>Throw:</b> {{ data.best_bet.lure_name }}</p>
-          <p><b>Retrieve:</b> {{ data.best_bet.speed }} · <b>Size:</b> {{ data.best_bet.size }}</p>
-          <div class="pill-row">
-            {% for color in data.best_bet.colors %}
-            <span class="pill">{{ color }}</span>
-            {% endfor %}
-          </div>
+        <p class="eyebrow">Smart trip report</p>
+        <h1>{{ report.title }}</h1>
+        <p class="report-subtitle">{{ report.subtitle }} · {{ report.generated_at }}</p>
+        <div class="report-meta">
+          {% if report.location_label %}<span class="report-badge">{{ report.location_label }}</span>{% endif %}
+          {% if report.zip_code %}<span class="report-badge">ZIP {{ report.zip_code }}</span>{% endif %}
+          {% if report.target_species %}<span class="report-badge">Target: {{ report.target_species }}</span>{% endif %}
+          {% if report.overall_rating %}<span class="report-badge">{{ report.overall_rating }}</span>{% endif %}
         </div>
       </div>
 
-      {% if data.best_bet.reasons %}
-      <h3>Why</h3>
-      <ul>{% for reason in data.best_bet.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
-      {% endif %}
-    </div>
+      <div class="report-actions">
+        <button onclick="window.print()">Print / Save PDF</button>
+        <button class="secondary" onclick="history.back()">Back</button>
+      </div>
+    </header>
 
-    <div class="card">
+    <section class="report-summary-grid">
+      <article class="report-card report-metric">
+        <label>Overall score</label>
+        <strong class="report-summary-score">{{ report.overall_score }}/100</strong>
+      </article>
+      <article class="report-card report-metric">
+        <label>Target species</label>
+        <strong>{{ report.target_species }}</strong>
+      </article>
+      <article class="report-card report-metric">
+        <label>Best bet</label>
+        <strong>{{ report.best_bet.species }}</strong>
+      </article>
+      <article class="report-card report-metric">
+        <label>Best time</label>
+        <strong>{{ report.best_time.label }}</strong>
+      </article>
+    </section>
+
+    <section class="report-card">
+      <h2>Best Bet Today</h2>
+      <div class="report-best-bet">
+        <div class="report-media">
+          <img class="species-icon species-icon-lg report-fish-art" src="{{ report.best_bet.fish_image }}" alt="{{ report.best_bet.species }}">
+          <div>
+            <div class="report-row-head">
+              <h3>{{ report.best_bet.species }}</h3>
+              {% if report.best_bet.species_score is not none %}
+                <span class="report-score-pill">{{ report.best_bet.species_score }}% fit</span>
+              {% endif %}
+            </div>
+            <p class="report-muted"><b>Best Time:</b> {{ report.best_time.label }} · {{ report.best_time.range }}{% if report.best_time.best_hour %} · {{ report.best_time.best_hour }}{% endif %}</p>
+            <p class="report-muted"><b>Lure:</b> {{ report.best_bet.lure_name }}</p>
+            <p class="report-muted"><b>Retrieve:</b> {{ report.best_bet.speed }}{% if report.best_bet.size %} · <b>Size:</b> {{ report.best_bet.size }}{% endif %}</p>
+            {% if report.best_bet.why %}
+              <p class="report-muted">{{ report.best_bet.why }}</p>
+            {% endif %}
+            {% if report.best_bet.reasons %}
+              <ul class="report-reasons">
+                {% for reason in report.best_bet.reasons %}
+                  <li>{{ reason }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        </div>
+        <img class="lure-art lure-art-md report-lure-art" src="{{ report.best_bet.lure_image }}" alt="{{ report.best_bet.lure_name }}">
+      </div>
+    </section>
+
+    <section class="report-card">
+      <h2>Trip Conditions</h2>
+      <div class="report-condition-grid">
+        {% for item in report.conditions %}
+          <div class="report-condition">
+            <strong>{{ item.label }}</strong>
+            <div>{{ item.value }}</div>
+          </div>
+        {% endfor %}
+      </div>
+      <p class="report-muted">Source: Open-Meteo or fallback weather when required.</p>
+    </section>
+
+    <section class="report-card">
       <h2>Smart Intelligence</h2>
-      <h3>{{ data.smart_intelligence.headline }}</h3>
-      <p>{{ data.smart_intelligence.summary }}</p>
-      <div class="pill-row">
-        {% for label in data.smart_intelligence.condition_labels %}
-        <span class="pill">{{ label }}</span>
+      <h3>{{ report.smart_intelligence.headline }}</h3>
+      {% if report.smart_intelligence.summary %}
+        <p class="report-muted">{{ report.smart_intelligence.summary }}</p>
+      {% endif %}
+      {% if report.smart_intelligence.condition_labels %}
+        <div class="report-pill-row">
+          {% for label in report.smart_intelligence.condition_labels %}
+            <span class="report-pill">{{ label }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <p class="report-muted"><b>Clarity signal:</b> {{ report.smart_intelligence.clarity_label }}{% if report.smart_intelligence.clarity_basis %} · {{ report.smart_intelligence.clarity_basis }}{% endif %}</p>
+      {% if report.smart_intelligence.positive_signals %}
+        <div class="report-pill-row">
+          {% for item in report.smart_intelligence.positive_signals %}
+            <span class="report-pill">{{ item }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% if report.smart_intelligence.caution_signals %}
+        <div class="report-pill-row">
+          {% for item in report.smart_intelligence.caution_signals %}
+            <span class="report-pill">{{ item }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% if report.smart_intelligence.strategy %}
+        <ul class="report-reasons">
+          {% for item in report.smart_intelligence.strategy %}
+            <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </section>
+
+    <section class="report-card">
+      <h2>Species Ranking</h2>
+      <div class="report-species-grid">
+        {% for item in report.species_ranking %}
+          <article class="report-species-row">
+            <div class="report-media">
+              <img class="species-icon species-icon-md report-fish-art" src="{{ item.fish_image }}" alt="{{ item.name }}">
+              <div>
+                <div class="report-row-head">
+                  <h3>{{ item.name }}</h3>
+                  {% if item.score is not none %}<span class="report-score-pill">{{ item.score }}%</span>{% endif %}
+                </div>
+                <p class="report-muted">Habitat: {{ item.habitat }}</p>
+                {% if item.target_fit %}
+                  <p class="report-muted">{{ item.target_fit }}</p>
+                {% endif %}
+                {% if item.lure_label %}
+                  <p class="report-muted"><b>Recommended:</b> {{ item.lure_label }}</p>
+                {% endif %}
+                {% if item.why %}
+                  <p class="report-muted">{{ item.why }}</p>
+                {% endif %}
+              </div>
+            </div>
+            {% if item.lure_image %}
+              <img class="lure-art lure-art-sm report-lure-art" src="{{ item.lure_image }}" alt="{{ item.lure_label }}">
+            {% endif %}
+          </article>
         {% endfor %}
       </div>
-      <p><b>Clarity signal:</b> {{ data.smart_intelligence.clarity_signal.label }}</p>
-      <ul>
-        {% for item in data.smart_intelligence.strategy %}
-        <li>{{ item }}</li>
-        {% endfor %}
-      </ul>
-    </div>
+    </section>
 
-    <div class="card">
-      <h2>Top Species</h2>
-      <table>
-        <tr>
-          <th>Species</th>
-          <th>Score</th>
-          <th>Rating</th>
-        </tr>
-        {% for s in data.species[:6] %}
-        <tr>
-          <td>
-            <img class="species-icon species-icon-sm" src="{{ fish_image(s.name) }}" alt="">
-            {{ s.name }}
-          </td>
-          <td>{{ s.score }}%</td>
-          <td>{{ s.rating }}</td>
-        </tr>
+    <section class="report-card">
+      <h2>Recommended Lures</h2>
+      <div class="report-lure-grid">
+        {% for item in report.recommended_lures %}
+          <article class="report-lure-row">
+            <div class="report-media">
+              <img class="lure-art lure-art-md report-lure-art" src="{{ item.image }}" alt="{{ item.name }}">
+              <div>
+                <div class="report-row-head">
+                  <h3>{{ item.name }}</h3>
+                  {% if item.top_pick %}<span class="report-score-pill">Top pick</span>{% endif %}
+                </div>
+                <p class="report-muted">For {{ item.species }}{% if item.species_score is not none %} · {{ item.species_score }}% fit{% endif %}</p>
+                <p class="report-muted">{% if item.color %}Color: {{ item.color }}{% endif %}{% if item.speed %} · {{ item.speed }}{% endif %}{% if item.size %} · {{ item.size }}{% endif %}</p>
+                {% if item.why %}
+                  <p class="report-muted">{{ item.why }}</p>
+                {% endif %}
+              </div>
+            </div>
+          </article>
         {% endfor %}
-      </table>
-    </div>
+      </div>
+    </section>
 
-    <div class="card">
-      <h2>Top Lures</h2>
-      <table>
-        <tr>
-          <th>Art</th>
-          <th>Species</th>
-          <th>Lure</th>
-          <th>Speed</th>
-          <th>Size</th>
-        </tr>
-        {% for l in data.lure_cards[:4] %}
-        <tr>
-          <td><img class="lure-art lure-art-sm" src="{{ l.image }}" alt="{{ l.name }}"></td>
-          <td>{{ l.species }}</td>
-          <td>{{ l.name }}</td>
-          <td>{{ l.speed }}</td>
-          <td>{{ l.size }}</td>
-        </tr>
-        {% endfor %}
-      </table>
-    </div>
+    <section class="report-card">
+      <h2>Nearby Waters</h2>
+      {% if report.nearby_waters %}
+        <div class="report-species-grid">
+          {% for item in report.nearby_waters %}
+            <article class="report-water-row">
+              <div class="report-row-head">
+                <h3>{{ item.name }}</h3>
+                {% if item.count is not none %}<span class="report-score-pill">{{ item.count }}</span>{% endif %}
+              </div>
+              {% if item.type %}
+                <p class="report-muted">{{ item.type }}</p>
+              {% endif %}
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="report-empty">No nearby waters saved for this report.</p>
+      {% endif %}
+    </section>
 
-    <div class="card">
-      <h2>7-Day Outlook</h2>
-      <table>
-        <tr>
-          <th>Date</th>
-          <th>Score</th>
-          <th>Rating</th>
-          <th>Temp</th>
-        </tr>
-        {% for f in data.forecast %}
-        <tr>
-          <td>{{ f.date }}</td>
-          <td>{{ f.score }}</td>
-          <td>{{ f.rating }}</td>
-          <td>{{ f.low }}° / {{ f.high }}°</td>
-        </tr>
-        {% endfor %}
-      </table>
-    </div>
+    <section class="report-card">
+      <h2>7-Day Fishing Outlook</h2>
+      {% if report.forecast %}
+        <table class="report-outlook-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Rating</th>
+              <th>High / Low</th>
+              <th>Wind</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in report.forecast %}
+              <tr>
+                <td>{{ item.pretty_date or item.date }}</td>
+                <td>{{ item.rating }}</td>
+                <td>{{ item.high }}&deg; / {{ item.low }}&deg;</td>
+                <td>{{ item.wind }} mph</td>
+                <td>{{ item.score }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="report-empty">No forecast data available for this report.</p>
+      {% endif %}
+    </section>
 
-    <div class="card">
+    <section class="report-card">
       <h2>Trip Notes</h2>
-      <div class="notes-box">
-        <p class="muted">Write launch plan, water clarity, first lure, backup lure, access notes, and post-trip catch details here.</p>
+      <div class="report-best-bet">
+        <p class="report-muted">Write launch plan, water clarity, first lure, backup lure, access notes, and post-trip catch details here.</p>
       </div>
-      <p class="muted">Use the Catch Log after the trip so future intelligence can learn from results.</p>
-    </div>
+      <p class="report-muted">Use the Catch Log after the trip so future intelligence can learn from results.</p>
+    </section>
+
+    <details class="report-card report-debug-json">
+      <summary>Raw saved JSON - debugging</summary>
+      <pre>{{ report.raw_json }}</pre>
+    </details>
   </div>
 </body>
 </html>

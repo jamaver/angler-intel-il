@@ -189,6 +189,202 @@ def species_key(name):
     return slugify_species(name).replace("_", "-")
 
 
+def compact_text(value, fallback=""):
+    text = " ".join(str(value or "").split()).strip()
+    return text or fallback
+
+
+def format_report_datetime(value):
+    if not value:
+        return "Unknown time"
+
+    if isinstance(value, datetime):
+        return value.strftime("%b %d, %Y %I:%M %p")
+
+    text = compact_text(value)
+    for fmt in ("%b %d, %Y %I:%M %p", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"):
+        try:
+            return datetime.strptime(text, fmt).strftime("%b %d, %Y %I:%M %p")
+        except Exception:
+            pass
+    return text
+
+
+def report_lure_label(item):
+    asset = item.get("lure_asset") if isinstance(item, dict) else {}
+    if isinstance(asset, dict) and asset.get("label"):
+        return compact_text(asset.get("label"))
+    return compact_text(item.get("name") or item.get("lure_name") or item.get("label") or "Lure", "Lure")
+
+
+def report_lure_image(item):
+    asset = item.get("lure_asset") if isinstance(item, dict) else {}
+    if isinstance(asset, dict) and asset.get("path"):
+        return asset.get("path")
+    return item.get("image") or "/static/lures/generic_lure.png"
+
+
+def report_species_lure(item, preferred_window="evening"):
+    lures = item.get("lures") if isinstance(item, dict) else {}
+    cards = lures.get("cards", {}) if isinstance(lures, dict) else {}
+    if isinstance(cards, dict):
+        for key in (preferred_window, "evening", "morning", "midday"):
+            card = cards.get(key)
+            if isinstance(card, dict):
+                return card
+    return {}
+
+
+def report_species_rows(species_rows, best_bet=None, best_time=None):
+    preferred_window = "evening"
+    if isinstance(best_time, dict):
+        label = compact_text(best_time.get("label")).lower()
+        if "morning" in label:
+            preferred_window = "morning"
+        elif "midday" in label:
+            preferred_window = "midday"
+
+    rows = []
+    best_name = compact_text((best_bet or {}).get("species")).lower()
+
+    for item in species_rows or []:
+        if not isinstance(item, dict):
+            continue
+        lure_card = report_species_lure(item, preferred_window)
+        rows.append({
+            "name": compact_text(item.get("name"), "Species"),
+            "score": item.get("score"),
+            "rating": compact_text(item.get("rating"), "Good"),
+            "fish_image": item.get("fish_image") or fish_image(item.get("name")),
+            "habitat": compact_text(item.get("habitat"), "Mixed habitat"),
+            "lure_label": report_lure_label(lure_card) if lure_card else "",
+            "lure_image": report_lure_image(lure_card) if lure_card else "",
+            "why": compact_text(lure_card.get("why") if isinstance(lure_card, dict) else "", ""),
+            "target_fit": "Current trip target" if compact_text(item.get("name")).lower() == best_name else "",
+        })
+
+    return rows
+
+
+def report_lure_rows(lure_rows):
+    rows = []
+    for item in lure_rows or []:
+        if not isinstance(item, dict):
+            continue
+        rows.append({
+            "species": compact_text(item.get("species"), "Species"),
+            "species_score": item.get("species_score"),
+            "name": report_lure_label(item),
+            "image": report_lure_image(item),
+            "type": compact_text(item.get("type"), ""),
+            "color": compact_text(item.get("color"), ""),
+            "speed": compact_text(item.get("speed"), ""),
+            "size": compact_text(item.get("size"), ""),
+            "why": compact_text(item.get("why"), ""),
+            "top_pick": bool(item.get("top_pick")),
+        })
+    return rows
+
+
+def report_outlook_rows(forecast_rows):
+    rows = []
+    for item in forecast_rows or []:
+        if not isinstance(item, dict):
+            continue
+        pretty_date = ""
+        if item.get("date"):
+            try:
+                pretty_date = datetime.strptime(item.get("date"), "%Y-%m-%d").strftime("%a, %b %d")
+            except Exception:
+                pretty_date = compact_text(item.get("date"), "")
+        rows.append({
+            "date": compact_text(item.get("date"), ""),
+            "pretty_date": pretty_date,
+            "score": item.get("score"),
+            "rating": compact_text(item.get("rating"), ""),
+            "high": item.get("high"),
+            "low": item.get("low"),
+            "wind": item.get("wind"),
+        })
+    return rows
+
+
+def report_water_rows(water_rows):
+    rows = []
+    for item in water_rows or []:
+        if not isinstance(item, dict):
+            continue
+        rows.append({
+            "name": compact_text(item.get("name"), "Waterbody"),
+            "count": item.get("count"),
+            "type": compact_text(item.get("type"), ""),
+        })
+    return rows
+
+
+def build_snapshot_report(data):
+    best_bet = data.get("best_bet", {}) if isinstance(data, dict) else {}
+    weather = data.get("weather", {}) if isinstance(data, dict) else {}
+    smart = data.get("smart_intelligence", {}) if isinstance(data, dict) else {}
+    catch_insights = data.get("catch_insights", {}) if isinstance(data, dict) else {}
+    target_species = compact_text(data.get("selected_species") or data.get("target_species"), "Auto")
+
+    raw_json = json.dumps(data, indent=2, sort_keys=True, default=str)
+
+    return {
+        "title": f"Trip Report ZIP {compact_text(data.get('location', {}).get('zip'), '')}".strip(),
+        "subtitle": "Saved by Angler Intel",
+        "generated_at": format_report_datetime(data.get("generated_at")),
+        "location_label": compact_text(
+            ", ".join(part for part in [data.get("location", {}).get("city"), data.get("location", {}).get("state")] if part),
+            compact_text(data.get("location", {}).get("zip"), "Unknown location"),
+        ),
+        "zip_code": compact_text(data.get("location", {}).get("zip"), ""),
+        "target_species": target_species,
+        "overall_score": data.get("overall", {}).get("score"),
+        "overall_rating": compact_text(data.get("overall", {}).get("rating"), ""),
+        "best_time": {
+            "label": compact_text(best_bet.get("time_label"), "Any time"),
+            "range": compact_text(best_bet.get("time_range"), "Any time"),
+            "best_hour": compact_text(best_bet.get("best_hour"), ""),
+        },
+        "best_bet": {
+            "species": compact_text(best_bet.get("species"), "Target Species"),
+            "species_score": best_bet.get("species_score"),
+            "fish_image": best_bet.get("fish_image") or "/static/fish/generic_fish.png",
+            "lure_name": report_lure_label(best_bet),
+            "lure_image": report_lure_image(best_bet),
+            "speed": compact_text(best_bet.get("speed"), ""),
+            "size": compact_text(best_bet.get("size"), ""),
+            "why": compact_text(best_bet.get("why"), ""),
+            "reasons": [compact_text(item, "") for item in best_bet.get("reasons", []) if compact_text(item, "")],
+        },
+        "conditions": [
+            {"label": "Temperature", "value": f"{weather.get('temp', '?')}°F"},
+            {"label": "Wind", "value": f"{weather.get('wind', '?')} mph"},
+            {"label": "Pressure", "value": f"{weather.get('pressure', '?')} inHg"},
+            {"label": "Cloud Cover", "value": f"{weather.get('cloud', '?')}%"},
+            {"label": "Source", "value": compact_text(weather.get("source"), "unknown")},
+        ],
+        "smart_intelligence": {
+            "headline": compact_text(smart.get("headline"), "Fishing pattern"),
+            "summary": compact_text(smart.get("summary"), ""),
+            "condition_labels": [compact_text(item, "") for item in smart.get("condition_labels", []) if compact_text(item, "")],
+            "clarity_label": compact_text((smart.get("clarity_signal") or {}).get("label"), "unknown"),
+            "clarity_basis": compact_text((smart.get("clarity_signal") or {}).get("basis"), ""),
+            "strategy": [compact_text(item, "") for item in smart.get("strategy", []) if compact_text(item, "")],
+            "positive_signals": [compact_text(item, "") for item in smart.get("positive_signals", []) if compact_text(item, "")],
+            "caution_signals": [compact_text(item, "") for item in smart.get("caution_signals", []) if compact_text(item, "")],
+        },
+        "species_ranking": report_species_rows(data.get("species", []), best_bet=best_bet, best_time=data.get("best_time")),
+        "recommended_lures": report_lure_rows(data.get("lure_cards", [])),
+        "nearby_waters": report_water_rows((catch_insights or {}).get("top_waterbodies", [])),
+        "forecast": report_outlook_rows(data.get("forecast", [])),
+        "catch_insights": catch_insights,
+        "raw_json": raw_json,
+    }
+
+
 def find_species_entry(name):
     target = species_key(name)
     for species in SPECIES:
@@ -837,7 +1033,7 @@ def snapshot():
     if not data:
         return "<h1>Invalid ZIP code</h1>", 400
 
-    return render_template("snapshot.html", data=data)
+    return render_template("snapshot.html", data=data, report=build_snapshot_report(data))
 
 
 @app.route("/api/intel")
