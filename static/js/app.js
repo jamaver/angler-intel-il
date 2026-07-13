@@ -573,69 +573,94 @@ function renderSmartIntelligence(intel) {
   }
 
   return `
-    <h3>${intel.headline || "Fishing pattern"}</h3>
-    <p>${intel.summary || ""}</p>
-    ${intel.ok === false ? `<div class="status-warn">Fallback intelligence is active.</div>` : ""}
-    ${lureRecommendation.path ? `
-      <div class="intel-recommendation lure-recommendation">
-        <img class="recommendation-lure-art lure-art lure-art-md" src="${lureRecommendation.path}" alt="${lureRecommendation.label || "Lure"}">
+    <div class="intel-shell">
+      <div class="intel-shell-head">
         <div>
-          <b>Primary lure</b>
-          <div>${lureRecommendation.label || intel.recommendations?.[1]?.value || "Lure"}</div>
-          <div class="small">${intel.recommendations?.[1]?.why || "Chosen from the current lure plan."}</div>
+          <h3>${intel.headline || "Fishing pattern"}</h3>
+          <p>${intel.summary || ""}</p>
+        </div>
+        <div class="intel-score-card">
+          <div class="score">${confidenceScore ?? "?"}</div>
+          <div class="small">${confidenceLabel}</div>
+          <div class="small">${confidenceBasis}</div>
         </div>
       </div>
-    ` : ""}
-    <div class="intel-signal-row">${labels}</div>
-    <div class="intel-grid">
-      <div class="intel-recommendation">
-        <b>Confidence</b>
-        <div class="score">${confidenceScore ?? "?"}</div>
-        <div class="small">${confidenceLabel}</div>
-        <div class="small">${confidenceBasis}</div>
+
+      ${intel.ok === false ? `<div class="status-warn">Fallback intelligence is active.</div>` : ""}
+
+      ${lureRecommendation.path ? `
+        <div class="intel-recommendation lure-recommendation">
+          <img class="recommendation-lure-art lure-art lure-art-md" src="${lureRecommendation.path}" alt="${lureRecommendation.label || "Lure"}">
+          <div>
+            <b>Primary lure</b>
+            <div>${lureRecommendation.label || intel.recommendations?.[1]?.value || "Lure"}</div>
+            <div class="small">${intel.recommendations?.[1]?.why || "Chosen from the current lure plan."}</div>
+          </div>
+        </div>
+      ` : ""}
+
+      <div class="intel-chip-row">${labels}</div>
+
+      <div class="intel-grid intel-quad-grid">
+        <div class="intel-recommendation">
+          <b>Clarity</b>
+          <div class="small">${intel.clarity_signal?.label || "unknown"}</div>
+          <div class="small">${intel.clarity_signal?.basis || "No clarity basis available."}</div>
+        </div>
+
+        <div class="intel-recommendation">
+          <b>Catch history</b>
+          <div class="small">${catchHistory.summary || "No catch history yet."}</div>
+          <div class="small">${catchMeta.join(" · ") || "Sample size is zero."}</div>
+        </div>
+
+        <div class="intel-recommendation">
+          <b>Input quality</b>
+          <div class="small">${inputQuality.ok ? "All key inputs present." : `Missing: ${missingInputs.join(", ") || "unknown"}`}</div>
+          <div class="small">Source: ${inputQuality.source || "unknown"}${inputQuality.fallback ? " · fallback" : ""}</div>
+        </div>
+
+        <div class="intel-recommendation">
+          <b>Confidence basis</b>
+          <div class="small">${confidenceBasis || "No basis provided."}</div>
+          <div class="small">${intel.fallback_used ? "Fallback logic was used." : "Primary logic stayed active."}</div>
+        </div>
       </div>
 
-      <div class="intel-recommendation">
-        <b>Clarity</b>
-        <div class="small">${intel.clarity_signal?.label || "unknown"}</div>
-        <div class="small">${intel.clarity_signal?.basis || "No clarity basis available."}</div>
-      </div>
+      ${positives.length ? `<div class="intel-group">
+        <h4>Positive signals</h4>
+        <div class="intel-chip-row">${positives.map(item => `<span class="mini">${item}</span>`).join("")}</div>
+      </div>` : ""}
+      ${cautions.length ? `<div class="intel-group">
+        <h4>Caution signals</h4>
+        <div class="intel-chip-row">${cautions.map(item => `<span class="mini">${item}</span>`).join("")}</div>
+      </div>` : ""}
 
-      <div class="intel-recommendation">
-        <b>Catch history</b>
-        <div class="small">${catchHistory.summary || "No catch history yet."}</div>
-        <div class="small">${catchMeta.join(" · ") || "Sample size is zero."}</div>
-      </div>
+      <div class="intel-grid">${recommendations}</div>
 
-      <div class="intel-recommendation">
-        <b>Input quality</b>
-        <div class="small">${inputQuality.ok ? "All key inputs present." : `Missing: ${missingInputs.join(", ") || "unknown"}`}</div>
-        <div class="small">Source: ${inputQuality.source || "unknown"}${inputQuality.fallback ? " · fallback" : ""}</div>
-      </div>
+      ${explanation.length ? `<details class="intel-details">
+        <summary>Explanation</summary>
+        <ul>${explanation.map(item => `<li>${item}</li>`).join("")}</ul>
+      </details>` : ""}
+
+      <details class="intel-details">
+        <summary>Strategy and next actions</summary>
+        <h4>Strategy</h4>
+        <ul>${strategy}</ul>
+        <h4>Next actions</h4>
+        <ul>${nextActions}</ul>
+      </details>
+
+      ${warnings ? `<details class="intel-details">
+        <summary>Warnings</summary>
+        <ul>${warnings}</ul>
+      </details>` : ""}
+
+      ${errors ? `<details class="intel-details">
+        <summary>Errors</summary>
+        <ul>${errors}</ul>
+      </details>` : ""}
     </div>
-
-    ${positives.length ? `<h4>Positive signals</h4><div class="intel-signal-row">${positives.map(item => `<span class="mini">${item}</span>`).join("")}</div>` : ""}
-    ${cautions.length ? `<h4>Caution signals</h4><div class="intel-signal-row">${cautions.map(item => `<span class="mini">${item}</span>`).join("")}</div>` : ""}
-    <div class="intel-grid">${recommendations}</div>
-    ${explanation.length ? `<details class="intel-details">
-      <summary>Explanation</summary>
-      <ul>${explanation.map(item => `<li>${item}</li>`).join("")}</ul>
-    </details>` : ""}
-    <details class="intel-details">
-      <summary>Strategy and next actions</summary>
-      <h4>Strategy</h4>
-      <ul>${strategy}</ul>
-      <h4>Next actions</h4>
-      <ul>${nextActions}</ul>
-    </details>
-    ${warnings ? `<details class="intel-details">
-      <summary>Warnings</summary>
-      <ul>${warnings}</ul>
-    </details>` : ""}
-    ${errors ? `<details class="intel-details">
-      <summary>Errors</summary>
-      <ul>${errors}</ul>
-    </details>` : ""}
   `;
 }
 
