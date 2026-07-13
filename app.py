@@ -1040,7 +1040,16 @@ def snapshot():
 def api_intel():
     zip_code = request.args.get("zip", "60543")
     target_species = str(request.args.get("target_species", "")).strip()
-    data = build_intel(zip_code, target_species=target_species)
+    water_id = str(request.args.get("water_id", "")).strip()
+
+    if water_id:
+        water = get_water_record_by_id(water_id)
+        if not water:
+            return jsonify({"error": "Waterbody not found"}), 404
+
+        data = build_water_intel(water, target_species=target_species, zip_code=zip_code)
+    else:
+        data = build_intel(zip_code, target_species=target_species)
 
     if not data:
         return jsonify({"error": "Invalid ZIP code"}), 400

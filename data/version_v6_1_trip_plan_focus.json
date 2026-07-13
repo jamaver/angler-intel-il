@@ -1,0 +1,10 @@
+{
+  "version": "v6.1-trip-plan-focus",
+  "previous_version": "v6-baseline",
+  "selected_water_focus": true,
+  "trip_plan_card": true,
+  "water_id_intel": true,
+  "focus_water_persistence": true,
+  "saved_reports_water_focus_ready": true,
+  "installed_at": "2026-07-13T07:07:34-05:00"
+}

@@ -264,6 +264,93 @@ button {
   font-size: 0.92rem;
 }
 
+.focus-water-control {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(96, 165, 250, 0.14);
+  background: rgba(8, 17, 30, 0.58);
+}
+
+.focus-water-control label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 800;
+}
+
+.focus-water-control select {
+  min-height: 2.65rem;
+}
+
+.dashboard-trip-plan-card {
+  border-color: rgba(96, 165, 250, 0.14);
+}
+
+.trip-plan-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.trip-plan-copy {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.trip-plan-copy h3 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.trip-plan-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.15rem;
+}
+
+.trip-plan-stack {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.trip-plan-item {
+  padding: 0.72rem 0.8rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(11, 20, 34, 0.42);
+}
+
+.trip-plan-item span {
+  display: block;
+  color: #9ec5ff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 0.2rem;
+}
+
+.trip-plan-item strong {
+  display: block;
+  line-height: 1.35;
+}
+
+.trip-plan-item small {
+  display: block;
+  margin-top: 0.18rem;
+  color: #cfd8e6;
+}
+
+.trip-plan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
 .control-grid {
   display: grid;
   gap: 0.8rem;
@@ -822,6 +909,10 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .trip-plan-grid {
+    grid-template-columns: 1fr;
+  }
+
   .status-layout {
     grid-template-columns: 1fr;
   }
@@ -829,6 +920,10 @@ button {
   .status-score,
   .status-actions {
     text-align: left;
+    justify-content: flex-start;
+  }
+
+  .trip-plan-actions {
     justify-content: flex-start;
   }
 }
@@ -899,6 +994,10 @@ button {
   }
 
   .dashboard-secondary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trip-plan-stack {
     grid-template-columns: 1fr;
   }
 }

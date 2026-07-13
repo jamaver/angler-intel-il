@@ -3,8 +3,13 @@ const zipInput = document.getElementById("zipInput");
 const favoriteName = document.getElementById("favoriteName");
 const targetSpeciesNode = document.getElementById("targetSpecies");
 const targetProfileSummary = document.getElementById("targetProfileSummary");
+const focusWaterNode = document.getElementById("focusWater");
+const focusWaterSummary = document.getElementById("focusWaterSummary");
+
+const FOCUS_WATER_STORAGE_KEY = "angler-intel.focus-water";
 
 let currentZip = "60543";
+let currentFocusWaterIdValue = localStorage.getItem(FOCUS_WATER_STORAGE_KEY) || "";
 let latestData = null;
 let targetProfile = null;
 
@@ -15,6 +20,15 @@ function el(id) {
 function setHTML(id, html) {
   const node = el(id);
   if (node) node.innerHTML = html;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function asList(value) {
@@ -165,30 +179,32 @@ function renderDashboardSummary(data) {
   const waters = data.waters || [];
   const weather = data.weather || {};
   const target = data.target_species || currentTargetSpecies() || "Auto";
-  const topWater = waters[0] || {};
-  const topWaterLabel = topWater.name ? `${topWater.name}${topWater.distance ? ` · ${topWater.distance} mi` : ""}` : "No waters in range";
+  const focusWater = data.water || waters[0] || {};
+  const focusWaterLabel = focusWater.name ? `${focusWater.name}${focusWater.distance ? ` · ${focusWater.distance} mi` : ""}` : "Auto from ZIP";
+  const focusWaterDetail = focusWater.type || data.area_type || "ZIP search";
 
   return `
     <div class="dashboard-metric-grid">
       ${renderMetric("Target", target, data.target_species_source || "profile")}
       ${renderMetric("Score", `${data.overall?.score ?? "?"}/100`, data.overall?.rating || "")}
       ${renderMetric("Wind", `${weather.wind ?? "?"} mph`, weather.fallback ? "fallback weather" : "live weather")}
-      ${renderMetric("Waters", `${waters.length}`, topWaterLabel)}
+      ${renderMetric("Focus", focusWaterLabel, focusWaterDetail)}
     </div>
   `;
 }
 
 function renderDashboardBrief(data) {
   const waters = data.waters || [];
-  const topWater = waters[0];
+  const topWater = data.water || waters[0];
   const secondWater = waters[1];
   const target = data.target_species || currentTargetSpecies() || "Auto";
 
   if (!topWater) {
     return `
       <div class="dashboard-brief-empty">
-        <p>No waters matched this search radius.</p>
+        <p>No focus water selected yet.</p>
         <a class="hero-action" href="/map">Open Map</a>
+        <a class="hero-action secondary-link" href="/waters">Local Waters</a>
       </div>
     `;
   }
@@ -219,6 +235,60 @@ function renderDashboardBrief(data) {
   `;
 }
 
+function renderTripPlan(data) {
+  const waters = data.waters || [];
+  const focusWater = data.water || waters[0] || {};
+  const target = data.target_species || currentTargetSpecies() || "Auto";
+  const bestBet = data.best_bet || {};
+  const planWhy = bestBet.why || data.smart_intelligence?.summary || "Load intel to see the plan.";
+  const waterLabel = focusWater.name || data.location?.city || "Auto from ZIP";
+  const waterType = focusWater.type || data.area_type || "water";
+  const bestTime = bestBet.time_label || data.best_time?.label || "Any time";
+  const bestTimeRange = bestBet.time_range || data.best_time?.time || "";
+  const lure = bestBet.lure_name || data.lure_cards?.[0]?.name || "Lure";
+  const waterAction = focusWater.id
+    ? `<a class="hero-action secondary-link" href="/water/${encodeURIComponent(focusWater.id)}">Open Water Intel</a>`
+    : `<a class="hero-action secondary-link" href="/map">Open Map</a>`;
+
+  return `
+    <div class="trip-plan-grid">
+      <div class="trip-plan-copy">
+        <div class="small">Focus water</div>
+        <h3>${escapeHtml(waterLabel)}</h3>
+        <div class="small">${escapeHtml(waterType)}${focusWater.city ? ` · ${escapeHtml(focusWater.city)}` : ""}${focusWater.distance ? ` · ${escapeHtml(focusWater.distance)} mi` : ""}</div>
+        <div class="trip-plan-pills">
+          <span class="mini">${escapeHtml(target)}</span>
+          <span class="mini">${escapeHtml(bestBet.fit_label || data.overall?.rating || "Target fit")}</span>
+          ${focusWater.favorite ? `<span class="mini">Favorite</span>` : ""}
+          ${focusWater.manual ? `<span class="mini">Manual</span>` : ""}
+        </div>
+      </div>
+
+      <div class="trip-plan-stack">
+        <div class="trip-plan-item">
+          <span>Best time</span>
+          <strong>${escapeHtml(bestTime)}</strong>
+          <small>${escapeHtml(bestTimeRange)}</small>
+        </div>
+        <div class="trip-plan-item">
+          <span>Best lure</span>
+          <strong>${escapeHtml(lure)}</strong>
+          <small>${escapeHtml(bestBet.speed || "Presentation guide")}</small>
+        </div>
+        <div class="trip-plan-item">
+          <span>Why it works</span>
+          <strong>${escapeHtml(planWhy)}</strong>
+        </div>
+      </div>
+
+      <div class="trip-plan-actions">
+        ${waterAction}
+        <a class="hero-action" href="/reports">Saved Reports</a>
+      </div>
+    </div>
+  `;
+}
+
 if (form) {
   form.addEventListener("submit", e => {
     e.preventDefault();
@@ -228,6 +298,15 @@ if (form) {
 
 targetSpeciesNode?.addEventListener("change", () => {
   syncTargetSpecies({ use_trip: true }).catch(err => {
+    console.error(err);
+  });
+});
+
+focusWaterNode?.addEventListener("change", () => {
+  const value = focusWaterNode.value.trim();
+  setFocusWaterSelection(value);
+  renderFocusWaterSummary(latestData || {});
+  loadIntel(currentZip, value).catch(err => {
     console.error(err);
   });
 });
@@ -274,6 +353,27 @@ function currentTargetSpecies() {
   return targetProfile?.current_trip_target || targetProfile?.default_target_species || "";
 }
 
+function currentFocusWaterId() {
+  return focusWaterNode ? focusWaterNode.value.trim() : currentFocusWaterIdValue;
+}
+
+function setFocusWaterSelection(waterId) {
+  currentFocusWaterIdValue = String(waterId || "").trim();
+  localStorage.setItem(FOCUS_WATER_STORAGE_KEY, currentFocusWaterIdValue);
+  if (focusWaterNode && focusWaterNode.value !== currentFocusWaterIdValue) {
+    focusWaterNode.value = currentFocusWaterIdValue;
+  }
+}
+
+function renderFocusWaterSummary(data = {}) {
+  if (!focusWaterSummary) return;
+  const water = data.water || {};
+  const focusName = water.name || data.location?.city || "Auto from ZIP";
+  const focusType = water.type || data.area_type || "ZIP-based";
+  const fit = water.id ? "Selected waterbody" : "ZIP search";
+  focusWaterSummary.textContent = `${fit}: ${focusName} · ${focusType}`;
+}
+
 function renderTargetProfile() {
   if (!targetProfileSummary) return;
   if (!targetProfile) {
@@ -304,6 +404,58 @@ async function loadTargetProfile() {
     console.error(err);
     targetProfile = null;
     renderTargetProfile();
+  }
+}
+
+function focusWaterLabel(water) {
+  const bits = [water?.name, water?.type, water?.city].filter(Boolean);
+  return bits.join(" · ") || "Waterbody";
+}
+
+async function loadFocusWaters() {
+  if (!focusWaterNode) return;
+
+  try {
+    const res = await fetch("/api/map-data");
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || "Could not load waters");
+    }
+
+    const rankedWaters = Array.isArray(data.top_waters) && data.top_waters.length ? data.top_waters.slice() : [];
+    const records = rankedWaters.length
+      ? rankedWaters
+      : Array.isArray(data.waters)
+        ? data.waters.slice().sort((a, b) => {
+            const aRank = Number(Boolean(a.favorite)) * 3 + Number(Boolean(a.manual || String(a.source || "").toLowerCase() === "manual")) * 2 + Number(Boolean(a.stocked_trout));
+            const bRank = Number(Boolean(b.favorite)) * 3 + Number(Boolean(b.manual || String(b.source || "").toLowerCase() === "manual")) * 2 + Number(Boolean(b.stocked_trout));
+            if (aRank !== bRank) return bRank - aRank;
+            const aScore = Number(a.score || a.local_score || 0);
+            const bScore = Number(b.score || b.local_score || 0);
+            if (aScore !== bScore) return bScore - aScore;
+            return String(a.name || "").localeCompare(String(b.name || ""));
+          })
+        : [];
+
+    const options = ['<option value="">Auto from ZIP</option>'];
+    for (const record of records.slice(0, 50)) {
+      const label = focusWaterLabel(record);
+      options.push(`<option value="${escapeHtml(record.id)}">${escapeHtml(label)}</option>`);
+    }
+    focusWaterNode.innerHTML = options.join("");
+
+    const saved = localStorage.getItem(FOCUS_WATER_STORAGE_KEY) || "";
+    if (saved && Array.from(focusWaterNode.options).some(option => option.value === saved)) {
+      focusWaterNode.value = saved;
+      currentFocusWaterIdValue = saved;
+    } else {
+      focusWaterNode.value = "";
+      currentFocusWaterIdValue = "";
+      localStorage.removeItem(FOCUS_WATER_STORAGE_KEY);
+    }
+  } catch (err) {
+    console.error(err);
+    focusWaterNode.innerHTML = '<option value="">Auto from ZIP</option>';
   }
 }
 
@@ -449,25 +601,38 @@ async function deleteCatch(id) {
   await loadIntel(currentZip);
 }
 
-async function loadIntel(zip) {
+async function loadIntel(zip, waterId = currentFocusWaterId()) {
   currentZip = zip;
   if (zipInput) zipInput.value = zip;
   const target = currentTargetSpecies();
+  const focusWaterId = String(waterId || "").trim();
 
   setHTML("status", "Loading fishing intelligence...");
 
   try {
     const params = new URLSearchParams({ zip });
     if (target) params.set("target_species", target);
+    if (focusWaterId) params.set("water_id", focusWaterId);
     const res = await fetch(`/api/intel?${params.toString()}`);
     const data = await res.json();
 
     if (!res.ok) {
+      if (focusWaterId) {
+        setFocusWaterSelection("");
+        renderFocusWaterSummary({});
+        return loadIntel(zip, "");
+      }
       setHTML("status", data.error || "Error loading data");
       return;
     }
 
     latestData = data;
+    if (data.water?.id) {
+      setFocusWaterSelection(data.water.id);
+    } else if (focusWaterId) {
+      setFocusWaterSelection(focusWaterId);
+    }
+    renderFocusWaterSummary(data);
     render(data);
   } catch (err) {
     console.error(err);
@@ -675,6 +840,17 @@ function render(data) {
     targetSpeciesNode.value = targetProfile.current_trip_target || targetProfile.default_target_species || "";
   }
 
+  if (focusWaterNode) {
+    const waterId = data.water?.id || currentFocusWaterIdValue || "";
+    if (waterId) {
+      focusWaterNode.value = waterId;
+      currentFocusWaterIdValue = waterId;
+      localStorage.setItem(FOCUS_WATER_STORAGE_KEY, waterId);
+    } else if (!focusWaterNode.value) {
+      focusWaterNode.value = "";
+    }
+  }
+
   setHTML("status", `
     <div class="status-layout">
       <div>
@@ -693,6 +869,7 @@ function render(data) {
     </div>
   `);
   setHTML("dashboardSummary", renderDashboardSummary(data));
+  setHTML("tripPlan", renderTripPlan(data));
   setHTML("dashboardBrief", renderDashboardBrief(data));
 
   const best = data.best_bet;
@@ -829,6 +1006,8 @@ function render(data) {
 
 loadFavorites();
 loadCatchLog();
-loadTargetProfile().finally(() => {
-  loadIntel("60543");
+loadFocusWaters().finally(() => {
+  loadTargetProfile().finally(() => {
+    loadIntel("60543");
+  });
 });

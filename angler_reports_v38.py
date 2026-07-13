@@ -844,6 +844,12 @@ loadReports();
             or ""
         ).strip()
 
+        water_id = (
+            request.args.get("water_id")
+            or request.form.get("water_id")
+            or ""
+        ).strip()
+
         title = (
             request.args.get("title")
             or request.form.get("title")
@@ -856,7 +862,10 @@ loadReports();
                 "error": "Missing ZIP. Use /api/reports/create?zip=60543",
             }), 400
 
-        query = urlencode({"zip": zip_code})
+        query_params = {"zip": zip_code}
+        if water_id:
+            query_params["water_id"] = water_id
+        query = urlencode(query_params)
 
         try:
             with app.test_client() as client:

@@ -66,6 +66,16 @@
           <div id="targetProfileSummary" class="control-profile-summary"></div>
         </div>
 
+        <div class="focus-water-control">
+          <label>
+            Focus water
+            <select id="focusWater">
+              <option value="">Auto from ZIP</option>
+            </select>
+          </label>
+          <div id="focusWaterSummary" class="control-profile-summary">Choose a waterbody to steer the trip plan and intelligence.</div>
+        </div>
+
         <div class="favorite-add">
           <input id="favoriteName" placeholder="Favorite name">
           <button onclick="saveFavorite()" type="button">Save ZIP</button>
@@ -73,6 +83,17 @@
 
         <div id="favorites" class="favorites"></div>
       </div>
+    </section>
+
+    <section class="card dashboard-trip-plan-card">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow section-eyebrow">Trip plan</p>
+          <h2>One-screen plan</h2>
+        </div>
+        <div class="small">Where, what, why, and what to do next.</div>
+      </div>
+      <div id="tripPlan"></div>
     </section>
 
     <section class="dashboard-primary-grid">

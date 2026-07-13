@@ -88,6 +88,17 @@ Angler Intel is moving toward a map-first, waterbody-centered fishing intelligen
 - Cleaner mobile layout and card hierarchy
 - Stronger icon and action button presentation
 
+## v6.1 Trip Plan Focus
+
+- Selected waterbody steering on the dashboard
+- Trip plan card with where, what, why, and next action
+- Water-specific `/api/intel` requests from the main UI
+- Focus-water persistence for faster repeat sessions
+- Saved reports that can follow the selected waterbody
+- Cleaner dashboard answers before the user opens the map
+
+## Follow-On
+
 - Import/export waterbody datasets
 - Backup and restore coverage for structured data
 - Portable snapshots for migration and recovery
