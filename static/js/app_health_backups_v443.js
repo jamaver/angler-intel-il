@@ -70,12 +70,16 @@
           <div class="ai-health-backup-row-actions">
             <a class="ai-health-backup-link" href="${esc(b.download_url)}">Download</a>
             <button type="button" data-restore-backup="${esc(b.filename)}">Restore</button>
+            <button type="button" class="danger" data-delete-backup="${esc(b.filename)}">Delete</button>
           </div>
         </div>
       `).join("");
 
       panel.querySelectorAll("[data-restore-backup]").forEach(button => {
         button.addEventListener("click", () => restoreBackup(button.getAttribute("data-restore-backup") || ""));
+      });
+      panel.querySelectorAll("[data-delete-backup]").forEach(button => {
+        button.addEventListener("click", () => deleteBackup(button.getAttribute("data-delete-backup") || ""));
       });
     } catch (err) {
       status.textContent = "Unable to load backups: " + err;
@@ -138,6 +142,43 @@
       loadBackups();
     } catch (err) {
       status.textContent = "Restore failed: " + err;
+    }
+  }
+
+  async function deleteBackup(filename) {
+    const panel = ensurePanel();
+    const status = panel.querySelector("#aiHealthBackupStatus");
+
+    if (!filename) {
+      status.textContent = "Delete failed: missing backup filename.";
+      return;
+    }
+
+    if (!confirm(`Delete backup ${filename}? This cannot be undone.`)) {
+      return;
+    }
+
+    status.textContent = "Deleting backup...";
+
+    try {
+      const res = await fetch("/api/app-health/backups/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ filename })
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        status.textContent = "Delete failed: " + (data.error || "unknown error");
+        return;
+      }
+
+      status.textContent = `Deleted ${filename}.`;
+      loadBackups();
+    } catch (err) {
+      status.textContent = "Delete failed: " + err;
     }
   }
 

@@ -38,6 +38,19 @@ def _backup_files() -> list[dict[str, Any]]:
     return files
 
 
+def _delete_backup(filename: str) -> dict[str, Any]:
+    archive_path = safe_user_data_backup_path(filename)
+    if not archive_path.exists() or not archive_path.is_file():
+        raise FileNotFoundError("Backup not found")
+
+    archive_path.unlink()
+    return {
+        "filename": archive_path.name,
+        "path": str(archive_path),
+        "backups": _backup_files()[:10],
+    }
+
+
 def _create_backup() -> dict[str, Any]:
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -152,3 +165,29 @@ def register_health_backup_routes_v443(app):
             return jsonify({"ok": False, "error": "Backup not found"}), 404
 
         return send_file(path, as_attachment=True, download_name=safe)
+
+    @app.route("/api/app-health/backups/delete", methods=["POST"])
+    def app_health_delete_backup_v443():
+        payload = request.get_json(silent=True) or {}
+        filename = str(
+            payload.get("filename")
+            or payload.get("path")
+            or request.args.get("filename")
+            or request.args.get("path")
+            or ""
+        ).strip()
+
+        try:
+            result = _delete_backup(filename)
+            return jsonify({
+                "ok": True,
+                "version": "v5.9-modern-ui-refresh",
+                "deleted": result["filename"],
+                "backups": result["backups"],
+            })
+        except FileNotFoundError:
+            return jsonify({"ok": False, "error": "Backup not found"}), 404
+        except ValueError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 500

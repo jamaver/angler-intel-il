@@ -65,6 +65,44 @@ def _save_index(items: list[dict[str, Any]]) -> None:
     _write_json(INDEX_PATH, items)
 
 
+def _delete_report_assets(report_id: str) -> dict[str, Any]:
+    if "/" in report_id or "\\" in report_id or ".." in report_id:
+        raise ValueError("Invalid report id")
+
+    items = _index()
+    match = None
+    remaining = []
+
+    for item in items:
+        if item.get("id") == report_id:
+            match = item
+        else:
+            remaining.append(item)
+
+    if not match:
+        raise FileNotFoundError("Report not found")
+
+    deleted_files: list[str] = []
+    for key in ("html_file", "json_file"):
+        filename = str(match.get(key) or "").strip()
+        if not filename:
+            continue
+        path = _safe_report_file(filename)
+        if path is None:
+            continue
+        if path.exists():
+            path.unlink()
+            deleted_files.append(path.name)
+
+    _save_index(remaining)
+
+    return {
+        "report": match,
+        "deleted_files": deleted_files,
+        "remaining_count": len(remaining),
+    }
+
+
 def _first_present(data: dict[str, Any], keys: list[str], default: Any = None) -> Any:
     for key in keys:
         if key in data and data[key] not in (None, "", [], {}):
@@ -726,7 +764,7 @@ def register_report_routes_v38(app):
     <pre id="createResult">No report created yet.</pre>
   </div>
 
-  <div class="card">
+    <div class="card">
     <h2>Existing reports</h2>
     <button onclick="loadReports()">Refresh reports</button>
     <div id="reportsList">Loading...</div>
@@ -783,10 +821,50 @@ async function loadReports() {
         <a href="${r.view_url}">View</a> |
         <a href="${r.html_url}">Download HTML</a> |
         <a href="${r.json_url}">Download JSON</a>
+        <button type="button" class="danger" data-delete-report="${escapeHtml(r.id || "")}">Delete</button>
       </div>
     `).join("");
+
+    box.querySelectorAll("[data-delete-report]").forEach(button => {
+      button.addEventListener("click", () => deleteReport(button.getAttribute("data-delete-report") || ""));
+    });
   } catch (err) {
     box.textContent = "Unable to load reports: " + err;
+  }
+}
+
+async function deleteReport(reportId) {
+  const box = document.getElementById("createResult");
+  if (!reportId) {
+    box.textContent = "Delete failed: missing report id.";
+    return;
+  }
+
+  if (!confirm(`Delete report ${reportId}? This removes the saved HTML and JSON files.`)) {
+    return;
+  }
+
+  box.textContent = "Deleting report...";
+
+  try {
+    const res = await fetch("/api/reports/delete", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ report_id: reportId })
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.ok) {
+      box.textContent = "Delete failed: " + (data.error || "unknown error");
+      return;
+    }
+
+    box.textContent = `Deleted ${reportId}.`;
+    loadReports();
+  } catch (err) {
+    box.textContent = "Delete failed: " + err;
   }
 }
 
@@ -964,6 +1042,33 @@ loadReports();
                 attachment_filename=path.name,
             )
 
+    @app.route("/api/reports/delete", methods=["POST"])
+    def delete_report_v38():
+        payload = request.get_json(silent=True) or {}
+        report_id = str(
+            payload.get("report_id")
+            or payload.get("id")
+            or request.args.get("report_id")
+            or request.args.get("id")
+            or ""
+        ).strip()
+
+        try:
+            result = _delete_report_assets(report_id)
+            return jsonify({
+                "ok": True,
+                "version": "v3.8",
+                "report_id": report_id,
+                "deleted_files": result["deleted_files"],
+                "remaining_count": result["remaining_count"],
+            })
+        except FileNotFoundError:
+            return jsonify({"ok": False, "error": "Report not found"}), 404
+        except ValueError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 500
+
     @app.route("/api/reports/view/<report_id>")
     def view_report_v38(report_id: str):
         if "/" in report_id or "\\" in report_id or ".." in report_id:
@@ -1017,6 +1122,7 @@ loadReports();
                 "/api/reports/create?zip=60543",
                 "/api/reports/save",
                 "/api/reports/download/<filename>",
+                "/api/reports/delete",
                 "/api/reports/view/<report_id>",
             ],
         })
