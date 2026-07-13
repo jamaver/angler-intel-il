@@ -749,10 +749,11 @@ button {
 }
 
 .mini {
-  background: #233451;
+  background: rgba(8, 18, 31, 0.58);
+  border: 1px solid rgba(148, 163, 184, 0.15);
   padding: 8px 12px;
   border-radius: 12px;
-  color: #eef3fb;
+  color: #e2e8f0;
   font-size: 13px;
   font-weight: bold;
 }
