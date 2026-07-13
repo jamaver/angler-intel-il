@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlencode
 
-from flask import jsonify, request, send_file
+from flask import jsonify, render_template, request, send_file
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -126,6 +126,11 @@ def _extract_summary(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _compact_text(value: Any, fallback: str = "") -> str:
+    text = " ".join(str(value or "").split()).strip()
+    return text or fallback
+
+
 def _short_text(value: Any, limit: int = 240) -> str:
     if value is None:
         return ""
@@ -139,168 +144,359 @@ def _short_text(value: Any, limit: int = 240) -> str:
     return text
 
 
-def _render_item_list(value: Any, empty: str = "No data saved for this section.") -> str:
+def _format_report_datetime(value: Any) -> str:
     if not value:
-        return f"<p class='muted'>{html.escape(empty)}</p>"
+        return "Unknown time"
+    if isinstance(value, datetime):
+        return value.strftime("%b %d, %Y %I:%M %p")
+    text = _compact_text(value)
+    for fmt in ("%b %d, %Y %I:%M %p", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"):
+        try:
+            return datetime.strptime(text, fmt).strftime("%b %d, %Y %I:%M %p")
+        except Exception:
+            continue
+    return text
 
-    if isinstance(value, dict):
-        items = []
-        for k, v in value.items():
-            items.append(f"<li><strong>{html.escape(str(k))}:</strong> {html.escape(_short_text(v, 400))}</li>")
-        return "<ul>" + "\n".join(items) + "</ul>"
 
-    if isinstance(value, list):
-        items = []
-        for entry in value[:12]:
-            if isinstance(entry, dict):
-                label = (
-                    entry.get("name")
-                    or entry.get("species")
-                    or entry.get("title")
-                    or entry.get("water")
-                    or entry.get("waterbody")
-                    or entry.get("day")
-                    or entry.get("date")
-                    or "Item"
-                )
-                detail = _short_text(entry, 360)
-                items.append(f"<li><strong>{html.escape(str(label))}</strong><br>{html.escape(detail)}</li>")
-            else:
-                items.append(f"<li>{html.escape(_short_text(entry, 360))}</li>")
-        return "<ul>" + "\n".join(items) + "</ul>"
+def _fit_label(score: Any) -> str:
+    try:
+        value = float(score)
+    except Exception:
+        return "Exploratory fit"
+    if value >= 80:
+        return "Strong target fit"
+    if value >= 65:
+        return "Good target fit"
+    if value >= 50:
+        return "Moderate target fit"
+    return "Exploratory fit"
 
-    return f"<p>{html.escape(_short_text(value, 500))}</p>"
+
+def _lure_label(item: Any) -> str:
+    if not isinstance(item, dict):
+        return "Lure"
+    asset = item.get("lure_asset") if isinstance(item.get("lure_asset"), dict) else {}
+    if asset and asset.get("label"):
+        return _compact_text(asset.get("label"), "Lure")
+    return _compact_text(
+        item.get("name") or item.get("lure_name") or item.get("label") or "Lure",
+        "Lure",
+    )
+
+
+def _lure_image(item: Any) -> str:
+    if not isinstance(item, dict):
+        return "/static/lures/generic_lure.png"
+    asset = item.get("lure_asset") if isinstance(item.get("lure_asset"), dict) else {}
+    if asset and asset.get("path"):
+        return asset.get("path")
+    return item.get("image") or "/static/lures/generic_lure.png"
+
+
+def _best_time_label(best_bet: dict[str, Any]) -> str:
+    parts = [
+        _compact_text(best_bet.get("time_label"), ""),
+        _compact_text(best_bet.get("time_range"), ""),
+    ]
+    parts = [part for part in parts if part]
+    return " · ".join(parts) or "Any time"
+
+
+def _condition_rows(weather: dict[str, Any]) -> list[dict[str, str]]:
+    rows = []
+    if not isinstance(weather, dict):
+        return rows
+    rows.append({"label": "Temperature", "value": f"{weather.get('temp', '?')}°F"})
+    rows.append({"label": "Wind", "value": f"{weather.get('wind', '?')} mph"})
+    rows.append({"label": "Pressure", "value": f"{weather.get('pressure', '?')} inHg"})
+    rows.append({"label": "Cloud Cover", "value": f"{weather.get('cloud', '?')}%"})
+    source = _compact_text(weather.get("source"), "")
+    if source:
+        rows.append({"label": "Source", "value": source})
+    return rows
+
+
+def _best_bet_context(best_bet: dict[str, Any]) -> dict[str, Any]:
+    best_bet = best_bet if isinstance(best_bet, dict) else {}
+    return {
+        "species": _compact_text(best_bet.get("species"), "Target Species"),
+        "fish_image": best_bet.get("fish_image") or "/static/fish/generic_fish.png",
+        "best_time": _best_time_label(best_bet),
+        "best_hour": _compact_text(best_bet.get("best_hour"), ""),
+        "lure_name": _lure_label(best_bet),
+        "lure_image": _lure_image(best_bet),
+        "speed": _compact_text(best_bet.get("speed"), ""),
+        "size": _compact_text(best_bet.get("size"), ""),
+        "why": _compact_text(best_bet.get("why"), ""),
+        "fit_label": _fit_label(best_bet.get("species_score")),
+        "reasons": [_compact_text(item, "") for item in best_bet.get("reasons", []) if _compact_text(item, "")],
+    }
+
+
+def _species_rows(species: Any, best_bet: dict[str, Any], best_time: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    best_name = _compact_text(best_bet.get("species"), "").lower()
+    preferred_window = "evening"
+    if isinstance(best_time, dict):
+        label = _compact_text(best_time.get("label"), "").lower()
+        if "morning" in label:
+            preferred_window = "morning"
+        elif "midday" in label:
+            preferred_window = "midday"
+
+    for item in species or []:
+        if not isinstance(item, dict):
+            continue
+        lures = item.get("lures") if isinstance(item.get("lures"), dict) else {}
+        cards = lures.get("cards") if isinstance(lures.get("cards"), dict) else {}
+        lure_card = {}
+        if isinstance(cards, dict):
+            for key in (preferred_window, "evening", "morning", "midday"):
+                candidate = cards.get(key)
+                if isinstance(candidate, dict):
+                    lure_card = candidate
+                    break
+
+        rows.append({
+            "name": _compact_text(item.get("name"), "Species"),
+            "fish_image": item.get("fish_image") or "/static/fish/generic_fish.png",
+            "rating": _compact_text(item.get("rating"), ""),
+            "habitat": _compact_text(item.get("habitat"), "Mixed habitat"),
+            "lure_label": _lure_label(lure_card) if lure_card else "",
+            "lure_image": _lure_image(lure_card) if lure_card else "",
+            "why": _compact_text(lure_card.get("why") if isinstance(lure_card, dict) else "", ""),
+            "fit_label": _fit_label(item.get("score")),
+            "target_fit": _fit_label(item.get("score")),
+            "selected": _compact_text(item.get("name"), "").lower() == best_name,
+        })
+    return rows
+
+
+def _lure_rows(lures: Any) -> list[dict[str, Any]]:
+    rows = []
+    for item in lures or []:
+        if not isinstance(item, dict):
+            continue
+        rows.append({
+            "species": _compact_text(item.get("species"), "Species"),
+            "name": _lure_label(item),
+            "image": _lure_image(item),
+            "color": _compact_text(item.get("color"), ""),
+            "speed": _compact_text(item.get("speed"), ""),
+            "size": _compact_text(item.get("size"), ""),
+            "why": _compact_text(item.get("why"), ""),
+            "fit_label": _fit_label(item.get("species_score")),
+            "top_pick": bool(item.get("top_pick")),
+        })
+    return rows
+
+
+def _water_rows(waters: Any) -> list[dict[str, Any]]:
+    rows = []
+    for item in waters or []:
+        if not isinstance(item, dict):
+            continue
+        rows.append({
+            "name": _compact_text(item.get("name"), "Waterbody"),
+            "count": item.get("count"),
+            "type": _compact_text(item.get("type"), ""),
+        })
+    return rows
+
+
+def _forecast_rows(forecast: Any) -> list[dict[str, Any]]:
+    rows = []
+    for item in forecast or []:
+        if not isinstance(item, dict):
+            continue
+        date_text = _compact_text(item.get("date"), "")
+        pretty_date = date_text
+        if date_text:
+            try:
+                pretty_date = datetime.strptime(date_text, "%Y-%m-%d").strftime("%a, %b %d")
+            except Exception:
+                pretty_date = date_text
+        rows.append({
+            "date": date_text,
+            "pretty_date": pretty_date,
+            "rating": _compact_text(item.get("rating"), ""),
+            "high": item.get("high"),
+            "low": item.get("low"),
+            "wind": item.get("wind"),
+            "score": item.get("score"),
+        })
+    return rows
+
+
+def _render_condition_cards(rows: list[dict[str, str]]) -> str:
+    return "".join(
+        f'<div class="report-condition"><strong>{html.escape(item["label"])}</strong><div>{html.escape(str(item["value"]))}</div></div>'
+        for item in rows
+    )
+
+
+def _render_species_cards(rows: list[dict[str, Any]]) -> str:
+    blocks = []
+    for item in rows:
+        reasons_html = f'<p class="report-muted">{html.escape(item["why"])}</p>' if item.get("why") else ""
+        rating_html = f'<p class="report-muted">Rating: {html.escape(item["rating"])}</p>' if item.get("rating") else ""
+        lure_html = f'<p class="report-muted"><b>Recommended:</b> {html.escape(item["lure_label"])}</p>' if item.get("lure_label") else ""
+        fit_html = f'<span class="report-score-pill">{html.escape(item["fit_label"])}</span>' if item.get("fit_label") else ""
+        lure_art = f'<img class="lure-art lure-art-sm report-lure-art" src="{html.escape(item["lure_image"])}" alt="{html.escape(item["lure_label"])}">' if item.get("lure_image") else ""
+        blocks.append(
+            f'''<article class="report-species-row">
+          <div class="report-media">
+            <img class="species-icon species-icon-md report-fish-art" src="{html.escape(item["fish_image"])}" alt="{html.escape(item["name"])}">
+            <div>
+              <div class="report-row-head">
+                <h3>{html.escape(item["name"])}</h3>
+                {fit_html}
+              </div>
+              {rating_html}
+              <p class="report-muted">Habitat: {html.escape(item["habitat"])}</p>
+              {lure_html}
+              {reasons_html}
+            </div>
+          </div>
+          {lure_art}
+        </article>'''
+        )
+    return "".join(blocks)
+
+
+def _render_lure_cards(rows: list[dict[str, Any]]) -> str:
+    blocks = []
+    for item in rows:
+        top_pick_html = '<span class="report-score-pill">Top pick</span>' if item.get("top_pick") else ""
+        color_part = f' · {html.escape(item["color"])}' if item.get("color") else ""
+        size_part = f' · {html.escape(item["size"])}' if item.get("size") else ""
+        why_html = f'<p class="report-muted">{html.escape(item["why"])}</p>' if item.get("why") else ""
+        blocks.append(
+            f'''<article class="report-lure-row">
+          <div class="report-media">
+            <img class="lure-art lure-art-md report-lure-art" src="{html.escape(item["image"])}" alt="{html.escape(item["name"])}">
+            <div>
+              <div class="report-row-head">
+                <h3>{html.escape(item["name"])}</h3>
+                {top_pick_html}
+              </div>
+              <p class="report-muted">For {html.escape(item["species"])}{color_part}</p>
+              <p class="report-muted">{html.escape(item["speed"])}{size_part}</p>
+              {why_html}
+            </div>
+          </div>
+        </article>'''
+        )
+    return "".join(blocks)
+
+
+def _render_water_cards(rows: list[dict[str, Any]]) -> str:
+    if not rows:
+        return '<p class="report-empty">No nearby waters saved for this report.</p>'
+    blocks = []
+    for item in rows:
+        count_html = f'<span class="report-score-pill">{html.escape(str(item["count"]))}</span>' if item.get("count") is not None else ""
+        type_html = f'<p class="report-muted">{html.escape(item["type"])}</p>' if item.get("type") else ""
+        blocks.append(
+            f'''<article class="report-water-row">
+          <div class="report-row-head">
+            <h3>{html.escape(item["name"])}</h3>
+            {count_html}
+          </div>
+          {type_html}
+        </article>'''
+        )
+    return f'<div class="report-species-grid">{"".join(blocks)}</div>'
+
+
+def _render_forecast_table(rows: list[dict[str, Any]]) -> str:
+    if not rows:
+        return '<p class="report-empty">No forecast data saved for this report.</p>'
+    body = "".join(
+        f'<tr><td>{html.escape(item["pretty_date"] or item["date"])}</td><td>{html.escape(item["rating"])}</td><td>{html.escape(str(item["high"]))}&deg; / {html.escape(str(item["low"]))}&deg;</td><td>{html.escape(str(item["wind"]))} mph</td><td>{html.escape(str(item["score"]))}</td></tr>'
+        for item in rows
+    )
+    return f'''<table class="report-outlook-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Rating</th>
+          <th>High / Low</th>
+          <th>Wind</th>
+          <th>Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        {body}
+      </tbody>
+    </table>'''
+
+
+def _build_report_context(report_meta: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    intel = payload.get("intel") if isinstance(payload.get("intel"), dict) else payload if isinstance(payload, dict) else {}
+    location = intel.get("location") if isinstance(intel.get("location"), dict) else {}
+    overall = intel.get("overall") if isinstance(intel.get("overall"), dict) else {}
+    best_bet = intel.get("best_bet") if isinstance(intel.get("best_bet"), dict) else {}
+    best_time = intel.get("best_time") if isinstance(intel.get("best_time"), dict) else {}
+    weather = intel.get("weather") if isinstance(intel.get("weather"), dict) else {}
+    smart = intel.get("smart_intelligence") if isinstance(intel.get("smart_intelligence"), dict) else {}
+    catch_insights = intel.get("catch_insights") if isinstance(intel.get("catch_insights"), dict) else {}
+
+    best_bet_ctx = _best_bet_context(best_bet)
+    condition_rows = _condition_rows(weather)
+    species_rows = _species_rows(intel.get("species") if isinstance(intel.get("species"), list) else [], best_bet, best_time)
+    lure_rows = _lure_rows(intel.get("lure_cards") if isinstance(intel.get("lure_cards"), list) else [])
+    water_rows = _water_rows(intel.get("waters") if isinstance(intel.get("waters"), list) else [])
+    forecast_rows = _forecast_rows(intel.get("forecast") if isinstance(intel.get("forecast"), list) else [])
+
+    smart_clarity = smart.get("clarity_signal") if isinstance(smart.get("clarity_signal"), dict) else {}
+    smart_condition_labels = [_compact_text(item, "") for item in (smart.get("condition_labels") or []) if _compact_text(item, "")]
+    smart_positive = [_compact_text(item, "") for item in (smart.get("positive_signals") or []) if _compact_text(item, "")]
+    smart_caution = [_compact_text(item, "") for item in (smart.get("caution_signals") or []) if _compact_text(item, "")]
+    smart_strategy = [_compact_text(item, "") for item in (smart.get("strategy") or []) if _compact_text(item, "")]
+
+    location_label = _compact_text(
+        ", ".join(part for part in [location.get("city"), location.get("state")] if part),
+        _compact_text(location.get("zip") or report_meta.get("zip"), "Unknown location"),
+    )
+
+    return {
+        "title": report_meta.get("title") or "Saved Fishing Report",
+        "subtitle": "Saved by Angler Intel",
+        "generated_at": _format_report_datetime(report_meta.get("created") or payload.get("saved_at") or payload.get("created")),
+        "location_label": location_label,
+        "zip_code": _compact_text(report_meta.get("zip") or location.get("zip") or intel.get("zip"), ""),
+        "target_species": _compact_text(intel.get("target_species") or payload.get("target_species"), "Auto"),
+        "overall_score": overall.get("score"),
+        "overall_rating": _compact_text(overall.get("rating"), ""),
+        "best_time": {
+            "label": _compact_text(best_bet.get("time_label"), "Any time"),
+            "range": _compact_text(best_bet.get("time_range"), "Any time"),
+            "best_hour": _compact_text(best_bet.get("best_hour"), ""),
+        },
+        "best_bet": best_bet_ctx,
+        "conditions": condition_rows,
+        "smart_intelligence": {
+            "headline": _compact_text(smart.get("headline"), "Fishing pattern"),
+            "summary": _compact_text(smart.get("summary"), ""),
+            "condition_labels": smart_condition_labels,
+            "clarity_label": _compact_text(smart_clarity.get("label"), "unknown"),
+            "clarity_basis": _compact_text(smart_clarity.get("basis"), ""),
+            "positive_signals": smart_positive,
+            "caution_signals": smart_caution,
+            "strategy": smart_strategy,
+        },
+        "species_ranking": species_rows,
+        "recommended_lures": lure_rows,
+        "nearby_waters": water_rows,
+        "forecast": forecast_rows,
+        "catch_insights": catch_insights,
+        "raw_json": json.dumps(payload, indent=2, ensure_ascii=False),
+    }
 
 
 def _render_report_html(report_meta: dict[str, Any], payload: dict[str, Any]) -> str:
-    summary = _extract_summary(payload)
-
-    title = report_meta.get("title") or "Saved Fishing Report"
-    created = report_meta.get("created") or ""
-    zip_code = report_meta.get("zip") or summary.get("zip") or ""
-
-    best_bet = summary.get("best_bet")
-    weather = summary.get("weather")
-    species = summary.get("species")
-    lures = summary.get("lures")
-    waters = summary.get("waters")
-    forecast = summary.get("forecast")
-
-    raw_json = json.dumps(payload, indent=2, ensure_ascii=False)
-
-    return f"""<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>{html.escape(title)} - Angler Intel</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {{
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      margin: 2rem;
-      max-width: 1000px;
-      line-height: 1.45;
-      color: #172018;
-    }}
-    .top {{
-      border-bottom: 1px solid #ddd;
-      margin-bottom: 1.5rem;
-      padding-bottom: 1rem;
-    }}
-    .card {{
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem 0;
-      background: #fff;
-    }}
-    .muted {{
-      color: #666;
-    }}
-    code, pre {{
-      background: #f5f5f5;
-      border-radius: 8px;
-    }}
-    code {{
-      padding: 0.15rem 0.3rem;
-    }}
-    pre {{
-      padding: 1rem;
-      overflow-x: auto;
-      white-space: pre-wrap;
-    }}
-    a {{
-      color: #0b5d2a;
-    }}
-    li {{
-      margin: 0.4rem 0;
-    }}
-    @media print {{
-      body {{ margin: 0.5in; }}
-      .no-print {{ display: none; }}
-      .card {{ break-inside: avoid; }}
-    }}
-  </style>
-  <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-  <nav class="ai-main-tabs" aria-label="Angler Intel navigation">
-  <a class="ai-main-tab" href="/">Dashboard</a>
-  <a class="ai-main-tab" href="/waters">Local Waters</a>
-  <a class="ai-main-tab active" href="/reports">Saved Reports</a>
-  <a class="ai-main-tab" href="/app-health">App Health</a>
-</nav>
-  <div class="top">
-    <h1>{html.escape(title)}</h1>
-    <p class="muted">Saved by Angler Intel v3.8</p>
-    <p><strong>Created:</strong> {html.escape(created)}</p>
-    <p><strong>ZIP:</strong> {html.escape(str(zip_code or "N/A"))}</p>
-    <p class="no-print">
-      <a href="/reports">Back to saved reports</a> |
-      <a href="/">Dashboard</a> |
-      <button onclick="window.print()">Print / Save PDF</button>
-    </p>
-  </div>
-
-  <div class="card">
-    <h2>Best Bet Today</h2>
-    {_render_item_list(best_bet, "No Best Bet data saved.")}
-  </div>
-
-  <div class="card">
-    <h2>Trip Conditions</h2>
-    {_render_item_list(weather, "No weather data saved.")}
-  </div>
-
-  <div class="card">
-    <h2>Species Ranking</h2>
-    {_render_item_list(species, "No species ranking saved.")}
-  </div>
-
-  <div class="card">
-    <h2>Recommended Lures</h2>
-    {_render_item_list(lures, "No lure data saved.")}
-  </div>
-
-  <div class="card">
-    <h2>Nearby Waters</h2>
-    {_render_item_list(waters, "No nearby waters saved.")}
-  </div>
-
-  <div class="card">
-    <h2>7-Day Fishing Outlook</h2>
-    {_render_item_list(forecast, "No forecast data saved.")}
-  </div>
-
-  <details class="card">
-    <summary>Raw saved JSON</summary>
-    <pre>{html.escape(raw_json)}</pre>
-  </details>
-  <script src="/static/js/global_nav_v433.js"></script>
-  <script src="/static/js/ui_polish_v442.js"></script>
-</body>
-</html>
-"""
+    return render_template("snapshot.html", report=_build_report_context(report_meta, payload))
 
 
 def _save_report(payload: dict[str, Any], title: str | None = None, zip_code: str | None = None) -> dict[str, Any]:
@@ -775,15 +971,24 @@ loadReports();
         if not match:
             return jsonify({"ok": False, "error": "Report not found"}), 404
 
-        html_file = match.get("html_file")
-        if not html_file:
-            return jsonify({"ok": False, "error": "Report HTML not found"}), 404
+        json_file = match.get("json_file")
+        if not json_file:
+            return jsonify({"ok": False, "error": "Report JSON not found"}), 404
 
-        path = _safe_report_file(html_file)
+        path = _safe_report_file(json_file)
         if path is None:
-            return jsonify({"ok": False, "error": "Report HTML not found"}), 404
+            return jsonify({"ok": False, "error": "Report JSON not found"}), 404
 
-        return path.read_text(encoding="utf-8")
+        try:
+            wrapped = json.loads(path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            return jsonify({"ok": False, "error": f"Report JSON unreadable: {exc}"}), 500
+
+        payload = wrapped.get("payload") if isinstance(wrapped, dict) else None
+        if not isinstance(payload, dict):
+            payload = wrapped if isinstance(wrapped, dict) else {}
+
+        return _render_report_html(match, payload)
 
     @app.route("/api/reports/status")
     def reports_status_v38():

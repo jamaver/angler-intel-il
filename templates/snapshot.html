@@ -406,15 +406,16 @@
           <div>
             <div class="report-row-head">
               <h3>{{ report.best_bet.species }}</h3>
-              {% if report.best_bet.species_score is not none %}
-                <span class="report-score-pill">{{ report.best_bet.species_score }}% fit</span>
+              {% if report.best_bet.fit_label %}
+                <span class="report-score-pill">{{ report.best_bet.fit_label }}</span>
               {% endif %}
             </div>
+            <p class="report-muted"><b>Species:</b> {{ report.best_bet.species }}</p>
             <p class="report-muted"><b>Best Time:</b> {{ report.best_time.label }} · {{ report.best_time.range }}{% if report.best_time.best_hour %} · {{ report.best_time.best_hour }}{% endif %}</p>
             <p class="report-muted"><b>Lure:</b> {{ report.best_bet.lure_name }}</p>
             <p class="report-muted"><b>Retrieve:</b> {{ report.best_bet.speed }}{% if report.best_bet.size %} · <b>Size:</b> {{ report.best_bet.size }}{% endif %}</p>
             {% if report.best_bet.why %}
-              <p class="report-muted">{{ report.best_bet.why }}</p>
+              <p class="report-muted"><b>Why:</b> {{ report.best_bet.why }}</p>
             {% endif %}
             {% if report.best_bet.reasons %}
               <ul class="report-reasons">
@@ -489,7 +490,7 @@
               <div>
                 <div class="report-row-head">
                   <h3>{{ item.name }}</h3>
-                  {% if item.score is not none %}<span class="report-score-pill">{{ item.score }}%</span>{% endif %}
+                  {% if item.target_fit %}<span class="report-score-pill">{{ item.target_fit }}</span>{% endif %}
                 </div>
                 <p class="report-muted">Habitat: {{ item.habitat }}</p>
                 {% if item.target_fit %}
@@ -523,7 +524,7 @@
                   <h3>{{ item.name }}</h3>
                   {% if item.top_pick %}<span class="report-score-pill">Top pick</span>{% endif %}
                 </div>
-                <p class="report-muted">For {{ item.species }}{% if item.species_score is not none %} · {{ item.species_score }}% fit{% endif %}</p>
+                <p class="report-muted">For {{ item.species }}{% if item.fit_label %} · {{ item.fit_label }}{% endif %}</p>
                 <p class="report-muted">{% if item.color %}Color: {{ item.color }}{% endif %}{% if item.speed %} · {{ item.speed }}{% endif %}{% if item.size %} · {{ item.size }}{% endif %}</p>
                 {% if item.why %}
                   <p class="report-muted">{{ item.why }}</p>
