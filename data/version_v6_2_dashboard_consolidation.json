@@ -1,0 +1,14 @@
+{
+  "version": "v6.2-dashboard-consolidation",
+  "previous_version": "v6.1-trip-plan-focus",
+  "dashboard_consolidation": true,
+  "trip_plan_primary": true,
+  "secondary_sections_collapsed": true,
+  "map_first_flow": true,
+  "smart_intelligence_preserved": true,
+  "catch_learning_preserved": true,
+  "fish_and_lure_assets_preserved": true,
+  "app_health_maintenance_only": true,
+  "admin_not_in_normal_nav": true,
+  "installed_at": "2026-07-13T22:15:14-05:00"
+}

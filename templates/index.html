@@ -96,17 +96,18 @@
       <div id="tripPlan"></div>
     </section>
 
-    <section class="dashboard-primary-grid">
-      <section class="card dashboard-brief-card">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow section-eyebrow">Map brief</p>
-            <h2>Map Brief</h2>
+    <section class="dashboard-command-center">
+      <div class="dashboard-command-left">
+        <section class="card dashboard-brief-card">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow section-eyebrow">Map brief</p>
+              <h2>Map Brief</h2>
+            </div>
           </div>
-        </div>
-        <p class="small">Best nearby water and its current fit for the selected target.</p>
-        <div id="dashboardBrief" class="dashboard-brief"></div>
-      </section>
+          <p class="small">Best nearby water and its current fit for the selected target.</p>
+          <div id="dashboardBrief" class="dashboard-brief"></div>
+        </section>
 
       <section id="status" class="card dashboard-status-card">
         <div class="section-head">
@@ -117,144 +118,201 @@
         </div>
         Loading...
       </section>
+      </div>
 
-      <section class="card best-bet-card">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow section-eyebrow">Primary target</p>
-            <h2>Best Bet Today</h2>
+      <div class="dashboard-command-main">
+        <section class="card smart-intelligence-card">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow section-eyebrow">Fishing logic</p>
+              <h2>Smart Intelligence</h2>
+            </div>
           </div>
-        </div>
-        <div id="bestBet"></div>
-      </section>
-
-      <section class="card smart-intelligence-card">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow section-eyebrow">Fishing logic</p>
-            <h2>Smart Intelligence</h2>
-          </div>
-        </div>
-        <div id="smartIntelligence"></div>
-      </section>
+          <div id="smartIntelligence"></div>
+        </section>
+      </div>
     </section>
 
-    <section class="dashboard-secondary-grid">
-      <div class="card">
-        <div class="section-head compact">
-          <div>
-            <p class="eyebrow section-eyebrow">Timing</p>
-            <h2>Best Time Today</h2>
-          </div>
-        </div>
-        <div id="bestTime"></div>
-      </div>
+    <section class="dashboard-secondary-stack">
+      <details class="dashboard-accordion">
+        <summary>
+          <span>
+            <span class="eyebrow section-eyebrow">Plan details</span>
+            <strong>Best Time, Conditions, Lures</strong>
+          </span>
+          <span class="accordion-note">Everything that supports the trip plan.</span>
+        </summary>
+        <div class="dashboard-accordion-content dashboard-accordion-grid">
+          <section class="card dashboard-panel-compact dashboard-panel-wide best-bet-card">
+            <div class="section-head compact">
+              <div>
+                <p class="eyebrow section-eyebrow">Primary target</p>
+                <h2>Best Bet Today</h2>
+              </div>
+            </div>
+            <div id="bestBet"></div>
+          </section>
 
-      <div class="card">
-        <div class="section-head compact">
-          <div>
-            <p class="eyebrow section-eyebrow">Current weather</p>
-            <h2>Conditions</h2>
-          </div>
-        </div>
-        <div id="conditions"></div>
-      </div>
+          <section class="card dashboard-panel-compact">
+            <div class="section-head compact">
+              <div>
+                <p class="eyebrow section-eyebrow">Timing</p>
+                <h2>Best Time Today</h2>
+              </div>
+            </div>
+            <div id="bestTime"></div>
+          </section>
 
-      <div class="card">
-        <div class="section-head compact">
-          <div>
-            <p class="eyebrow section-eyebrow">Presentation</p>
-            <h2>Recommended Lures</h2>
-          </div>
-        </div>
-      <div id="lureCards" class="lure-cards"></div>
-      </div>
+          <section class="card dashboard-panel-compact">
+            <div class="section-head compact">
+              <div>
+                <p class="eyebrow section-eyebrow">Current weather</p>
+                <h2>Conditions</h2>
+              </div>
+            </div>
+            <div id="conditions"></div>
+          </section>
 
-      <div class="card">
-        <div class="section-head compact">
-          <div>
-            <p class="eyebrow section-eyebrow">Hourly</p>
-            <h2>Hourly Bite Forecast</h2>
-          </div>
+          <section class="card dashboard-panel-compact dashboard-panel-wide">
+            <div class="section-head compact">
+              <div>
+                <p class="eyebrow section-eyebrow">Presentation</p>
+                <h2>Recommended Lures</h2>
+              </div>
+            </div>
+            <div id="lureCards" class="lure-cards"></div>
+          </section>
         </div>
-      <div id="hourly" class="hourly"></div>
-      </div>
+      </details>
 
-      <div class="card">
-        <div class="section-head compact">
-          <div>
-            <p class="eyebrow section-eyebrow">Windows</p>
-            <h2>Hourly Bite Windows</h2>
-          </div>
+      <details class="dashboard-accordion">
+        <summary>
+          <span>
+            <span class="eyebrow section-eyebrow">Forecast</span>
+            <strong>Hourly Bite Forecast and 7-Day Outlook</strong>
+          </span>
+          <span class="accordion-note">Open for full timing detail.</span>
+        </summary>
+        <div class="dashboard-accordion-content dashboard-accordion-grid">
+          <section class="card dashboard-panel-compact">
+            <div class="section-head compact">
+              <div>
+                <p class="eyebrow section-eyebrow">Hourly</p>
+                <h2>Hourly Bite Forecast</h2>
+              </div>
+            </div>
+            <div id="hourly" class="hourly"></div>
+          </section>
+
+          <section class="card dashboard-panel-compact">
+            <div class="section-head compact">
+              <div>
+                <p class="eyebrow section-eyebrow">Windows</p>
+                <h2>Hourly Bite Windows</h2>
+              </div>
+            </div>
+            <div id="timeBlocks" class="cards"></div>
+          </section>
+
+          <section class="card dashboard-panel-compact dashboard-panel-wide">
+            <div class="section-head compact">
+              <div>
+                <p class="eyebrow section-eyebrow">Week ahead</p>
+                <h2>7-Day Fishing Forecast</h2>
+              </div>
+            </div>
+            <div id="forecast" class="forecast"></div>
+          </section>
         </div>
-      <div id="timeBlocks" class="cards"></div>
-      </div>
+      </details>
 
-      <div class="card">
-        <div class="section-head compact">
-          <div>
-            <p class="eyebrow section-eyebrow">Signals</p>
-            <h2>Top Species & Lures</h2>
-          </div>
+      <details class="dashboard-accordion">
+        <summary>
+          <span>
+            <span class="eyebrow section-eyebrow">Species & Rigs</span>
+            <strong>Top Species, Lures, and Rig Guidance</strong>
+          </span>
+          <span class="accordion-note">Expand to compare species fits.</span>
+        </summary>
+        <div class="dashboard-accordion-content">
+          <section class="card dashboard-panel-compact">
+            <div class="section-head compact">
+              <div>
+                <p class="eyebrow section-eyebrow">Signals</p>
+                <h2>Top Species & Lures</h2>
+              </div>
+            </div>
+            <div id="species" class="cards"></div>
+          </section>
         </div>
-      <div id="species" class="cards"></div>
-      </div>
+      </details>
 
-      <div class="card">
-        <div class="section-head compact">
-          <div>
-            <p class="eyebrow section-eyebrow">Map list</p>
-            <h2>Nearby Waters</h2>
-          </div>
+      <details class="dashboard-accordion">
+        <summary>
+          <span>
+            <span class="eyebrow section-eyebrow">Waters</span>
+            <strong>Nearby Waters and Map List</strong>
+          </span>
+          <span class="accordion-note">Open to browse the wider water list.</span>
+        </summary>
+        <div class="dashboard-accordion-content">
+          <section class="card dashboard-panel-compact">
+            <div class="section-head compact">
+              <div>
+                <p class="eyebrow section-eyebrow">Map list</p>
+                <h2>Nearby Waters</h2>
+              </div>
+            </div>
+            <div id="waters"></div>
+          </section>
         </div>
-      <div id="waters"></div>
-      </div>
+      </details>
 
-      <div class="card">
-        <div class="section-head compact">
-          <div>
-            <p class="eyebrow section-eyebrow">Week ahead</p>
-            <h2>7-Day Fishing Forecast</h2>
-          </div>
+      <details class="dashboard-accordion">
+        <summary>
+          <span>
+            <span class="eyebrow section-eyebrow">Learning</span>
+            <strong>Personal Catch Insights and Catch Log</strong>
+          </span>
+          <span class="accordion-note">Expand for learning detail and log entry.</span>
+        </summary>
+        <div class="dashboard-accordion-content dashboard-accordion-grid">
+          <section class="card dashboard-panel-compact">
+            <div class="section-head compact">
+              <div>
+                <p class="eyebrow section-eyebrow">Learning</p>
+                <h2>Personal Catch Insights</h2>
+              </div>
+            </div>
+            <div id="catchInsights"></div>
+          </section>
+
+          <section class="card dashboard-panel-compact dashboard-panel-wide">
+            <div class="section-head compact">
+              <div>
+                <p class="eyebrow section-eyebrow">Log</p>
+                <h2>Catch Log</h2>
+              </div>
+            </div>
+
+            <div class="catch-form">
+              <select id="catchSpecies"></select>
+              <input id="catchLure" placeholder="Lure used">
+              <input id="catchWaterbody" placeholder="Waterbody (optional)">
+              <textarea id="catchNotes" placeholder="Notes, spot, depth, color, retrieve..."></textarea>
+              <button type="button" onclick="saveCatch()">Save Catch</button>
+            </div>
+
+            <div id="catchLog" class="catch-log"></div>
+          </section>
         </div>
-      <div id="forecast" class="forecast"></div>
-      </div>
-
-      <div class="card">
-        <div class="section-head compact">
-          <div>
-            <p class="eyebrow section-eyebrow">Learning</p>
-            <h2>Personal Catch Insights</h2>
-          </div>
-        </div>
-      <div id="catchInsights"></div>
-      </div>
-
-      <div class="card">
-        <div class="section-head compact">
-          <div>
-            <p class="eyebrow section-eyebrow">Log</p>
-            <h2>Catch Log</h2>
-          </div>
-        </div>
-
-        <div class="catch-form">
-          <select id="catchSpecies"></select>
-          <input id="catchLure" placeholder="Lure used">
-          <input id="catchWaterbody" placeholder="Waterbody (optional)">
-          <textarea id="catchNotes" placeholder="Notes, spot, depth, color, retrieve..."></textarea>
-          <button type="button" onclick="saveCatch()">Save Catch</button>
-        </div>
-
-        <div id="catchLog" class="catch-log"></div>
-      </div>
+      </details>
     </section>
   </div>
 
 <script src="/static/js/app.js"></script>
   <script src="/static/js/local_waters_bridge_v42.js"></script>
   <script src="/static/js/rigs_bridge_v43.js"></script>
-  <script src="/static/js/dashboard_sections_v431.js"></script>
   <script src="/static/js/global_nav_v433.js"></script>
   <script src="/static/js/recommendations_bridge_v44.js"></script>
   <script src="/static/js/ui_polish_v442.js"></script>

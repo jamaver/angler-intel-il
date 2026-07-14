@@ -240,50 +240,105 @@ function renderTripPlan(data) {
   const focusWater = data.water || waters[0] || {};
   const target = data.target_species || currentTargetSpecies() || "Auto";
   const bestBet = data.best_bet || {};
+  const intel = data.smart_intelligence || {};
   const planWhy = bestBet.why || data.smart_intelligence?.summary || "Load intel to see the plan.";
   const waterLabel = focusWater.name || data.location?.city || "Auto from ZIP";
   const waterType = focusWater.type || data.area_type || "water";
+  const targetFit = bestBet.fit_label || data.overall?.rating || "Target fit";
   const bestTime = bestBet.time_label || data.best_time?.label || "Any time";
   const bestTimeRange = bestBet.time_range || data.best_time?.time || "";
   const lure = bestBet.lure_name || data.lure_cards?.[0]?.name || "Lure";
+  const lurePath = bestBet.lure_image || bestBet.lure_asset?.path || lureIconPath(lure);
+  const fishPath = bestBet.fish_image || fishIconPath(bestBet.species || target);
+  const lureColors = asList(bestBet.colors).slice(0, 3);
+  const reasons = asList(bestBet.reasons).slice(0, 4);
+  const signalReasons = reasons.length ? reasons : asList(intel.positive_signals).slice(0, 4);
+  const reasonList = signalReasons.length ? signalReasons : [planWhy];
+  const conditionBits = [];
+  const weather = data.weather || {};
+  if (weather.temp !== undefined && weather.temp !== null && weather.temp !== "") {
+    conditionBits.push(`Temp ${weather.temp}°F`);
+  }
+  if (weather.wind !== undefined && weather.wind !== null && weather.wind !== "") {
+    conditionBits.push(`Wind ${weather.wind} mph`);
+  }
+  if (weather.pressure !== undefined && weather.pressure !== null && weather.pressure !== "") {
+    conditionBits.push(`Pressure ${weather.pressure} inHg`);
+  }
+  if (weather.cloud !== undefined && weather.cloud !== null && weather.cloud !== "") {
+    conditionBits.push(`Cloud ${weather.cloud}%`);
+  }
+  if (bestBet.size) {
+    conditionBits.push(`Size ${bestBet.size}`);
+  }
+  if (bestBet.speed) {
+    conditionBits.push(`Retrieve ${bestBet.speed}`);
+  }
   const waterAction = focusWater.id
     ? `<a class="hero-action secondary-link" href="/water/${encodeURIComponent(focusWater.id)}">Open Water Intel</a>`
     : `<a class="hero-action secondary-link" href="/map">Open Map</a>`;
 
   return `
-    <div class="trip-plan-grid">
-      <div class="trip-plan-copy">
-        <div class="small">Focus water</div>
-        <h3>${escapeHtml(waterLabel)}</h3>
-        <div class="small">${escapeHtml(waterType)}${focusWater.city ? ` · ${escapeHtml(focusWater.city)}` : ""}${focusWater.distance ? ` · ${escapeHtml(focusWater.distance)} mi` : ""}</div>
-        <div class="trip-plan-pills">
-          <span class="mini">${escapeHtml(target)}</span>
-          <span class="mini">${escapeHtml(bestBet.fit_label || data.overall?.rating || "Target fit")}</span>
-          ${focusWater.favorite ? `<span class="mini">Favorite</span>` : ""}
-          ${focusWater.manual ? `<span class="mini">Manual</span>` : ""}
+    <div class="trip-plan-shell">
+      <div class="trip-plan-hero">
+        <div class="trip-plan-media">
+          <img class="${speciesIconClass("lg")} trip-plan-fish-art" src="${escapeHtml(fishPath)}" alt="${escapeHtml(bestBet.species || target)}">
+          <div class="trip-plan-media-copy">
+            <div class="small">Target fit</div>
+            <h3>${escapeHtml(target)}</h3>
+            <div class="small">${escapeHtml(waterLabel)}${focusWater.city ? ` · ${escapeHtml(focusWater.city)}` : ""}${focusWater.distance ? ` · ${escapeHtml(focusWater.distance)} mi` : ""}</div>
+            <div class="trip-plan-pills">
+              <span class="mini">${escapeHtml(targetFit)}</span>
+              ${focusWater.favorite ? `<span class="mini">Favorite</span>` : ""}
+              ${focusWater.manual ? `<span class="mini">Manual</span>` : ""}
+              <span class="mini">${escapeHtml(waterType)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="trip-plan-lure">
+          <img class="recommendation-lure-art lure-art lure-art-md" src="${escapeHtml(lurePath)}" alt="${escapeHtml(lure)}">
+          <div class="trip-plan-lure-copy">
+            <div class="small">Primary lure</div>
+            <strong>${escapeHtml(lure)}</strong>
+            <div class="small">${escapeHtml(bestBet.speed || "Presentation guide")}</div>
+            ${bestBet.size ? `<div class="small">Size: ${escapeHtml(bestBet.size)}</div>` : ""}
+            ${lureColors.length ? `<div class="trip-plan-pills">${lureColors.map(color => `<span class="mini">${escapeHtml(color)}</span>`).join("")}</div>` : ""}
+          </div>
         </div>
       </div>
 
-      <div class="trip-plan-stack">
+      <div class="trip-plan-grid">
         <div class="trip-plan-item">
           <span>Best time</span>
           <strong>${escapeHtml(bestTime)}</strong>
           <small>${escapeHtml(bestTimeRange)}</small>
         </div>
         <div class="trip-plan-item">
-          <span>Best lure</span>
-          <strong>${escapeHtml(lure)}</strong>
-          <small>${escapeHtml(bestBet.speed || "Presentation guide")}</small>
+          <span>Retrieve</span>
+          <strong>${escapeHtml(bestBet.speed || "Presentation guide")}</strong>
+          <small>${escapeHtml(bestBet.size || "Lure size from the selected profile")}</small>
         </div>
-        <div class="trip-plan-item">
+        <div class="trip-plan-item trip-plan-wide">
           <span>Why it works</span>
           <strong>${escapeHtml(planWhy)}</strong>
         </div>
       </div>
 
+      ${conditionBits.length ? `
+        <div class="trip-plan-condition-row">
+          ${conditionBits.slice(0, 5).map(bit => `<span class="mini">${escapeHtml(bit)}</span>`).join("")}
+        </div>
+      ` : ""}
+
+      <ul class="trip-plan-reason-list">
+        ${reasonList.map(reason => `<li>${escapeHtml(reason)}</li>`).join("")}
+      </ul>
+
       <div class="trip-plan-actions">
         ${waterAction}
         <a class="hero-action" href="/reports">Saved Reports</a>
+        <button class="secondary" type="button" onclick="openSnapshot()">Trip Snapshot</button>
       </div>
     </div>
   `;
@@ -862,9 +917,6 @@ function render(data) {
       <div class="status-score">
         <div class="score">${data.overall?.score ?? "?"}/100</div>
         <div>${data.overall?.rating ?? ""}</div>
-      </div>
-      <div class="status-actions">
-        <button class="secondary" onclick="openSnapshot()">Trip Snapshot</button>
       </div>
     </div>
   `);

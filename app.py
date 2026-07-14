@@ -114,7 +114,7 @@ except Exception as exc:
 
 
 APP_VERSION = "v5.9-modern-ui-refresh"
-APP_RELEASE = "v6.1-trip-plan-focus"
+APP_RELEASE = "v6.2-dashboard-consolidation"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the

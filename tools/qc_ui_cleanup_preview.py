@@ -53,8 +53,10 @@ js_text = read("static/js/app.js") if (APP_ROOT / "static/js/app.js").exists() e
 css_text = read("static/css/style.css") if (APP_ROOT / "static/css/style.css").exists() else ""
 
 for needle, message in (
-    ("dashboard-primary-grid", "Dashboard should use the new primary grid"),
-    ("dashboard-secondary-grid", "Dashboard should use the new secondary grid"),
+    ("dashboard-command-center", "Dashboard should use the consolidated command center layout"),
+    ("dashboard-secondary-stack", "Dashboard should use the collapsed secondary stack"),
+    ("dashboard-accordion", "Dashboard should use accordion panels for supporting content"),
+    ("dashboard-trip-plan-card", "Dashboard should keep the trip plan card present"),
     ("section-head", "Dashboard should use section headers"),
     ("dashboard-status-card", "Dashboard status card should remain present"),
     ("App Health", "Dashboard should preserve App Health navigation"),

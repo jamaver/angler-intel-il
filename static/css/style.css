@@ -295,6 +295,25 @@ button {
   border-color: rgba(96, 165, 250, 0.14);
 }
 
+.dashboard-command-center {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.dashboard-command-left,
+.dashboard-command-main,
+.dashboard-secondary-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-command-left,
+.dashboard-command-main {
+  min-width: 0;
+}
+
 .trip-plan-grid {
   display: grid;
   gap: 0.75rem;
@@ -357,6 +376,136 @@ button {
   gap: 0.45rem;
   align-items: center;
   justify-content: flex-end;
+}
+
+.trip-plan-shell {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.trip-plan-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.66fr);
+  gap: 0.9rem;
+  align-items: stretch;
+}
+
+.trip-plan-media,
+.trip-plan-lure {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: center;
+  padding: 0.85rem;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(8, 17, 30, 0.48);
+}
+
+.trip-plan-media-copy,
+.trip-plan-lure-copy {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.trip-plan-media-copy h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.trip-plan-lure strong {
+  font-size: 1.03rem;
+}
+
+.trip-plan-fish-art {
+  width: 92px !important;
+  height: 92px !important;
+  max-width: 92px;
+  padding: 0;
+}
+
+.trip-plan-lure .recommendation-lure-art {
+  width: 86px;
+  height: 86px;
+  margin-right: 0;
+}
+
+.trip-plan-condition-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.trip-plan-reason-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: #d7e3f4;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.trip-plan-reason-list li {
+  line-height: 1.45;
+}
+
+.dashboard-secondary-stack {
+  margin-top: 2px;
+}
+
+.dashboard-accordion {
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(14, 22, 37, 0.9);
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.18);
+  overflow: hidden;
+}
+
+.dashboard-accordion summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.9rem;
+  align-items: center;
+  padding: 1rem 1rem 0.95rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.dashboard-accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.dashboard-accordion summary strong {
+  display: block;
+  margin-top: 0.18rem;
+  font-size: 1.04rem;
+  color: #eef3fb;
+}
+
+.accordion-note {
+  color: #c8d3e4;
+  font-size: 0.9rem;
+  text-align: right;
+  max-width: 24rem;
+}
+
+.dashboard-accordion-content {
+  display: grid;
+  gap: 12px;
+  padding: 0 1rem 1rem;
+}
+
+.dashboard-accordion-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard-panel-compact {
+  margin: 0;
+  background: rgba(10, 20, 36, 0.7);
+}
+
+.dashboard-panel-wide {
+  grid-column: 1 / -1;
 }
 
 .control-grid {
@@ -597,6 +746,7 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .dashboard-command-center,
   .dashboard-primary-grid {
     grid-template-columns: 1fr;
   }
@@ -922,6 +1072,22 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .trip-plan-hero,
+  .dashboard-accordion-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trip-plan-media,
+  .trip-plan-lure,
+  .dashboard-accordion summary {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .accordion-note {
+    text-align: left;
+  }
+
   .status-layout {
     grid-template-columns: 1fr;
   }
@@ -1002,6 +1168,7 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .dashboard-command-center,
   .dashboard-secondary-grid {
     grid-template-columns: 1fr;
   }
@@ -1014,7 +1181,10 @@ button {
 @media print {
   .best-bet-card,
   .species-with-image,
-  .pill-line {
+  .pill-line,
+  .dashboard-accordion,
+  .trip-plan-media,
+  .trip-plan-lure {
     background: white;
     color: black;
     border: 1px solid #ccc;
