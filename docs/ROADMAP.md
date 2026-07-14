@@ -97,6 +97,26 @@ Angler Intel is moving toward a map-first, waterbody-centered fishing intelligen
 - Saved reports that can follow the selected waterbody
 - Cleaner dashboard answers before the user opens the map
 
+## v6.2 Dashboard Command Center
+
+- Consolidated dashboard layout with a calmer primary flow
+- Trip plan, Smart Intelligence, map brief, and supporting sections separated more clearly
+- Secondary dashboard content collapsed into accordions
+- Mobile-friendly command center structure
+
+## v6.3 Smart Trip Forecast Date
+
+- Smart Trip reports can focus on a selected 7-day forecast date
+- Selected forecast day persists in saved report metadata
+- Report conditions and outlook highlight the focused day
+
+## v6.4 Report and Planning Polish
+
+- Cleaner saved report cards with grouped trip-plan summaries
+- Clearer report titles when users leave the title blank
+- Compact report list previews for faster scanning
+- Saved reports remain printable and PDF-friendly
+
 ## Follow-On
 
 - Import/export waterbody datasets

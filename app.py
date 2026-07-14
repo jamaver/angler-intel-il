@@ -114,7 +114,7 @@ except Exception as exc:
 
 
 APP_VERSION = "v5.9-modern-ui-refresh"
-APP_RELEASE = "v6.2-dashboard-consolidation"
+APP_RELEASE = "v6.4-report-planning-polish"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the
@@ -1322,7 +1322,7 @@ def api_map_data():
 
 
 if __name__ == "__main__":
-    print(f"Starting Angler Intel {APP_VERSION}...")
+    print(f"Starting Angler Intel {APP_RELEASE}...")
     app.run(host="0.0.0.0", port=5000)
 
 

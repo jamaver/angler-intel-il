@@ -376,6 +376,128 @@ def _forecast_label(date_text: Any) -> str:
         return value
 
 
+def _default_report_title(zip_code: Any, payload: dict[str, Any], summary: dict[str, Any], selected_forecast_label: Any = "") -> str:
+    intel = payload.get("intel") if isinstance(payload.get("intel"), dict) else {}
+    best_bet = summary.get("best_bet") if isinstance(summary.get("best_bet"), dict) else {}
+    best_bet_ctx = _best_bet_context(best_bet)
+
+    species = _compact_text(
+        _first_present(
+            intel,
+            ["target_species", "targetSpecies", "species", "species_name"],
+            "",
+        )
+        or best_bet_ctx.get("species")
+        or payload.get("target_species"),
+        "",
+    )
+    zip_text = _compact_text(zip_code, "")
+
+    if species and zip_text:
+        return f"{species} Plan — ZIP {zip_text}"
+    if species:
+        return f"{species} Plan"
+    if zip_text:
+        return f"Trip Plan — ZIP {zip_text}"
+    if _compact_text(selected_forecast_label, ""):
+        return "Trip Plan"
+    return "Trip Plan"
+
+
+def _report_overview(report_meta: dict[str, Any]) -> dict[str, Any]:
+    overview = {
+        "group": "General",
+        "display_title": _compact_text(report_meta.get("title"), "Trip Plan"),
+        "display_date": _compact_text(report_meta.get("selected_forecast_label"), ""),
+        "zip": _compact_text(report_meta.get("zip"), ""),
+        "target_species": "",
+        "best_time": "Any time",
+        "lure_name": "Lure",
+        "lure_image": "/static/lures/generic_lure.png",
+        "fish_image": "/static/fish/generic_fish.png",
+        "fit_label": "Exploratory fit",
+        "why": "",
+        "summary": "",
+        "rating": "",
+        "score": None,
+        "forecast_rating": "",
+        "forecast_day_index": report_meta.get("forecast_day_index"),
+    }
+
+    json_file = _compact_text(report_meta.get("json_file"), "")
+    if not json_file:
+        return overview
+
+    path = _safe_report_file(json_file)
+    if path is None:
+        return overview
+
+    try:
+        wrapped = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return overview
+
+    payload = wrapped.get("payload") if isinstance(wrapped, dict) else {}
+    if not isinstance(payload, dict):
+        payload = {}
+    summary = wrapped.get("summary") if isinstance(wrapped, dict) and isinstance(wrapped.get("summary"), dict) else _extract_summary(payload)
+
+    selected_forecast_date = _compact_text(
+        report_meta.get("selected_forecast_date")
+        or payload.get("selected_forecast_date")
+        or payload.get("forecast_date"),
+        "",
+    )
+    if not selected_forecast_date and isinstance(summary.get("forecast"), list) and summary.get("forecast"):
+        first_forecast = summary["forecast"][0]
+        if isinstance(first_forecast, dict):
+            selected_forecast_date = _compact_text(first_forecast.get("date"), "")
+
+    context = _build_report_context(report_meta, payload, selected_forecast_date=selected_forecast_date)
+    best_bet = context.get("best_bet") if isinstance(context.get("best_bet"), dict) else {}
+    smart = context.get("smart_intelligence") if isinstance(context.get("smart_intelligence"), dict) else {}
+
+    target_species = _compact_text(
+        best_bet.get("species")
+        or context.get("target_species")
+        or _first_present(payload.get("intel") if isinstance(payload.get("intel"), dict) else {}, ["target_species", "targetSpecies"], ""),
+        "General",
+    )
+    if target_species.lower() in {"target species", "species", ""}:
+        target_species = "General"
+
+    group = target_species if target_species != "General" else "General"
+    selected_label = _compact_text(
+        report_meta.get("selected_forecast_label")
+        or context.get("selected_forecast_label")
+        or _format_report_datetime(report_meta.get("created")),
+        "Trip Plan",
+    )
+    why = _compact_text(best_bet.get("why"), "")
+    reasons = best_bet.get("reasons") if isinstance(best_bet.get("reasons"), list) else []
+    if not why and reasons:
+        why = _compact_text(reasons[0], "")
+
+    overview.update({
+        "group": group,
+        "display_title": _compact_text(report_meta.get("title"), _default_report_title(overview["zip"], payload, summary, selected_label)),
+        "display_date": selected_label,
+        "target_species": target_species,
+        "best_time": _compact_text(best_bet.get("best_time"), "Any time"),
+        "best_time_range": _compact_text(best_bet.get("best_time_range"), ""),
+        "lure_name": _compact_text(best_bet.get("lure_name"), "Lure"),
+        "lure_image": _compact_text(best_bet.get("lure_image"), "/static/lures/generic_lure.png"),
+        "fish_image": _compact_text(best_bet.get("fish_image"), "/static/fish/generic_fish.png"),
+        "fit_label": _compact_text(best_bet.get("fit_label"), "Exploratory fit"),
+        "why": why,
+        "summary": _compact_text(smart.get("summary"), ""),
+        "rating": _compact_text(context.get("overall_rating"), ""),
+        "score": context.get("overall_score"),
+        "forecast_rating": _compact_text(context.get("forecast_focus", {}).get("rating"), ""),
+    })
+    return overview
+
+
 def _selected_forecast_context(forecast_rows: list[dict[str, Any]], selected_date: Any = None, fallback_date: Any = None) -> dict[str, Any]:
     rows = [row for row in forecast_rows if isinstance(row, dict)]
     selected_date_text = _compact_text(selected_date, "")
@@ -762,6 +884,142 @@ def register_report_routes_v38(app):
       border-top: 1px solid #dceee1;
       padding: 0.75rem 0;
     }
+    .report-collection {
+      display: grid;
+      gap: 1rem;
+      margin-top: 0.75rem;
+    }
+    .report-group {
+      display: grid;
+      gap: 0.75rem;
+    }
+    .report-group-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .report-group-head h3 {
+      margin: 0;
+      font-size: 1.02rem;
+    }
+    .report-group-count {
+      color: #5b6b60;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .report-grid {
+      display: grid;
+      gap: 0.85rem;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+    .report-list-card {
+      display: grid;
+      gap: 0.8rem;
+      border: 1px solid #dceee1;
+      border-radius: 14px;
+      background: #ffffff;
+      padding: 0.95rem;
+      box-shadow: 0 8px 20px rgba(16, 36, 23, 0.08);
+    }
+    .report-card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+    .report-card-top h4 {
+      margin: 0;
+      font-size: 1.03rem;
+    }
+    .report-card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-top: 0.45rem;
+    }
+    .report-card-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.22rem 0.55rem;
+      border-radius: 999px;
+      background: #e6f5eb;
+      color: #145c2b;
+      font-weight: 700;
+      font-size: 0.82rem;
+    }
+    .report-card-media {
+      display: grid;
+      grid-template-columns: 88px 1fr;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    .report-card-media img {
+      width: 100%;
+      max-width: 88px;
+      height: auto;
+      object-fit: contain;
+      border-radius: 12px;
+      background: transparent;
+    }
+    .report-summary-line {
+      color: #2f3a32;
+      line-height: 1.45;
+    }
+    .report-detail-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 0.5rem;
+    }
+    .report-detail {
+      padding: 0.55rem 0.65rem;
+      border: 1px solid #dceee1;
+      border-radius: 10px;
+      background: #f7fbf8;
+    }
+    .report-detail span {
+      display: block;
+      color: #5b6b60;
+      font-size: 0.73rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 0.15rem;
+    }
+    .report-detail strong {
+      display: block;
+      line-height: 1.25;
+    }
+    .report-actions-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      align-items: center;
+    }
+    .report-actions-row a,
+    .report-actions-row button {
+      min-height: 2.2rem;
+      padding: 0.45rem 0.75rem;
+      border-radius: 10px;
+      border: 1px solid #5fa66f;
+      background: #f4fff6;
+      color: #102417;
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .report-actions-row a:hover,
+    .report-actions-row button:hover {
+      background: #dff6e5;
+      color: #06150a;
+    }
+    .report-actions-row .danger {
+      border-color: #c95f5f;
+      background: #fff1f1;
+      color: #8f2f2f;
+    }
+    .report-actions-row .danger:hover {
+      background: #ffdcdc;
+    }
     a {
       color: #1f8f45;
       font-weight: 700;
@@ -839,8 +1097,8 @@ def register_report_routes_v38(app):
   <p>Saved reports keep local fishing trip snapshots on this Pi using your current Angler Intel data.</p>
 
   <div class="card">
-    <h2>Create report from ZIP</h2>
-    <p class="muted">This calls your existing <code>/api/intel?zip=...</code> endpoint and saves the result locally.</p>
+    <h2>Create trip report</h2>
+    <p class="muted">This calls your existing <code>/api/intel?zip=...</code> endpoint and saves a local trip plan. Leave the title blank for an auto-generated species-based plan title.</p>
 
     <label>
       ZIP code<br>
@@ -862,12 +1120,12 @@ def register_report_routes_v38(app):
     </label>
     <br>
 
-    <button onclick="createReport()">Create saved report</button>
+    <button onclick="createReport()">Create trip report</button>
     <pre id="createResult">No report created yet.</pre>
   </div>
 
     <div class="card">
-    <h2>Existing reports</h2>
+    <h2>Saved trip plans</h2>
     <button onclick="loadReports()">Refresh reports</button>
     <div id="reportsList">Loading...</div>
   </div>
@@ -968,16 +1226,27 @@ async function loadReports() {
       return;
     }
 
-    box.innerHTML = data.reports.map(r => `
-      <div class="report-row">
-        <strong>${escapeHtml(r.title || "Untitled report")}</strong><br>
-        <span class="muted">${escapeHtml(r.created || "")} ${r.zip ? " ZIP " + escapeHtml(r.zip) : ""}</span><br>
-        <a href="${r.view_url}">View</a> |
-        <a href="${r.html_url}">Download HTML</a> |
-        <a href="${r.json_url}">Download JSON</a>
-        <button type="button" class="danger" data-delete-report="${escapeHtml(r.id || "")}">Delete</button>
-      </div>
+    const groups = new Map();
+    data.reports.forEach(r => {
+      const overview = r.overview || {};
+      const group = String(r.group || overview.group || "General").trim() || "General";
+      if (!groups.has(group)) groups.set(group, []);
+      groups.get(group).push(r);
+    });
+
+    const groupHtml = Array.from(groups.entries()).map(([group, items]) => `
+      <section class="report-group">
+        <div class="report-group-head">
+          <h3>${escapeHtml(group)}</h3>
+          <span class="report-group-count">${items.length} report${items.length === 1 ? "" : "s"}</span>
+        </div>
+        <div class="report-grid">
+          ${items.map(renderReportCard).join("")}
+        </div>
+      </section>
     `).join("");
+
+    box.innerHTML = `<div class="report-collection">${groupHtml}</div>`;
 
     box.querySelectorAll("[data-delete-report]").forEach(button => {
       button.addEventListener("click", () => deleteReport(button.getAttribute("data-delete-report") || ""));
@@ -985,6 +1254,57 @@ async function loadReports() {
   } catch (err) {
     box.textContent = "Unable to load reports: " + err;
   }
+}
+
+function renderReportCard(r) {
+  const overview = r.overview || {};
+  const title = overview.display_title || r.title || "Untitled report";
+  const tripDate = overview.display_date || r.selected_forecast_label || r.created || "";
+  const zip = overview.zip || r.zip || "";
+  const targetSpecies = overview.target_species || r.group || "General";
+  const lure = overview.lure_name || "Lure";
+  const fit = overview.fit_label || "";
+  const bestTime = overview.best_time || "";
+  const score = overview.score != null ? String(overview.score) : "";
+  const why = overview.why || overview.summary || "";
+  const fishImage = overview.fish_image || "/static/fish/generic_fish.png";
+  const lureImage = overview.lure_image || "/static/lures/generic_lure.png";
+
+  return `
+    <article class="report-list-card">
+      <div class="report-card-top">
+        <div>
+          <h4>${escapeHtml(title)}</h4>
+          <div class="report-card-meta">
+            ${tripDate ? `<span class="report-card-badge">${escapeHtml(tripDate)}</span>` : ""}
+            ${zip ? `<span class="report-card-badge">ZIP ${escapeHtml(zip)}</span>` : ""}
+            ${fit ? `<span class="report-card-badge">${escapeHtml(fit)}</span>` : ""}
+          </div>
+        </div>
+        <button type="button" class="danger" data-delete-report="${escapeHtml(r.id || "")}">Delete</button>
+      </div>
+      <div class="report-card-media">
+        <img src="${escapeHtml(fishImage)}" alt="${escapeHtml(targetSpecies || "Fish")}">
+        <div>
+          <div class="report-summary-line"><strong>${escapeHtml(targetSpecies || "General")}</strong>${bestTime ? ` · ${escapeHtml(bestTime)}` : ""}</div>
+          <div class="report-summary-line">${escapeHtml(lure)}${score ? ` · Score ${escapeHtml(score)}` : ""}</div>
+          ${why ? `<div class="report-summary-line">${escapeHtml(why)}</div>` : ""}
+        </div>
+      </div>
+      <div class="report-detail-row">
+        <div class="report-detail"><span>Best lure</span><strong>${escapeHtml(lure)}</strong></div>
+        <div class="report-detail"><span>Trip date</span><strong>${escapeHtml(tripDate || "Unknown")}</strong></div>
+        <div class="report-detail"><span>Target fit</span><strong>${escapeHtml(fit || "Exploratory fit")}</strong></div>
+        <div class="report-detail"><span>Water</span><strong>${escapeHtml(zip ? "ZIP " + zip : "Local waters")}</strong></div>
+      </div>
+      <div class="report-actions-row">
+        <a href="${escapeHtml(r.view_url || "#")}">View</a>
+        <a href="${escapeHtml(r.html_url || "#")}">Download HTML</a>
+        <a href="${escapeHtml(r.json_url || "#")}">Download JSON</a>
+        <img class="report-lure-art" src="${escapeHtml(lureImage)}" alt="${escapeHtml(lure)}">
+      </div>
+    </article>
+  `;
 }
 
 async function deleteReport(reportId) {
@@ -1054,9 +1374,15 @@ loadReports();
             json_file = item.get("json_file")
             html_file = item.get("html_file")
             if json_file and (REPORTS_DIR / json_file).exists():
-                existing.append(item)
+                enriched = dict(item)
+                enriched["overview"] = _report_overview(enriched)
+                enriched["group"] = enriched["overview"].get("group", "General")
+                existing.append(enriched)
             elif html_file and (REPORTS_DIR / html_file).exists():
-                existing.append(item)
+                enriched = dict(item)
+                enriched["overview"] = _report_overview(enriched)
+                enriched["group"] = enriched["overview"].get("group", "General")
+                existing.append(enriched)
 
         if len(existing) != len(items):
             _save_index(existing)
@@ -1142,6 +1468,7 @@ loadReports();
             selected_date=selected_forecast_date,
             fallback_date=_now().date().isoformat(),
         )
+        summary_for_title = _extract_summary({"intel": intel})
         if forecast_rows:
             selected_forecast_date = forecast_selection["selected_forecast_date"]
             selected_forecast_label = forecast_selection["selected_forecast_label"]
@@ -1150,8 +1477,10 @@ loadReports();
             selected_forecast_label = forecast_selection["selected_forecast_label"] or _now().strftime("%A, %B %d, %Y")
             forecast_day_index = ""
 
+        title = title or _default_report_title(zip_code, {"intel": intel}, summary_for_title, selected_forecast_label)
+
         payload = {
-            "title": title or f"Trip Report ZIP {zip_code}",
+            "title": title,
             "zip": zip_code,
             "source": f"/api/intel?{query}",
             "saved_at": _now().isoformat(timespec="seconds"),
@@ -1207,6 +1536,10 @@ loadReports();
 
         if selected_forecast_date:
             payload.setdefault("selected_forecast_date", str(selected_forecast_date))
+
+        if not title or title == "Trip Report":
+            summary_for_title = _extract_summary(payload)
+            title = _default_report_title(zip_code, payload, summary_for_title, payload.get("selected_forecast_label") or "")
 
         meta = _save_report(payload, title=str(title), zip_code=str(zip_code))
 

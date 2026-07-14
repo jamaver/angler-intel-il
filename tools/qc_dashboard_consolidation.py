@@ -65,13 +65,21 @@ def main() -> int:
         if needle not in css:
             errors.append(f"style.css missing {label}")
 
+    release_label_present = (
+        "v6.2-dashboard-consolidation" in app_js
+        or "v6.2-dashboard-consolidation" in read(APP_PATH)
+        or "v6.4-report-planning-polish" in app_js
+        or "v6.4-report-planning-polish" in read(APP_PATH)
+    )
+    if not release_label_present:
+        errors.append("app.js/app.py missing release label")
+
     for needle, label in [
         ("trip-plan-hero", "trip plan hero render"),
         ("trip-plan-fish-art", "trip plan fish image render"),
         ("trip-plan-lure", "trip plan lure image render"),
         ("trip-plan-condition-row", "trip plan condition chips"),
         ("trip-plan-reason-list", "trip plan reason list"),
-        ("v6.2-dashboard-consolidation", "release label"),
     ]:
         if needle not in app_js and needle not in read(APP_PATH):
             errors.append(f"app.js/app.py missing {label}")
