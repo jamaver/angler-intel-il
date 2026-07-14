@@ -309,8 +309,63 @@ def report_outlook_rows(forecast_rows):
             "high": item.get("high"),
             "low": item.get("low"),
             "wind": item.get("wind"),
+            "selected": False,
         })
     return rows
+
+
+def forecast_label(date_text):
+    value = compact_text(date_text, "")
+    if not value:
+        return ""
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").strftime("%A, %B %d, %Y")
+    except Exception:
+        return value
+
+
+def selected_forecast_context(forecast_rows, selected_date=None, fallback_date=None):
+    rows = [row for row in forecast_rows if isinstance(row, dict)]
+    selected_text = compact_text(selected_date, "")
+    selected_row = None
+    selected_index = None
+
+    if selected_text:
+        for idx, row in enumerate(rows):
+            if compact_text(row.get("date"), "") == selected_text:
+                selected_row = row
+                selected_index = idx
+                break
+
+    if selected_row is None and rows:
+        selected_row = rows[0]
+        selected_index = 0
+        selected_text = compact_text(selected_row.get("date"), selected_text)
+
+    if not selected_text:
+        selected_text = compact_text(fallback_date, "")
+
+    label = forecast_label(selected_text) or compact_text(fallback_date, "")
+    if not label and selected_row:
+        label = compact_text(selected_row.get("pretty_date"), "") or compact_text(selected_row.get("date"), "")
+
+    focus = {
+        "date": compact_text(selected_row.get("date"), selected_text) if selected_row else selected_text,
+        "pretty_date": compact_text(selected_row.get("pretty_date"), label) if selected_row else label,
+        "rating": compact_text(selected_row.get("rating"), "") if selected_row else "",
+        "high": selected_row.get("high") if selected_row else None,
+        "low": selected_row.get("low") if selected_row else None,
+        "wind": selected_row.get("wind") if selected_row else None,
+        "score": selected_row.get("score") if selected_row else None,
+    }
+
+    return {
+        "selected_forecast_date": selected_text,
+        "selected_forecast_label": label,
+        "forecast_day_index": selected_index if selected_index is not None else "",
+        "forecast_focus": focus,
+        "forecast_rows": rows,
+    }
 
 
 def report_water_rows(water_rows):
@@ -326,12 +381,20 @@ def report_water_rows(water_rows):
     return rows
 
 
-def build_snapshot_report(data):
+def build_snapshot_report(data, selected_forecast_date=None):
     best_bet = data.get("best_bet", {}) if isinstance(data, dict) else {}
     weather = data.get("weather", {}) if isinstance(data, dict) else {}
     smart = data.get("smart_intelligence", {}) if isinstance(data, dict) else {}
     catch_insights = data.get("catch_insights", {}) if isinstance(data, dict) else {}
     target_species = compact_text(data.get("selected_species") or data.get("target_species"), "Auto")
+    forecast_rows = report_outlook_rows(data.get("forecast", []))
+    forecast_selection = selected_forecast_context(
+        forecast_rows,
+        selected_date=selected_forecast_date or data.get("selected_forecast_date"),
+        fallback_date=data.get("generated_at"),
+    )
+    for row in forecast_rows:
+        row["selected"] = compact_text(row.get("date"), "") == forecast_selection["selected_forecast_date"] if forecast_selection["selected_forecast_date"] else False
 
     raw_json = json.dumps(data, indent=2, sort_keys=True, default=str)
 
@@ -347,6 +410,9 @@ def build_snapshot_report(data):
         "target_species": target_species,
         "overall_score": data.get("overall", {}).get("score"),
         "overall_rating": compact_text(data.get("overall", {}).get("rating"), ""),
+        "selected_forecast_date": forecast_selection["selected_forecast_date"],
+        "selected_forecast_label": forecast_selection["selected_forecast_label"],
+        "forecast_focus": forecast_selection["forecast_focus"],
         "best_time": {
             "label": compact_text(best_bet.get("time_label"), "Any time"),
             "range": compact_text(best_bet.get("time_range"), "Any time"),
@@ -363,13 +429,24 @@ def build_snapshot_report(data):
             "why": compact_text(best_bet.get("why"), ""),
             "reasons": [compact_text(item, "") for item in best_bet.get("reasons", []) if compact_text(item, "")],
         },
-        "conditions": [
-            {"label": "Temperature", "value": f"{weather.get('temp', '?')}°F"},
-            {"label": "Wind", "value": f"{weather.get('wind', '?')} mph"},
-            {"label": "Pressure", "value": f"{weather.get('pressure', '?')} inHg"},
-            {"label": "Cloud Cover", "value": f"{weather.get('cloud', '?')}%"},
-            {"label": "Source", "value": compact_text(weather.get("source"), "unknown")},
-        ],
+        "conditions": (
+            [
+                {"label": "Forecast date", "value": forecast_selection["selected_forecast_label"]},
+                {"label": "Forecast rating", "value": compact_text(forecast_selection["forecast_focus"].get("rating"), compact_text(data.get("overall", {}).get("rating"), "Unknown"))},
+                {"label": "High / Low", "value": f"{forecast_selection['forecast_focus'].get('high', '?')}° / {forecast_selection['forecast_focus'].get('low', '?')}°"},
+                {"label": "Wind", "value": f"{forecast_selection['forecast_focus'].get('wind', '?')} mph"},
+                {"label": "Score", "value": forecast_selection["forecast_focus"].get("score")},
+                {"label": "Source", "value": "Open-Meteo forecast"},
+            ]
+            if forecast_rows
+            else [
+                {"label": "Temperature", "value": f"{weather.get('temp', '?')}°F"},
+                {"label": "Wind", "value": f"{weather.get('wind', '?')} mph"},
+                {"label": "Pressure", "value": f"{weather.get('pressure', '?')} inHg"},
+                {"label": "Cloud Cover", "value": f"{weather.get('cloud', '?')}%"},
+                {"label": "Source", "value": compact_text(weather.get("source"), "unknown")},
+            ]
+        ),
         "smart_intelligence": {
             "headline": compact_text(smart.get("headline"), "Fishing pattern"),
             "summary": compact_text(smart.get("summary"), ""),
@@ -383,7 +460,7 @@ def build_snapshot_report(data):
         "species_ranking": report_species_rows(data.get("species", []), best_bet=best_bet, best_time=data.get("best_time")),
         "recommended_lures": report_lure_rows(data.get("lure_cards", [])),
         "nearby_waters": report_water_rows((catch_insights or {}).get("top_waterbodies", [])),
-        "forecast": report_outlook_rows(data.get("forecast", [])),
+        "forecast": forecast_rows,
         "catch_insights": catch_insights,
         "raw_json": raw_json,
     }
@@ -1032,12 +1109,13 @@ def maps_alias():
 @app.route("/snapshot")
 def snapshot():
     zip_code = request.args.get("zip", "60543")
+    selected_forecast_date = request.args.get("selected_forecast_date") or request.args.get("forecast_date")
     data = build_intel(zip_code)
 
     if not data:
         return "<h1>Invalid ZIP code</h1>", 400
 
-    return render_template("snapshot.html", data=data, report=build_snapshot_report(data))
+    return render_template("snapshot.html", data=data, report=build_snapshot_report(data, selected_forecast_date=selected_forecast_date))
 
 
 @app.route("/api/intel")

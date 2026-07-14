@@ -366,6 +366,60 @@ def _forecast_rows(forecast: Any) -> list[dict[str, Any]]:
     return rows
 
 
+def _forecast_label(date_text: Any) -> str:
+    value = _compact_text(date_text, "")
+    if not value:
+        return ""
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").strftime("%A, %B %d, %Y")
+    except Exception:
+        return value
+
+
+def _selected_forecast_context(forecast_rows: list[dict[str, Any]], selected_date: Any = None, fallback_date: Any = None) -> dict[str, Any]:
+    rows = [row for row in forecast_rows if isinstance(row, dict)]
+    selected_date_text = _compact_text(selected_date, "")
+    selected_row = None
+    selected_index = None
+
+    if selected_date_text:
+        for idx, row in enumerate(rows):
+            if _compact_text(row.get("date"), "") == selected_date_text:
+                selected_row = row
+                selected_index = idx
+                break
+
+    if selected_row is None and rows:
+        selected_index = 0
+        selected_row = rows[0]
+        selected_date_text = _compact_text(selected_row.get("date"), selected_date_text)
+
+    if not selected_date_text:
+        selected_date_text = _compact_text(fallback_date, "")
+
+    label = _forecast_label(selected_date_text) or _compact_text(fallback_date, "")
+    if not label and selected_row:
+        label = _compact_text(selected_row.get("pretty_date"), "") or _compact_text(selected_row.get("date"), "")
+
+    focus = {
+        "date": _compact_text(selected_row.get("date"), selected_date_text) if selected_row else selected_date_text,
+        "pretty_date": _compact_text(selected_row.get("pretty_date"), label) if selected_row else label,
+        "rating": _compact_text(selected_row.get("rating"), "") if selected_row else "",
+        "high": selected_row.get("high") if selected_row else None,
+        "low": selected_row.get("low") if selected_row else None,
+        "wind": selected_row.get("wind") if selected_row else None,
+        "score": selected_row.get("score") if selected_row else None,
+    }
+
+    return {
+        "selected_forecast_date": selected_date_text,
+        "selected_forecast_label": label,
+        "forecast_day_index": selected_index if selected_index is not None else "",
+        "forecast_focus": focus,
+        "forecast_rows": rows,
+    }
+
+
 def _render_condition_cards(rows: list[dict[str, str]]) -> str:
     return "".join(
         f'<div class="report-condition"><strong>{html.escape(item["label"])}</strong><div>{html.escape(str(item["value"]))}</div></div>'
@@ -470,7 +524,7 @@ def _render_forecast_table(rows: list[dict[str, Any]]) -> str:
     </table>'''
 
 
-def _build_report_context(report_meta: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+def _build_report_context(report_meta: dict[str, Any], payload: dict[str, Any], selected_forecast_date: Any = None) -> dict[str, Any]:
     intel = payload.get("intel") if isinstance(payload.get("intel"), dict) else payload if isinstance(payload, dict) else {}
     location = intel.get("location") if isinstance(intel.get("location"), dict) else {}
     overall = intel.get("overall") if isinstance(intel.get("overall"), dict) else {}
@@ -486,6 +540,17 @@ def _build_report_context(report_meta: dict[str, Any], payload: dict[str, Any]) 
     lure_rows = _lure_rows(intel.get("lure_cards") if isinstance(intel.get("lure_cards"), list) else [])
     water_rows = _water_rows(intel.get("waters") if isinstance(intel.get("waters"), list) else [])
     forecast_rows = _forecast_rows(intel.get("forecast") if isinstance(intel.get("forecast"), list) else [])
+    forecast_selection = _selected_forecast_context(
+        forecast_rows,
+        selected_date=selected_forecast_date or payload.get("selected_forecast_date") or report_meta.get("selected_forecast_date"),
+        fallback_date=report_meta.get("created") or payload.get("saved_at") or payload.get("created"),
+    )
+    selected_forecast_date_text = forecast_selection["selected_forecast_date"]
+    selected_forecast_label = forecast_selection["selected_forecast_label"]
+    forecast_focus = forecast_selection["forecast_focus"]
+
+    for row in forecast_rows:
+        row["selected"] = _compact_text(row.get("date"), "") == selected_forecast_date_text if selected_forecast_date_text else False
 
     smart_clarity = smart.get("clarity_signal") if isinstance(smart.get("clarity_signal"), dict) else {}
     smart_condition_labels = [_compact_text(item, "") for item in (smart.get("condition_labels") or []) if _compact_text(item, "")]
@@ -507,13 +572,27 @@ def _build_report_context(report_meta: dict[str, Any], payload: dict[str, Any]) 
         "target_species": _compact_text(intel.get("target_species") or payload.get("target_species"), "Auto"),
         "overall_score": overall.get("score"),
         "overall_rating": _compact_text(overall.get("rating"), ""),
+        "selected_forecast_date": selected_forecast_date_text,
+        "selected_forecast_label": selected_forecast_label,
+        "forecast_focus": forecast_focus,
         "best_time": {
             "label": _compact_text(best_bet.get("time_label"), "Any time"),
             "range": _compact_text(best_bet.get("time_range"), "Any time"),
             "best_hour": _compact_text(best_bet.get("best_hour"), ""),
         },
         "best_bet": best_bet_ctx,
-        "conditions": condition_rows,
+        "conditions": (
+            [
+                {"label": "Forecast date", "value": selected_forecast_label},
+                {"label": "Forecast rating", "value": _compact_text(forecast_focus.get("rating"), _compact_text(overall.get("rating"), "Unknown"))},
+                {"label": "High / Low", "value": f"{forecast_focus.get('high', '?')}° / {forecast_focus.get('low', '?')}°"},
+                {"label": "Wind", "value": f"{forecast_focus.get('wind', '?')} mph"},
+                {"label": "Score", "value": forecast_focus.get("score")},
+                {"label": "Source", "value": "Open-Meteo forecast"},
+            ]
+            if forecast_rows
+            else condition_rows
+        ),
         "smart_intelligence": {
             "headline": _compact_text(smart.get("headline"), "Fishing pattern"),
             "summary": _compact_text(smart.get("summary"), ""),
@@ -533,8 +612,8 @@ def _build_report_context(report_meta: dict[str, Any], payload: dict[str, Any]) 
     }
 
 
-def _render_report_html(report_meta: dict[str, Any], payload: dict[str, Any]) -> str:
-    return render_template("snapshot.html", report=_build_report_context(report_meta, payload))
+def _render_report_html(report_meta: dict[str, Any], payload: dict[str, Any], selected_forecast_date: Any = None) -> str:
+    return render_template("snapshot.html", report=_build_report_context(report_meta, payload, selected_forecast_date=selected_forecast_date))
 
 
 def _save_report(payload: dict[str, Any], title: str | None = None, zip_code: str | None = None) -> dict[str, Any]:
@@ -557,6 +636,12 @@ def _save_report(payload: dict[str, Any], title: str | None = None, zip_code: st
     html_name = f"{report_id}.html"
 
     created = _now().isoformat(timespec="seconds")
+    selected_forecast_date = _compact_text(
+        payload.get("selected_forecast_date") or payload.get("forecast_date"),
+        "",
+    )
+    selected_forecast_label = _compact_text(payload.get("selected_forecast_label"), "")
+    forecast_day_index = payload.get("forecast_day_index")
 
     meta = {
         "id": report_id,
@@ -569,6 +654,12 @@ def _save_report(payload: dict[str, Any], title: str | None = None, zip_code: st
         "html_url": f"/api/reports/download/{html_name}",
         "view_url": f"/api/reports/view/{report_id}",
     }
+    if selected_forecast_date:
+        meta["selected_forecast_date"] = selected_forecast_date
+    if selected_forecast_label:
+        meta["selected_forecast_label"] = selected_forecast_label
+    if forecast_day_index not in (None, "", []):
+        meta["forecast_day_index"] = forecast_day_index
 
     wrapped = {
         "meta": meta,
@@ -580,7 +671,10 @@ def _save_report(payload: dict[str, Any], title: str | None = None, zip_code: st
     html_path = REPORTS_DIR / html_name
 
     _write_json(json_path, wrapped)
-    html_path.write_text(_render_report_html(meta, payload), encoding="utf-8")
+    html_path.write_text(
+        _render_report_html(meta, payload, selected_forecast_date=selected_forecast_date),
+        encoding="utf-8",
+    )
 
     items = _index()
     items = [x for x in items if x.get("id") != report_id]
@@ -760,6 +854,14 @@ def register_report_routes_v38(app):
     </label>
     <br>
 
+    <label>
+      Forecast date<br>
+      <select id="forecastDateInput">
+        <option value="">Load forecast dates</option>
+      </select>
+    </label>
+    <br>
+
     <button onclick="createReport()">Create saved report</button>
     <pre id="createResult">No report created yet.</pre>
   </div>
@@ -779,6 +881,7 @@ def register_report_routes_v38(app):
 async function createReport() {
   const zip = document.getElementById("zipInput").value.trim();
   const title = document.getElementById("titleInput").value.trim();
+  const forecastDate = document.getElementById("forecastDateInput").value.trim();
   const box = document.getElementById("createResult");
 
   if (!zip) {
@@ -790,6 +893,7 @@ async function createReport() {
 
   const params = new URLSearchParams({zip});
   if (title) params.set("title", title);
+  if (forecastDate) params.set("selected_forecast_date", forecastDate);
 
   try {
     const res = await fetch("/api/reports/create?" + params.toString(), {method: "POST"});
@@ -798,6 +902,56 @@ async function createReport() {
     loadReports();
   } catch (err) {
     box.textContent = "Report failed: " + err;
+  }
+}
+
+function prettyForecastLabel(item, index) {
+  const date = String(item && item.date ? item.date : "").trim();
+  if (!date) return `Forecast ${index + 1}`;
+  const base = String(item && item.pretty_date ? item.pretty_date : date).trim();
+  if (index === 0) return `Today — ${base}`;
+  if (index === 1) return `Tomorrow — ${base}`;
+  return base;
+}
+
+async function loadForecastDates() {
+  const zip = document.getElementById("zipInput").value.trim();
+  const select = document.getElementById("forecastDateInput");
+  if (!select) return;
+
+  select.innerHTML = "<option value=''>Loading forecast dates...</option>";
+  if (!zip) {
+    select.innerHTML = "<option value=''>Enter a ZIP first</option>";
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/intel?zip=${encodeURIComponent(zip)}`);
+    const data = await res.json();
+    const forecast = Array.isArray(data.forecast) ? data.forecast : [];
+
+    if (!forecast.length) {
+      select.innerHTML = "<option value=''>No forecast available</option>";
+      return;
+    }
+
+    select.innerHTML = [
+      "<option value=''>Auto / first available</option>",
+      ...forecast.map((item, index) => {
+        const value = String(item && item.date ? item.date : "").trim();
+        const label = escapeHtml(prettyForecastLabel(item, index));
+        return value ? `<option value=\"${escapeHtml(value)}\">${label}</option>` : "";
+      }),
+    ].join("");
+
+    const current = String(data.selected_forecast_date || "").trim();
+    if (current && Array.from(select.options).some(option => option.value === current)) {
+      select.value = current;
+    } else if (forecast[0] && forecast[0].date) {
+      select.value = String(forecast[0].date);
+    }
+  } catch (err) {
+    select.innerHTML = "<option value=''>Unable to load forecast dates</option>";
   }
 }
 
@@ -877,6 +1031,10 @@ function escapeHtml(s) {
     .replaceAll("'", "&#039;");
 }
 
+document.getElementById("zipInput").addEventListener("change", loadForecastDates);
+document.getElementById("zipInput").addEventListener("blur", loadForecastDates);
+
+loadForecastDates();
 loadReports();
 </script>
 </body>
@@ -933,6 +1091,13 @@ loadReports();
             or request.form.get("title")
             or ""
         ).strip()
+        selected_forecast_date = (
+            request.args.get("selected_forecast_date")
+            or request.form.get("selected_forecast_date")
+            or request.args.get("forecast_date")
+            or request.form.get("forecast_date")
+            or ""
+        ).strip()
 
         if not zip_code:
             return jsonify({
@@ -971,15 +1136,38 @@ loadReports();
                 "error": f"Unable to call /api/intel: {exc}",
             }), 500
 
+        forecast_rows = _forecast_rows(intel.get("forecast") if isinstance(intel.get("forecast"), list) else [])
+        forecast_selection = _selected_forecast_context(
+            forecast_rows,
+            selected_date=selected_forecast_date,
+            fallback_date=_now().date().isoformat(),
+        )
+        if forecast_rows:
+            selected_forecast_date = forecast_selection["selected_forecast_date"]
+            selected_forecast_label = forecast_selection["selected_forecast_label"]
+            forecast_day_index = forecast_selection["forecast_day_index"]
+        else:
+            selected_forecast_label = forecast_selection["selected_forecast_label"] or _now().strftime("%A, %B %d, %Y")
+            forecast_day_index = ""
+
         payload = {
             "title": title or f"Trip Report ZIP {zip_code}",
             "zip": zip_code,
             "source": f"/api/intel?{query}",
             "saved_at": _now().isoformat(timespec="seconds"),
             "intel": intel,
+            "selected_forecast_date": selected_forecast_date,
+            "selected_forecast_label": selected_forecast_label,
+            "forecast_day_index": forecast_day_index,
         }
 
         meta = _save_report(payload, title=title, zip_code=zip_code)
+        meta["selected_forecast_date"] = selected_forecast_date
+        meta["selected_forecast_label"] = selected_forecast_label
+        meta["forecast_day_index"] = forecast_day_index
+        items = _index()
+        items = [meta if item.get("id") == meta.get("id") else item for item in items]
+        _save_index(items)
 
         return jsonify({
             "ok": True,
@@ -1002,6 +1190,12 @@ loadReports();
             or payload.get("title")
             or "Trip Report"
         )
+        selected_forecast_date = (
+            request.args.get("selected_forecast_date")
+            or payload.get("selected_forecast_date")
+            or payload.get("forecast_date")
+            or ""
+        )
 
         zip_code = (
             request.args.get("zip")
@@ -1010,6 +1204,9 @@ loadReports();
             or payload.get("postal_code")
             or ""
         )
+
+        if selected_forecast_date:
+            payload.setdefault("selected_forecast_date", str(selected_forecast_date))
 
         meta = _save_report(payload, title=str(title), zip_code=str(zip_code))
 
@@ -1102,7 +1299,15 @@ loadReports();
         if not isinstance(payload, dict):
             payload = wrapped if isinstance(wrapped, dict) else {}
 
-        return _render_report_html(match, payload)
+        selected_forecast_date = (
+            request.args.get("selected_forecast_date")
+            or request.args.get("forecast_date")
+            or match.get("selected_forecast_date")
+            or payload.get("selected_forecast_date")
+            or ""
+        ).strip()
+
+        return _render_report_html(match, payload, selected_forecast_date=selected_forecast_date)
 
     @app.route("/api/reports/status")
     def reports_status_v38():

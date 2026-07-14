@@ -1,0 +1,14 @@
+{
+  "version": "v6.3-smart-trip-forecast-date",
+  "previous_version": "v6.2-dashboard-consolidation",
+  "smart_trip_forecast_date": true,
+  "forecast_date_selector": true,
+  "selected_forecast_date_persists": true,
+  "report_selected_day_highlight": true,
+  "selected_day_conditions": true,
+  "smart_trip_report_preserved": true,
+  "dashboard_consolidation_preserved": true,
+  "app_health_maintenance_only": true,
+  "admin_not_in_normal_nav": true,
+  "installed_at": "2026-07-13T22:45:00-05:00"
+}

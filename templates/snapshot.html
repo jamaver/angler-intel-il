@@ -67,6 +67,37 @@
       font-weight: 700;
     }
 
+    .report-selected-date {
+      background: #e6f5eb;
+      border-color: #bfd7c6;
+      color: var(--accent-dark);
+    }
+
+    .report-date-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      min-width: 240px;
+    }
+
+    .report-date-form label {
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .trip-date-selector {
+      width: 100%;
+      min-height: 2.6rem;
+      padding: 0.45rem 0.7rem;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      font-weight: 700;
+    }
+
     .report-actions {
       display: flex;
       gap: 0.6rem;
@@ -98,7 +129,7 @@
     }
 
     .report-summary-grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       margin: 18px 0;
     }
 
@@ -266,6 +297,12 @@
       vertical-align: top;
     }
 
+    .forecast-day-selected td {
+      background: #e6f5eb;
+      color: var(--accent-dark);
+      font-weight: 700;
+    }
+
     .report-empty {
       color: var(--muted);
       padding: 0.4rem 0;
@@ -308,6 +345,10 @@
       .report-actions {
         justify-content: flex-start;
       }
+
+      .report-date-form {
+        min-width: 100%;
+      }
     }
 
     @media (max-width: 640px) {
@@ -340,6 +381,10 @@
         display: none;
       }
 
+      .report-date-form {
+        display: none;
+      }
+
       .report-card,
       .report-best-bet,
       .report-condition,
@@ -369,11 +414,25 @@
           {% if report.location_label %}<span class="report-badge">{{ report.location_label }}</span>{% endif %}
           {% if report.zip_code %}<span class="report-badge">ZIP {{ report.zip_code }}</span>{% endif %}
           {% if report.target_species %}<span class="report-badge">Target: {{ report.target_species }}</span>{% endif %}
+          {% if report.selected_forecast_label %}<span class="report-badge report-selected-date">Trip date: {{ report.selected_forecast_label }}</span>{% endif %}
           {% if report.overall_rating %}<span class="report-badge">{{ report.overall_rating }}</span>{% endif %}
         </div>
       </div>
 
       <div class="report-actions">
+        {% if report.forecast %}
+          <form class="report-date-form" method="get">
+            <label for="tripDateSelect">Forecast date</label>
+            <select id="tripDateSelect" name="selected_forecast_date" class="trip-date-selector" onchange="this.form.submit()">
+              <option value="">Auto / first available</option>
+              {% for item in report.forecast %}
+                <option value="{{ item.date }}" {% if item.date == report.selected_forecast_date %}selected{% endif %}>
+                  {{ item.pretty_date or item.date }}
+                </option>
+              {% endfor %}
+            </select>
+          </form>
+        {% endif %}
         <button onclick="window.print()">Print / Save PDF</button>
         <button class="secondary" onclick="history.back()">Back</button>
       </div>
@@ -389,12 +448,22 @@
         <strong>{{ report.target_species }}</strong>
       </article>
       <article class="report-card report-metric">
-        <label>Best bet</label>
-        <strong>{{ report.best_bet.species }}</strong>
+        <label>Trip date</label>
+        <strong>{{ report.selected_forecast_label or report.generated_at }}</strong>
       </article>
       <article class="report-card report-metric">
         <label>Best time</label>
         <strong>{{ report.best_time.label }}</strong>
+      </article>
+      <article class="report-card report-metric">
+        <label>Forecast focus</label>
+        <strong>{{ report.forecast_focus.rating or report.overall_rating or "Forecast" }}</strong>
+        <div class="report-muted">
+          {% if report.forecast_focus.score is not none %}Score {{ report.forecast_focus.score }}{% endif %}
+          {% if report.forecast_focus.high is not none and report.forecast_focus.low is not none %}
+            {% if report.forecast_focus.score is not none %} · {% endif %}{{ report.forecast_focus.high }}&deg; / {{ report.forecast_focus.low }}&deg;
+          {% endif %}
+        </div>
       </article>
     </section>
 
@@ -440,7 +509,7 @@
           </div>
         {% endfor %}
       </div>
-      <p class="report-muted">Source: Open-Meteo or fallback weather when required. Fallback weather estimate text remains available when live data is unavailable.</p>
+      <p class="report-muted">This section follows the selected forecast day. Use the selector above to shift the focused day while keeping the full 7-day outlook visible. Fallback weather estimate text remains available when live data is unavailable.</p>
     </section>
 
     <section class="report-card">
@@ -572,7 +641,7 @@
           </thead>
           <tbody>
             {% for item in report.forecast %}
-              <tr>
+              <tr class="{% if item.selected %}forecast-day-selected{% endif %}">
                 <td>{{ item.pretty_date or item.date }}</td>
                 <td>{{ item.rating }}</td>
                 <td>{{ item.high }}&deg; / {{ item.low }}&deg;</td>
