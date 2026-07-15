@@ -114,12 +114,13 @@ except Exception as exc:
 
 
 APP_VERSION = "v5.9-modern-ui-refresh"
-APP_RELEASE = "v6.10-tackle-locker"
+APP_RELEASE = "v6.11-gear-catalog-flexible-search"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the
 # current visible release label in the UI.
 # modern_ui_refresh compatibility marker
+# v6.10-tackle-locker compatibility marker
 
 
 @app.context_processor

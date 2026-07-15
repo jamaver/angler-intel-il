@@ -3470,6 +3470,116 @@ button {
   min-height: 2.2rem;
 }
 
+.gear-toolbar-anchor {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.gear-import-row,
+.gear-settings-panel {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+}
+
+.gear-settings-panel {
+  padding: 0.9rem;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(8, 18, 31, 0.45);
+}
+
+.gear-results-group {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.9rem;
+}
+
+.gear-results-group h3 {
+  margin: 0;
+}
+
+.gear-catalog-result-body {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: start;
+}
+
+.gear-catalog-result-image {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.gear-catalog-result-copy {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.gear-catalog-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.gear-catalog-result-actions a {
+  color: #7ee49a;
+  font-weight: 800;
+}
+
+.gear-inline-link {
+  border: 0;
+  background: transparent;
+  color: #7dd3fc;
+  padding: 0;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+}
+
+.gear-duplicate-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  color: #fde68a;
+  font-weight: 700;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  background: rgba(250, 204, 21, 0.08);
+}
+
+.gear-card-highlight {
+  outline: 2px solid rgba(125, 211, 252, 0.85);
+  box-shadow: 0 0 0 4px rgba(125, 211, 252, 0.12);
+}
+
+.gear-result-messages,
+.gear-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.gear-result-messages {
+  flex-direction: column;
+}
+
+.gear-toolbar-grid .gear-field-inline {
+  min-height: 2.6rem;
+  align-self: end;
+}
+
 @media (max-width: 960px) {
   .gear-hero {
     grid-template-columns: 1fr;
@@ -3487,6 +3597,15 @@ button {
   }
 
   .gear-item-image {
+    width: 96px;
+    height: 96px;
+  }
+
+  .gear-catalog-result-body {
+    grid-template-columns: 1fr;
+  }
+
+  .gear-catalog-result-image {
     width: 96px;
     height: 96px;
   }

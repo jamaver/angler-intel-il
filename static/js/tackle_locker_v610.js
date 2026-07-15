@@ -2,6 +2,9 @@
   "use strict";
 
   const PAGE = window.__TACKLE_LOCKER__ || {};
+  PAGE.searchSettings = PAGE.settings || PAGE.searchSettings || {};
+  PAGE.importDraft = PAGE.importDraft || null;
+  PAGE.searchResults = PAGE.searchResults || {};
   const FORM_ID = "gearForm";
   const CATEGORY_FIELDS = [
     "rod",
@@ -34,6 +37,27 @@
     return items.find(item => String(item && item.id ? item.id : "") === String(itemId || ""));
   }
 
+  function getSettings() {
+    return PAGE.searchSettings || {};
+  }
+
+  function setSettings(settings) {
+    PAGE.searchSettings = settings || {};
+  }
+
+  function applySettingsToControls() {
+    const settings = getSettings();
+    const scope = byId("gearSearchScope");
+    const importCategory = byId("gearImportCategory");
+    if (scope) scope.value = settings.search_scope_default || "both";
+    if (byId("gearOnlineLookup")) byId("gearOnlineLookup").checked = Boolean(settings.online_lookup_enabled);
+    if (byId("gearDefaultScope")) byId("gearDefaultScope").value = settings.search_scope_default || "both";
+    if (byId("gearAllowRemoteImages")) byId("gearAllowRemoteImages").checked = Boolean(settings.allow_remote_images);
+    if (byId("gearCacheLookupResults")) byId("gearCacheLookupResults").checked = settings.cache_lookup_results !== false;
+    if (byId("gearPreferManufacturerSpecs")) byId("gearPreferManufacturerSpecs").checked = settings.prefer_manufacturer_specs !== false;
+    if (importCategory && !importCategory.value) importCategory.value = "misc";
+  }
+
   function setField(name, value) {
     const el = document.getElementById(`gear${name}`);
     if (!el) return;
@@ -54,6 +78,7 @@
   function clearForm() {
     const form = getForm();
     if (form) form.dataset.editingId = "";
+    PAGE.importDraft = null;
     byId("gearFormTitle").textContent = "Add gear";
     [
       "Id",
@@ -177,6 +202,22 @@
       favorite: byId("gearFavorite").checked,
     };
 
+    const draft = PAGE.importDraft && typeof PAGE.importDraft === "object" ? PAGE.importDraft : null;
+    if (draft) {
+      payload.provider = draft.provider || "";
+      payload.provider_product_id = draft.provider_product_id || "";
+      payload.image_url = draft.image_url || "";
+      payload.image_source = draft.image_source || "";
+      payload.identifiers = draft.identifiers || {};
+      payload.specifications = draft.specifications || {};
+      payload.price = draft.price ?? null;
+      payload.availability = draft.availability || "";
+      payload.raw_provider_data_cached = Boolean(draft.raw_provider_data_cached);
+      if (!payload.image && draft.image_url && !payload.image) {
+        payload.image = draft.image_url;
+      }
+    }
+
     const category = payload.category;
     if (category === "rod") {
       payload.length_ft = getField("LengthFt");
@@ -224,64 +265,189 @@
     return payload;
   }
 
-  function renderCatalogResults(results) {
+  function resultDuplicateNote(item) {
+    const duplicates = Array.isArray(item.duplicate_matches) ? item.duplicate_matches : [];
+    if (!duplicates.length) return "";
+    const first = duplicates[0];
+    const name = first && first.display_name ? first.display_name : "an existing item";
+    return `
+      <div class="gear-duplicate-note">
+        Possible match already in your locker.
+        <button type="button" class="gear-inline-link" data-gear-open-existing="${escapeHtml(first && first.id ? first.id : "")}">${escapeHtml(name)}</button>
+      </div>
+    `;
+  }
+
+  function renderResultCard(item, options = {}) {
+    if (!item) return "";
+    const title = item.display_name || [item.brand, item.model].filter(Boolean).join(" ") || "Catalog result";
+    const subtitle = [item.brand, item.model].filter(Boolean).join(" · ") || item.source_name || "Catalog source";
+    const sourceLine = [
+      item.source_name || "Catalog source",
+      item.provider ? `Provider: ${item.provider}` : "",
+      item.confidence ? `${item.confidence} confidence` : "",
+      item.retrieved_at ? `Updated ${item.retrieved_at}` : "",
+    ].filter(Boolean).join(" · ");
+    const sourceUrl = item.source_url ? `<a href="${escapeHtml(item.source_url)}" target="_blank" rel="noreferrer">Source URL</a>` : "";
+    const actionLabel = options.actionLabel || "Review";
+    const actionAttr = options.actionAttr || "data-gear-review-result";
+    const actionValue = options.actionValue || "";
+    const duplicate = resultDuplicateNote(item);
+    const duplicateMatches = Array.isArray(item.duplicate_matches) ? item.duplicate_matches : [];
+    const specs = item.specifications && typeof item.specifications === "object"
+      ? Object.entries(item.specifications).slice(0, 4).map(([key, value]) => `<span>${escapeHtml(String(key).replaceAll("_", " "))}: ${escapeHtml(value)}</span>`).join("")
+      : "";
+    const identifiers = item.identifiers && typeof item.identifiers === "object"
+      ? Object.entries(item.identifiers).slice(0, 3).map(([key, value]) => `<span>${escapeHtml(String(key).toUpperCase())}: ${escapeHtml(value)}</span>`).join("")
+      : "";
+    const statusBadges = [
+      item.match_group ? `<span class="gear-badge">${escapeHtml(item.match_group === "owned" ? "Owned" : item.match_group === "cached" ? "Cached" : item.match_group === "online" ? "Online" : item.match_group)}</span>` : "",
+      item.raw_provider_data_cached ? `<span class="gear-badge">Cached</span>` : "",
+      duplicateMatches.length ? `<span class="gear-badge gear-badge-favorite">Possible duplicate</span>` : "",
+    ].filter(Boolean).join("");
+
+    return `
+      <article class="gear-catalog-result" data-result-key="${escapeHtml(actionValue)}">
+        <div class="gear-catalog-result-head">
+          <div>
+            <h3>${escapeHtml(title)}</h3>
+            <p class="gear-muted">${escapeHtml(sourceLine || subtitle)}</p>
+          </div>
+          <div class="gear-badge-row">${statusBadges}</div>
+        </div>
+        <div class="gear-catalog-result-body">
+          <img class="gear-catalog-result-image" src="${escapeHtml(item.display_image || item.image || item.fallback_image || "")}" alt="${escapeHtml(title)}" onerror="this.src='${escapeHtml(item.fallback_image || "/static/gear/fallback/generic.svg")}'">
+          <div class="gear-catalog-result-copy">
+            <p class="gear-muted">${escapeHtml(subtitle)}</p>
+            ${specs ? `<div class="gear-item-specs">${specs}</div>` : ""}
+            ${identifiers ? `<div class="gear-item-specs">${identifiers}</div>` : ""}
+            ${item.price ? `<p class="gear-muted">Price: ${escapeHtml(item.price)}</p>` : ""}
+            ${item.availability ? `<p class="gear-muted">Availability: ${escapeHtml(item.availability)}</p>` : ""}
+            ${duplicate}
+          </div>
+        </div>
+        <div class="gear-catalog-result-actions">
+          ${sourceUrl}
+          <button type="button" class="gear-toolbar-button" ${actionAttr}="${escapeHtml(actionValue)}">${escapeHtml(actionLabel)}</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderSearchResults(payload) {
     const box = byId("catalogResults");
     if (!box) return;
 
-    if (!Array.isArray(results) || !results.length) {
-      box.innerHTML = "<p class='gear-empty'>No catalog matches. Manual entry is still available.</p>";
+    const localOwned = Array.isArray(payload?.local?.owned) ? payload.local.owned : [];
+    const localCached = Array.isArray(payload?.local?.cached) ? payload.local.cached : [];
+    const online = Array.isArray(payload?.online?.matches) ? payload.online.matches : [];
+    const messages = Array.isArray(payload?.messages) ? payload.messages : [];
+
+    PAGE.searchResults = {
+      localOwned,
+      localCached,
+      online,
+    };
+
+    const localCount = localOwned.length + localCached.length;
+    const onlineCount = online.length;
+    const localSections = [
+      localOwned.length ? `<section class="gear-results-group"><h3>Owned gear</h3><div class="gear-catalog-results">${localOwned.map((item, idx) => renderResultCard(item, { actionLabel: "Edit", actionAttr: "data-gear-review-item", actionValue: `local-owned-${idx}` })).join("")}</div></section>` : "",
+      localCached.length ? `<section class="gear-results-group"><h3>Cached catalog</h3><div class="gear-catalog-results">${localCached.map((item, idx) => renderResultCard(item, { actionLabel: "Review / add", actionAttr: "data-gear-review-item", actionValue: `local-cached-${idx}` })).join("")}</div></section>` : "",
+    ].filter(Boolean).join("");
+
+    const onlineSection = onlineCount
+      ? `<section class="gear-results-group"><h3>Online results</h3><div class="gear-catalog-results">${online.map((item, idx) => renderResultCard(item, { actionLabel: "Review / import", actionAttr: "data-gear-review-item", actionValue: `online-${idx}` })).join("")}</div></section>`
+      : `<section class="gear-results-group"><h3>Online results</h3><p class="gear-empty">${payload?.scope === "online" ? "No online products were returned. Try a different query, enable a provider, or paste a product URL." : "No online results yet. Enable online lookup or paste a product URL to import one."}</p></section>`;
+
+    const messageMarkup = messages.length
+      ? `<div class="gear-result-messages">${messages.map(message => `<p class="gear-empty">${escapeHtml(message)}</p>`).join("")}</div>`
+      : "";
+
+    if (!localCount && !onlineCount && !messages.length) {
+      box.innerHTML = `
+        <p class="gear-empty">No matching local or online products were found.</p>
+        <div class="gear-empty-actions">
+          <a class="gear-toolbar-button gear-toolbar-anchor" href="#gear-form">Add manually</a>
+          <button type="button" class="gear-toolbar-button" id="gearFocusUrl">Paste product URL</button>
+        </div>
+      `;
+      const focusUrl = byId("gearFocusUrl");
+      if (focusUrl) focusUrl.addEventListener("click", () => byId("gearProductUrl")?.focus());
       return;
     }
 
-    box.innerHTML = results.map(item => `
-      <article class="gear-catalog-result">
-        <div class="gear-catalog-result-head">
-          <div>
-            <h3>${escapeHtml(item.display_name || `${item.brand || ""} ${item.model || ""}`.trim() || "Catalog result")}</h3>
-            <p class="gear-muted">${escapeHtml(item.source_name || "Catalog cache")} · ${escapeHtml(item.confidence || "low")} confidence</p>
-          </div>
-          <button type="button" data-catalog-use="${escapeHtml(item.display_name || "")}">Use</button>
-        </div>
-        <p class="gear-muted">${escapeHtml(item.brand || "")}${item.model ? ` · ${escapeHtml(item.model)}` : ""}</p>
-        ${item.source_url ? `<a href="${escapeHtml(item.source_url)}" target="_blank" rel="noreferrer">Source URL</a>` : ""}
-      </article>
-    `).join("");
-
-    box.querySelectorAll("[data-catalog-use]").forEach(button => {
-      button.addEventListener("click", () => {
-        const displayName = button.getAttribute("data-catalog-use") || "";
-        const found = results.find(item => String(item.display_name || "") === displayName);
-        if (found) {
-          populateForm(found);
-        }
-      });
-    });
+    box.innerHTML = `
+      ${messageMarkup}
+      ${localSections || `<p class="gear-empty">No local matches in the locker or cache.</p>`}
+      ${onlineSection}
+      <p class="gear-empty">Local results are shown first. Review imported products before saving them to your locker.</p>
+    `;
   }
 
   async function searchCatalog() {
     const query = byId("catalogQuery").value.trim();
     const category = byId("catalogCategory").value;
+    const scope = byId("gearSearchScope")?.value || getSettings().search_scope_default || "both";
     const box = byId("catalogResults");
     if (!box) return;
     if (!query) {
-      box.innerHTML = "<p class='gear-empty'>Enter a search term to query the catalog cache.</p>";
+      box.innerHTML = "<p class='gear-empty'>Enter a search term to search local gear and optional online sources.</p>";
       return;
     }
 
-    box.innerHTML = "<p class='gear-empty'>Searching catalog cache...</p>";
+    box.innerHTML = "<p class='gear-empty'>Searching local gear, cache, and enabled online providers...</p>";
     try {
-      const params = new URLSearchParams({ q: query });
+      const params = new URLSearchParams({ q: query, scope });
       if (category) params.set("category", category);
-      const res = await fetch(`/api/gear/catalog/search?${params.toString()}`);
+      const res = await fetch(`/api/gear/search?${params.toString()}`);
       const data = await res.json();
-      renderCatalogResults(Array.isArray(data.products) ? data.products : []);
+      renderSearchResults(data);
     } catch (err) {
-      box.innerHTML = `<p class='gear-empty'>Catalog lookup failed: ${escapeHtml(err)}</p>`;
+      box.innerHTML = `<p class='gear-empty'>Search failed: ${escapeHtml(err)}</p>`;
+    }
+  }
+
+  async function importFromUrl() {
+    const url = byId("gearProductUrl").value.trim();
+    const category = byId("gearImportCategory").value;
+    const box = byId("catalogResults");
+    if (!box) return;
+    if (!url) {
+      box.innerHTML = "<p class='gear-empty'>Paste a product URL first.</p>";
+      return;
+    }
+
+    box.innerHTML = "<p class='gear-empty'>Importing product page...</p>";
+    try {
+      const res = await fetch("/api/gear/import/url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, category }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+      const product = data.product || {};
+      PAGE.importDraft = product;
+      populateForm(product);
+      box.innerHTML = `
+        <section class="gear-results-group">
+          <h3>Imported product</h3>
+          <p class="gear-empty">The imported product has been loaded into the form for review. Confirm the details before saving.</p>
+          ${renderResultCard(product, { actionLabel: "Review in form", actionAttr: "data-gear-review-import", actionValue: "imported" })}
+        </section>
+        ${Array.isArray(data.duplicate_matches) && data.duplicate_matches.length ? `<section class="gear-results-group"><h3>Possible duplicates</h3><div class="gear-catalog-results">${data.duplicate_matches.map((item, idx) => renderResultCard(item, { actionLabel: "Open existing", actionAttr: "data-gear-open-existing", actionValue: item.id || `duplicate-${idx}` })).join("")}</div></section>` : ""}
+      `;
+    } catch (err) {
+      box.innerHTML = `<p class='gear-empty'>URL import failed: ${escapeHtml(err)}</p>`;
     }
   }
 
   function populateForm(item) {
     if (!item) return;
+    PAGE.importDraft = item && (item.provider || item.provider_product_id || item.image_url || item.specifications || item.identifiers) ? item : null;
     const form = getForm();
     if (form) form.dataset.editingId = item.id || "";
     byId("gearFormTitle").textContent = `Edit ${item.display_name || "gear"}`;
@@ -291,9 +457,9 @@
     setField("Brand", item.brand);
     setField("Model", item.model);
     setField("DisplayName", item.display_name);
-    setField("Image", item.image);
+    setField("Image", item.image || item.image_url || item.display_image);
     setField("SourceName", item.source_name);
-    setField("SourceUrl", item.source_url);
+    setField("SourceUrl", item.source_url || item.source_page_url);
     setField("RetrievedAt", item.retrieved_at);
     byId("gearConfidence").value = item.confidence || "user-added";
     setField("Notes", item.notes);
@@ -385,10 +551,50 @@
     }
   }
 
+  function lookupSearchResult(key) {
+    const search = PAGE.searchResults || {};
+    const parts = String(key || "").split("-");
+    if (parts.length === 2 && parts[0] === "online") {
+      const idx = Number.parseInt(parts[1], 10);
+      return Number.isFinite(idx) && Array.isArray(search.online) ? search.online[idx] : null;
+    }
+    if (parts.length < 3) return null;
+    const group = parts[0];
+    const bucket = parts[1];
+    const idx = Number.parseInt(parts[2], 10);
+    if (!Number.isFinite(idx)) return null;
+    if (group === "local" && bucket === "owned") return Array.isArray(search.localOwned) ? search.localOwned[idx] : null;
+    if (group === "local" && bucket === "cached") return Array.isArray(search.localCached) ? search.localCached[idx] : null;
+    if (group === "online") return Array.isArray(search.online) ? search.online[idx] : null;
+    return null;
+  }
+
+  function openExistingItem(itemId) {
+    const item = getItem(itemId) || lookupSearchResult(itemId);
+    if (!item) return;
+    const card = document.querySelector(`[data-item-id="${CSS.escape(String(item.id || ""))}"]`);
+    if (card) {
+      card.scrollIntoView({ behavior: "smooth", block: "center" });
+      card.classList.add("gear-card-highlight");
+      window.setTimeout(() => card.classList.remove("gear-card-highlight"), 1500);
+    }
+    populateForm(item);
+  }
+
+  function reviewSearchResult(key) {
+    const item = lookupSearchResult(key);
+    if (!item) return;
+    populateForm(item);
+    getForm()?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   function wireItemButtons() {
-    document.querySelectorAll("[data-gear-action]").forEach(button => {
-      button.addEventListener("click", () => {
-        const action = button.getAttribute("data-gear-action");
+    document.addEventListener("click", event => {
+      const button = event.target.closest("button, a");
+      if (!button) return;
+
+      const action = button.getAttribute("data-gear-action");
+      if (action) {
         const itemId = button.getAttribute("data-gear-id");
         const item = getItem(itemId);
         if (action === "edit" && item) {
@@ -396,7 +602,25 @@
         } else {
           mutateItem(itemId, action);
         }
-      });
+        return;
+      }
+
+      const reviewKey = button.getAttribute("data-gear-review-item") || button.getAttribute("data-gear-review-result");
+      if (reviewKey) {
+        reviewSearchResult(reviewKey);
+        return;
+      }
+
+      const importKey = button.getAttribute("data-gear-review-import");
+      if (importKey) {
+        populateForm(PAGE.importDraft || lookupSearchResult(importKey));
+        return;
+      }
+
+      const openExisting = button.getAttribute("data-gear-open-existing");
+      if (openExisting) {
+        openExistingItem(openExisting);
+      }
     });
   }
 
@@ -429,7 +653,36 @@
     });
   }
 
+  async function saveSettings() {
+    const payload = {
+      search_scope_default: byId("gearDefaultScope")?.value || "both",
+      online_lookup_enabled: Boolean(byId("gearOnlineLookup")?.checked),
+      allow_remote_images: Boolean(byId("gearAllowRemoteImages")?.checked),
+      cache_lookup_results: Boolean(byId("gearCacheLookupResults")?.checked),
+      prefer_manufacturer_specs: Boolean(byId("gearPreferManufacturerSpecs")?.checked),
+      enabled_providers: getSettings().enabled_providers || {},
+    };
+
+    try {
+      const res = await fetch("/api/gear/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+      setSettings(data.settings || payload);
+      applySettingsToControls();
+      alert("Search preferences saved.");
+    } catch (err) {
+      alert(`Unable to save gear preferences: ${err}`);
+    }
+  }
+
   function init() {
+    applySettingsToControls();
     const form = getForm();
     if (form) form.addEventListener("submit", submitForm);
 
@@ -443,11 +696,29 @@
     });
     byId("gearFormReset").addEventListener("click", clearForm);
     byId("catalogSearchButton").addEventListener("click", searchCatalog);
+    byId("gearImportUrlButton").addEventListener("click", importFromUrl);
+    byId("gearSaveSettings").addEventListener("click", saveSettings);
     byId("catalogQuery").addEventListener("keydown", event => {
       if (event.key === "Enter") {
         event.preventDefault();
         searchCatalog();
       }
+    });
+    byId("gearProductUrl").addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        importFromUrl();
+      }
+    });
+    byId("gearDefaultScope").addEventListener("change", () => {
+      const scope = byId("gearDefaultScope").value;
+      setSettings({ ...getSettings(), search_scope_default: scope });
+      if (byId("gearSearchScope")) byId("gearSearchScope").value = scope;
+    });
+    byId("gearSearchScope").addEventListener("change", () => {
+      const scope = byId("gearSearchScope").value;
+      setSettings({ ...getSettings(), search_scope_default: scope });
+      byId("gearDefaultScope").value = scope;
     });
 
     wireItemButtons();
@@ -461,4 +732,3 @@
     init();
   }
 })();
-

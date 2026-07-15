@@ -7,16 +7,15 @@ from typing import Any
 
 from flask import jsonify, render_template, request
 
-from gear.catalog_providers import search_products
+from gear.catalog_providers import available_providers, fetch_product, search_gear_catalog
+from gear.settings import load_settings
 from gear.inventory import (
     category_label,
     category_sections,
+    find_duplicate_items,
     fallback_image_for,
-    get_item,
     inventory_summary,
     list_items,
-    normalize_item,
-    reference_rig_items,
     set_status,
     toggle_favorite,
     upsert_item,
@@ -123,6 +122,8 @@ def _filter_rigs(q: str = "", species: str = "", lure: str = "") -> list[dict[st
 def _enrich_gear_item(item: dict[str, Any]) -> dict[str, Any]:
     enriched = dict(item)
     enriched["fallback_image"] = fallback_image_for(enriched.get("category"), enriched.get("subtype"))
+    enriched["display_image"] = enriched.get("image_url") or enriched.get("image") or enriched["fallback_image"]
+    enriched["duplicate_matches"] = enriched.get("duplicate_matches") if isinstance(enriched.get("duplicate_matches"), list) else []
     return enriched
 
 
@@ -143,6 +144,8 @@ def _locker_context() -> dict[str, Any]:
         "items": items,
         "recent_items": [_enrich_gear_item(item) for item in items[:4]],
         "reference_rigs": _rigs(),
+        "settings": load_settings(),
+        "providers": available_providers(),
     }
 
 
@@ -442,14 +445,51 @@ def register_species_rig_routes_v43(app):
             return jsonify({"ok": False, "error": "Gear item not found"}), 404
         return jsonify({"ok": True, "item": _enrich_gear_item(item), "summary": inventory_summary()})
 
+    @app.route("/api/gear/search")
+    def gear_search_api_v611():
+        query = request.args.get("q", "")
+        category = request.args.get("category", "")
+        scope = request.args.get("scope", "both")
+        results = search_gear_catalog(query, category=category, scope=scope)
+        return jsonify(results)
+
     @app.route("/api/gear/catalog/search")
     def gear_catalog_search_api_v610():
         query = request.args.get("q", "")
         category = request.args.get("category", "")
-        results = search_products(query, category=category)
+        results = search_gear_catalog(query, category=category, scope="local")
         return jsonify({
             "ok": True,
-            "version": "v6.10-tackle-locker",
-            "count": len(results),
-            "products": results,
+            "version": "v6.11-gear-catalog-flexible-search",
+            "count": len(results.get("local", {}).get("owned", [])) + len(results.get("local", {}).get("cached", [])),
+            "products": results.get("local", {}).get("cached", []),
+            "local": results.get("local", {}),
+            "messages": results.get("messages", []),
         })
+
+    @app.route("/api/gear/import/url", methods=["POST"])
+    def gear_import_url_api_v611():
+        payload = request.get_json(silent=True) or {}
+        url = payload.get("url", "")
+        category = payload.get("category", "misc")
+        import_result = fetch_product(url=url, category=category, allow_remote_images=bool(load_settings().get("allow_remote_images", False)))
+        if not import_result:
+            return jsonify({"ok": False, "error": "Unable to import the product URL."}), 400
+        duplicates = find_duplicate_items(import_result) if isinstance(import_result, dict) else []
+        return jsonify({
+            "ok": True,
+            "version": "v6.11-gear-catalog-flexible-search",
+            "product": import_result,
+            "duplicate_matches": duplicates if isinstance(duplicates, list) else [],
+        })
+
+    @app.route("/api/gear/settings", methods=["GET", "POST"])
+    def gear_settings_api_v611():
+        if request.method == "GET":
+            return jsonify({"ok": True, "settings": load_settings(), "providers": available_providers()})
+        payload = request.get_json(silent=True) or {}
+        if not isinstance(payload, dict):
+            payload = {}
+        from gear.settings import save_settings
+        settings = save_settings(payload)
+        return jsonify({"ok": True, "settings": settings, "providers": available_providers()})

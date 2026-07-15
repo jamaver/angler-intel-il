@@ -95,6 +95,50 @@ def _split_tags(value: Any) -> list[str]:
     return [part.strip() for part in str(value or "").replace("\n", ",").split(",") if part.strip()]
 
 
+def _as_dict(value: Any) -> dict[str, Any]:
+    return dict(value) if isinstance(value, dict) else {}
+
+
+def _compact_text(value: Any) -> str:
+    return " ".join(str(value or "").split()).strip().lower()
+
+
+def _item_blob(item: dict[str, Any]) -> str:
+    pieces = [
+        item.get("category"),
+        item.get("brand"),
+        item.get("model"),
+        item.get("display_name"),
+        item.get("notes"),
+        item.get("source_name"),
+        item.get("source_url"),
+        item.get("reel_type"),
+        item.get("line_type"),
+        item.get("lure_type"),
+        item.get("subtype"),
+        item.get("size"),
+    ]
+    specs = _as_dict(item.get("specifications"))
+    identifiers = _as_dict(item.get("identifiers"))
+    pieces.extend(specs.values())
+    pieces.extend(identifiers.values())
+    return " ".join(_text(piece) for piece in pieces if _text(piece)).lower()
+
+
+def _identifier_values(item: dict[str, Any]) -> list[str]:
+    identifiers = _as_dict(item.get("identifiers"))
+    values = []
+    for key in ("upc", "gtin", "gtin13", "gtin14", "sku", "asin", "mpn", "manufacturer_part_number", "product_id", "provider_product_id"):
+        value = _text(identifiers.get(key), "")
+        if value:
+            values.append(value.lower())
+    for key in ("provider_product_id", "provider", "source_url"):
+        value = _text(item.get(key), "")
+        if value:
+            values.append(value.lower())
+    return values
+
+
 def ensure_inventory_file() -> None:
     path = inventory_path()
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -208,12 +252,21 @@ def normalize_item(payload: dict[str, Any], existing: dict[str, Any] | None = No
         "status": _text(payload.get("status"), _text(existing.get("status"), "owned")).lower(),
         "favorite": _as_bool(payload.get("favorite") if "favorite" in payload else existing.get("favorite")),
         "notes": _text(payload.get("notes"), _text(existing.get("notes"), "")),
-        "image": _text(payload.get("image"), _text(existing.get("image"), fallback_image_for(category, payload.get("subtype") or existing.get("subtype")))),
+        "image": _text(payload.get("image"), _text(existing.get("image"), "")),
+        "image_url": _text(payload.get("image_url"), _text(existing.get("image_url"), "")),
+        "image_source": _text(payload.get("image_source"), _text(existing.get("image_source"), "")),
         "source": _text(payload.get("source"), _text(existing.get("source"), "manual")).lower(),
         "source_name": _text(payload.get("source_name"), _text(existing.get("source_name"), "Manual entry")),
         "source_url": _text(payload.get("source_url"), _text(existing.get("source_url"), "")),
         "retrieved_at": _text(payload.get("retrieved_at"), _text(existing.get("retrieved_at"), "")),
         "confidence": _text(payload.get("confidence"), _text(existing.get("confidence"), "user-added")).lower(),
+        "provider": _text(payload.get("provider"), _text(existing.get("provider"), "")),
+        "provider_product_id": _text(payload.get("provider_product_id"), _text(existing.get("provider_product_id"), "")),
+        "price": payload.get("price", existing.get("price")),
+        "availability": _text(payload.get("availability"), _text(existing.get("availability"), "")),
+        "raw_provider_data_cached": _as_bool(payload.get("raw_provider_data_cached") if "raw_provider_data_cached" in payload else existing.get("raw_provider_data_cached")),
+        "identifiers": _as_dict(payload.get("identifiers")) or _as_dict(existing.get("identifiers")),
+        "specifications": _as_dict(payload.get("specifications")) or _as_dict(existing.get("specifications")),
         "quantity": _as_int(payload.get("quantity"), _as_int(existing.get("quantity"), 1)) or 1,
         "created_at": _text(existing.get("created_at"), _now()),
         "updated_at": _now(),
@@ -299,6 +352,11 @@ def normalize_item(payload: dict[str, Any], existing: dict[str, Any] | None = No
     if not item["display_name"]:
         item["display_name"] = _default_display_name(item)
 
+    if not item["image"]:
+        item["image"] = item["image_url"] or fallback_image_for(category, payload.get("subtype") or existing.get("subtype"))
+    if not item["image_url"] and item["image"].startswith("http"):
+        item["image_url"] = item["image"]
+
     return item
 
 
@@ -306,6 +364,109 @@ def list_items() -> list[dict[str, Any]]:
     data = load_inventory()
     items = data.get("items") if isinstance(data.get("items"), list) else []
     return sorted([item for item in items if isinstance(item, dict)], key=lambda x: (x.get("favorite", False), x.get("updated_at", ""), x.get("created_at", "")), reverse=True)
+
+
+def search_items(query: str = "", category: str = "", status: str = "", limit: int = 20) -> list[dict[str, Any]]:
+    q = _compact_text(query)
+    category = _text(category, "").lower()
+    status = _text(status, "").lower()
+    results: list[tuple[int, dict[str, Any]]] = []
+
+    for item in list_items():
+        item_category = _text(item.get("category"), "misc").lower()
+        item_status = _text(item.get("status"), "owned").lower()
+        if category and item_category != category:
+            continue
+        if status and item_status != status:
+            continue
+
+        blob = _item_blob(item)
+        if q and q not in blob:
+            continue
+
+        score = 0
+        if q:
+            if q in _compact_text(item.get("display_name")):
+                score += 30
+            if q in _compact_text(item.get("brand")):
+                score += 10
+            if q in _compact_text(item.get("model")):
+                score += 10
+            if q in _compact_text(item.get("notes")):
+                score += 4
+            if q in _compact_text(item.get("source_name")):
+                score += 3
+        if _as_bool(item.get("favorite")):
+            score += 2
+        if item_status == "owned":
+            score += 1
+
+        enriched = dict(item)
+        enriched["fallback_image"] = fallback_image_for(item_category, item.get("subtype"))
+        results.append((score, enriched))
+
+    results.sort(key=lambda pair: (pair[0], _text(pair[1].get("updated_at"), ""), _text(pair[1].get("display_name"), "")), reverse=True)
+    return [item for _, item in results[:limit]]
+
+
+def find_duplicate_items(candidate: dict[str, Any], limit: int = 3) -> list[dict[str, Any]]:
+    candidate = candidate if isinstance(candidate, dict) else {}
+    candidate_category = _text(candidate.get("category"), "misc").lower()
+    candidate_brand = _compact_text(candidate.get("brand"))
+    candidate_model = _compact_text(candidate.get("model"))
+    candidate_display = _compact_text(candidate.get("display_name"))
+    candidate_identifiers = [value for value in _identifier_values(candidate) if value]
+    candidate_blob = _item_blob(candidate)
+    candidate_id = _text(candidate.get("id"), "")
+
+    matches: list[tuple[int, dict[str, Any]]] = []
+
+    for item in list_items():
+        if candidate_id and _text(item.get("id"), "") == candidate_id:
+            continue
+        score = 0
+        reasons: list[str] = []
+        item_category = _text(item.get("category"), "misc").lower()
+
+        if candidate_category and item_category == candidate_category:
+            score += 20
+            reasons.append("same category")
+
+        item_identifiers = _identifier_values(item)
+        if candidate_identifiers and item_identifiers:
+            overlap = sorted(set(candidate_identifiers).intersection(item_identifiers))
+            if overlap:
+                score += 120
+                reasons.append("shared identifier")
+
+        item_brand = _compact_text(item.get("brand"))
+        item_model = _compact_text(item.get("model"))
+        item_display = _compact_text(item.get("display_name"))
+        if candidate_brand and item_brand and candidate_brand == item_brand:
+            score += 30
+            reasons.append("same brand")
+        if candidate_model and item_model and candidate_model == item_model:
+            score += 40
+            reasons.append("same model")
+        if candidate_display and item_display and candidate_display == item_display:
+            score += 50
+            reasons.append("same display name")
+        if candidate_blob and candidate_blob == _item_blob(item):
+            score += 25
+            reasons.append("matching specs")
+        if candidate_brand and candidate_brand in item_display and candidate_model:
+            score += 10
+            reasons.append("brand/model match")
+
+        if score >= 40:
+            match = dict(item)
+            match["fallback_image"] = fallback_image_for(item_category, item.get("subtype"))
+            match["match_score"] = score
+            match["match_reasons"] = reasons
+            matches.append((score, match))
+
+    matches.sort(key=lambda pair: (pair[0], _text(pair[1].get("updated_at"), ""), _text(pair[1].get("display_name"), "")), reverse=True)
+    return [item for _, item in matches[:limit]]
 
 
 def get_item(item_id: str) -> dict[str, Any] | None:
@@ -410,4 +571,3 @@ def reference_rig_items() -> list[dict[str, Any]]:
     except Exception:
         data = []
     return data if isinstance(data, list) else []
-

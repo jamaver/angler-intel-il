@@ -1,0 +1,15 @@
+{
+  "version": "v6.11-gear-catalog-flexible-search",
+  "previous_version": "v6.10-tackle-locker",
+  "feature": "flexible gear catalog search",
+  "search_modes": [
+    "local only",
+    "online only",
+    "both",
+    "manual entry"
+  ],
+  "online_lookup_enabled": false,
+  "manual_entry": true,
+  "structured_url_import": true,
+  "created_at": "2026-07-15T16:21:01"
+}

@@ -237,14 +237,22 @@
     <section class="card gear-catalog-card">
       <div class="section-head compact">
         <div>
-          <p class="eyebrow section-eyebrow">Catalog lookup</p>
-          <h2>Search cached product matches</h2>
+          <p class="eyebrow section-eyebrow">Gear search</p>
+          <h2>Search local, online, or both</h2>
         </div>
       </div>
       <div class="gear-toolbar-grid">
         <label class="gear-field">
-          <span>Search text</span>
+          <span>Search gear</span>
           <input id="catalogQuery" type="search" placeholder="Curado DC 150, Mojo Bass, Super 8 Slick...">
+        </label>
+        <label class="gear-field">
+          <span>Search scope</span>
+          <select id="gearSearchScope">
+            <option value="both">Both local and online</option>
+            <option value="local">Local only</option>
+            <option value="online">Online only</option>
+          </select>
         </label>
         <label class="gear-field">
           <span>Category</span>
@@ -255,10 +263,66 @@
             {% endfor %}
           </select>
         </label>
-        <button type="button" class="gear-toolbar-button" id="catalogSearchButton">Search catalog</button>
+        <button type="button" class="gear-toolbar-button" id="catalogSearchButton">Search</button>
+        <a class="gear-toolbar-button gear-toolbar-anchor" href="#gear-form">Add manually</a>
       </div>
+
+      <div class="gear-import-row">
+        <label class="gear-field">
+          <span>Paste product URL</span>
+          <input id="gearProductUrl" type="url" placeholder="https://manufacturer.com/product/...">
+        </label>
+        <label class="gear-field">
+          <span>URL category</span>
+          <select id="gearImportCategory">
+            <option value="misc">Miscellaneous</option>
+            {% for section in locker.categories %}
+              <option value="{{ section.key }}">{{ section.label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <button type="button" class="gear-toolbar-button" id="gearImportUrlButton">Import URL</button>
+      </div>
+
+      <div class="gear-settings-panel">
+        <div class="section-head compact">
+          <div>
+            <p class="eyebrow section-eyebrow">Search preferences</p>
+            <h3>Lookup controls</h3>
+          </div>
+          <span class="gear-reference-note">Online lookup stays optional.</span>
+        </div>
+        <div class="gear-toolbar-grid">
+          <label class="gear-field gear-field-inline">
+            <input type="checkbox" id="gearOnlineLookup">
+            <span>Enable online lookup</span>
+          </label>
+          <label class="gear-field">
+            <span>Default scope</span>
+            <select id="gearDefaultScope">
+              <option value="both">Both local and online</option>
+              <option value="local">Local only</option>
+              <option value="online">Online only</option>
+            </select>
+          </label>
+          <label class="gear-field gear-field-inline">
+            <input type="checkbox" id="gearAllowRemoteImages">
+            <span>Allow remote product images</span>
+          </label>
+          <label class="gear-field gear-field-inline">
+            <input type="checkbox" id="gearCacheLookupResults">
+            <span>Cache lookup results</span>
+          </label>
+          <label class="gear-field gear-field-inline">
+            <input type="checkbox" id="gearPreferManufacturerSpecs">
+            <span>Prefer manufacturer specs</span>
+          </label>
+          <button type="button" class="gear-toolbar-button" id="gearSaveSettings">Save preferences</button>
+        </div>
+      </div>
+
       <div id="catalogResults" class="gear-catalog-results">
-        <p class="gear-empty">Search results will appear here when catalog data is available. Manual entry still works immediately.</p>
+        <p class="gear-empty">Search local gear, cached products, or online product sources. Manual entry and product URL import stay available either way.</p>
       </div>
     </section>
 
@@ -277,7 +341,7 @@
             <div class="gear-item-grid">
               {% for item in section["items"] %}
                 <article class="gear-item-card" data-gear-card data-item-id="{{ item.id }}" data-category="{{ item.category }}" data-status="{{ item.status }}" data-favorite="{{ 'true' if item.favorite else 'false' }}">
-                  <img class="gear-item-image" src="{{ item.image }}" alt="{{ item.display_name }}" onerror="this.src='{{ item.fallback_image }}'">
+                  <img class="gear-item-image" src="{{ item.display_image }}" alt="{{ item.display_name }}" onerror="this.src='{{ item.fallback_image }}'">
                   <div class="gear-item-body">
                     <div class="gear-item-head">
                       <div>
@@ -290,6 +354,15 @@
                         <span class="gear-badge">{{ section.label }}</span>
                       </div>
                     </div>
+
+                    {% if item.duplicate_matches %}
+                      <div class="gear-duplicate-note">
+                        Possible match already in your locker:
+                        {% for match in item.duplicate_matches[:2] %}
+                          <button type="button" class="gear-inline-link" data-gear-action="edit" data-gear-id="{{ match.id }}">{{ match.display_name }}</button>{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                      </div>
+                    {% endif %}
 
                     <div class="gear-item-specs">
                       {% if item.category == "rod" %}
@@ -329,6 +402,7 @@
                       {% if item.source_url %}<a href="{{ item.source_url }}" target="_blank" rel="noreferrer">Source URL</a>{% endif %}
                       {% if item.retrieved_at %}<span>Retrieved {{ item.retrieved_at }}</span>{% endif %}
                       <span>Confidence: {{ item.confidence|title }}</span>
+                      {% if item.provider %}<span>Provider: {{ item.provider|title }}</span>{% endif %}
                     </div>
 
                     <div class="gear-card-actions">
