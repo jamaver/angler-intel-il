@@ -114,7 +114,7 @@ except Exception as exc:
 
 
 APP_VERSION = "v5.9-modern-ui-refresh"
-APP_RELEASE = "v6.4-report-planning-polish"
+APP_RELEASE = "v6.5-ranking-explanation-tuning"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the
@@ -453,6 +453,26 @@ def build_snapshot_report(data, selected_forecast_date=None):
             "condition_labels": [compact_text(item, "") for item in smart.get("condition_labels", []) if compact_text(item, "")],
             "clarity_label": compact_text((smart.get("clarity_signal") or {}).get("label"), "unknown"),
             "clarity_basis": compact_text((smart.get("clarity_signal") or {}).get("basis"), ""),
+            "ranking_factors": [
+                {
+                    "label": compact_text(item.get("label"), ""),
+                    "value": compact_text(item.get("value"), ""),
+                    "why": compact_text(item.get("why"), ""),
+                }
+                for item in (smart.get("ranking_factors") or [])
+                if isinstance(item, dict) and (compact_text(item.get("label"), "") or compact_text(item.get("why"), ""))
+            ],
+            "explanation_sections": [
+                {
+                    "label": compact_text(item.get("label"), ""),
+                    "value": compact_text(item.get("value"), ""),
+                    "why": compact_text(item.get("why"), ""),
+                    "details": [compact_text(detail, "") for detail in (item.get("details") or []) if compact_text(detail, "")],
+                }
+                for item in (smart.get("explanation_sections") or [])
+                if isinstance(item, dict) and (compact_text(item.get("label"), "") or compact_text(item.get("why"), ""))
+            ],
+            "decision_factors": [compact_text(item, "") for item in smart.get("decision_factors", []) if compact_text(item, "")],
             "strategy": [compact_text(item, "") for item in smart.get("strategy", []) if compact_text(item, "")],
             "positive_signals": [compact_text(item, "") for item in smart.get("positive_signals", []) if compact_text(item, "")],
             "caution_signals": [compact_text(item, "") for item in smart.get("caution_signals", []) if compact_text(item, "")],

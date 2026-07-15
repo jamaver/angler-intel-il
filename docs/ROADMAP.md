@@ -117,6 +117,13 @@ Angler Intel is moving toward a map-first, waterbody-centered fishing intelligen
 - Compact report list previews for faster scanning
 - Saved reports remain printable and PDF-friendly
 
+## v6.5 Ranking and Explanation Tuning
+
+- Clearer confidence labels and trust signals
+- Grouped explanation sections for target fit, water fit, catch history, and presentation
+- Less repeated reasoning between the dashboard and saved reports
+- Stronger emphasis on why a recommendation is ranked where it is
+
 ## Follow-On
 
 - Import/export waterbody datasets

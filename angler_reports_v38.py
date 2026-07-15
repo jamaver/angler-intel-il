@@ -721,6 +721,26 @@ def _build_report_context(report_meta: dict[str, Any], payload: dict[str, Any], 
             "condition_labels": smart_condition_labels,
             "clarity_label": _compact_text(smart_clarity.get("label"), "unknown"),
             "clarity_basis": _compact_text(smart_clarity.get("basis"), ""),
+            "ranking_factors": [
+                {
+                    "label": _compact_text(item.get("label"), ""),
+                    "value": _compact_text(item.get("value"), ""),
+                    "why": _compact_text(item.get("why"), ""),
+                }
+                for item in (smart.get("ranking_factors") or [])
+                if isinstance(item, dict) and (_compact_text(item.get("label"), "") or _compact_text(item.get("why"), ""))
+            ],
+            "explanation_sections": [
+                {
+                    "label": _compact_text(item.get("label"), ""),
+                    "value": _compact_text(item.get("value"), ""),
+                    "why": _compact_text(item.get("why"), ""),
+                    "details": [_compact_text(detail, "") for detail in (item.get("details") or []) if _compact_text(detail, "")],
+                }
+                for item in (smart.get("explanation_sections") or [])
+                if isinstance(item, dict) and (_compact_text(item.get("label"), "") or _compact_text(item.get("why"), ""))
+            ],
+            "decision_factors": [_compact_text(item, "") for item in smart.get("decision_factors", []) if _compact_text(item, "")],
             "positive_signals": smart_positive,
             "caution_signals": smart_caution,
             "strategy": smart_strategy,

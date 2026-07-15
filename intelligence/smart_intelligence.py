@@ -359,6 +359,87 @@ def _build_explanation_lines(
     return lines
 
 
+def _compact_list(values: list[str], limit: int = 3) -> list[str]:
+    items: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        text = _safe_text(value, "").strip()
+        if not text:
+            continue
+        key = text.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        items.append(text)
+        if len(items) >= limit:
+            break
+    return items
+
+
+def _explanation_sections(
+    *,
+    confidence: dict[str, Any],
+    clarity: dict[str, Any],
+    catch_signal: dict[str, Any],
+    water_type: str,
+    species: str,
+    lure: str,
+    best_bet: dict[str, Any],
+    season: str,
+    time_label: str,
+) -> list[dict[str, Any]]:
+    best_bet = _safe_mapping(best_bet)
+    reasons = _compact_list([
+        best_bet.get("why"),
+        *(_safe_sequence(best_bet.get("reasons")) if isinstance(best_bet.get("reasons"), list) else []),
+    ], limit=3)
+
+    return [
+        {
+            "label": "Confidence",
+            "value": confidence["label"],
+            "why": confidence["basis"],
+            "details": _compact_list([
+                f"Score {confidence['score']}/100",
+                "Use this as a confidence guide, not a guarantee.",
+            ], limit=2),
+        },
+        {
+            "label": "Target fit",
+            "value": species,
+            "why": f"Top species score is {best_bet.get('species_score', 'unknown')} with {season} and {water_type} context.",
+            "details": _compact_list([
+                f"Best time: {time_label}",
+                f"Lure plan: {lure}",
+            ], limit=2),
+        },
+        {
+            "label": "Water fit",
+            "value": clarity["label"],
+            "why": clarity["basis"],
+            "details": _compact_list([
+                f"Water type: {water_type}",
+                "Adjust lure color on site if clarity looks different.",
+            ], limit=2),
+        },
+        {
+            "label": "Catch history",
+            "value": catch_signal["level"],
+            "why": catch_signal["weight"],
+            "details": _compact_list([
+                catch_signal["summary"],
+                f"Sample size: {catch_signal.get('sample_size', {}).get('local', 0)} local / {catch_signal.get('sample_size', {}).get('total', 0)} total",
+            ], limit=2),
+        },
+        {
+            "label": "Presentation",
+            "value": lure,
+            "why": reasons[0] if reasons else "Chosen from the current lure plan.",
+            "details": reasons[1:] if len(reasons) > 1 else [best_bet.get("speed") or "Presentation guidance"],
+        },
+    ]
+
+
 def _base_payload(
     *,
     ok: bool,
@@ -481,6 +562,33 @@ def _base_payload(
         species=species,
     )
 
+    explanation_sections = _explanation_sections(
+        confidence=confidence,
+        clarity=clarity,
+        catch_signal=catch_signal,
+        water_type=water_type,
+        species=species,
+        lure=lure,
+        best_bet=safe_best_bet,
+        season=season,
+        time_label=best_time_label,
+    )
+
+    ranking_factors = [
+        {
+            "label": section["label"],
+            "value": section["value"],
+            "why": section["why"],
+        }
+        for section in explanation_sections
+    ]
+
+    decision_factors = [
+        f"{section['label']}: {section['why']}"
+        for section in explanation_sections
+        if section.get("why")
+    ]
+
     if positive_signals:
         explanation.insert(1, positive_signals[0])
     if caution_signals:
@@ -506,6 +614,9 @@ def _base_payload(
             f"pressure, cloud cover, season, water type, lure fit, confidence, and catch-history signal."
         ),
         "confidence": confidence,
+        "ranking_factors": ranking_factors,
+        "explanation_sections": explanation_sections,
+        "decision_factors": decision_factors,
         "explanation": explanation,
         "positive_signals": positive_signals,
         "caution_signals": caution_signals,

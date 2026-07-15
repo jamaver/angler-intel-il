@@ -1,0 +1,15 @@
+{
+  "version": "v6.5-ranking-explanation-tuning",
+  "previous_version": "v6.4-report-planning-polish",
+  "ranking_explanation_tuning": true,
+  "confidence_labels_refined": true,
+  "ranking_factors_grouped": true,
+  "explanation_sections_added": true,
+  "dashboard_reasoning_cleaner": true,
+  "report_reasoning_cleaner": true,
+  "smart_trip_reports_preserved": true,
+  "dashboard_consolidation_preserved": true,
+  "app_health_maintenance_only": true,
+  "admin_not_in_normal_nav": true,
+  "installed_at": "2026-07-14T08:25:00-05:00"
+}

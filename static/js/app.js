@@ -252,7 +252,8 @@ function renderTripPlan(data) {
   const fishPath = bestBet.fish_image || fishIconPath(bestBet.species || target);
   const lureColors = asList(bestBet.colors).slice(0, 3);
   const reasons = asList(bestBet.reasons).slice(0, 4);
-  const signalReasons = reasons.length ? reasons : asList(intel.positive_signals).slice(0, 4);
+  const decisionFactors = asList(intel.decision_factors).slice(0, 4);
+  const signalReasons = decisionFactors.length ? decisionFactors : (reasons.length ? reasons : asList(intel.positive_signals).slice(0, 4));
   const reasonList = signalReasons.length ? signalReasons : [planWhy];
   const conditionBits = [];
   const weather = data.weather || {};
@@ -766,10 +767,12 @@ function renderSmartIntelligence(intel) {
   const confidenceScore = confidence.score ?? confidence.value;
   const confidenceBasis = confidence.basis || confidence.explanation || "";
   const explanation = asList(intel.explanation);
+  const explanationSections = asList(intel.explanation_sections);
   const positives = asList(intel.positive_signals);
   const cautions = asList(intel.caution_signals);
   const labels = asList(intel.condition_labels).map(c => `<span class="mini">${c}</span>`).join("");
-  const recommendations = asList(intel.recommendations).map(r => `
+  const rankingFactors = asList(intel.ranking_factors);
+  const recommendations = (rankingFactors.length ? rankingFactors : asList(intel.recommendations)).map(r => `
     <div class="intel-recommendation">
       <b>${r.label}: ${r.value}</b>
       <div class="small">${r.why || ""}</div>
@@ -856,7 +859,23 @@ function renderSmartIntelligence(intel) {
         <div class="intel-chip-row">${cautions.map(item => `<span class="mini">${item}</span>`).join("")}</div>
       </div>` : ""}
 
-      <div class="intel-grid">${recommendations}</div>
+      <div class="intel-grid intel-rationale-grid">${recommendations}</div>
+
+      ${explanationSections.length ? `<div class="intel-group">
+        <h4>Why this plan</h4>
+        <div class="intel-rationale-list">
+          ${explanationSections.map(section => `
+            <div class="intel-rationale-card">
+              <div class="intel-rationale-head">
+                <b>${section.label || "Reason"}</b>
+                ${section.value ? `<span class="mini">${section.value}</span>` : ""}
+              </div>
+              <div class="small">${section.why || ""}</div>
+              ${(section.details || []).length ? `<ul class="intel-rationale-details">${section.details.map(item => `<li>${item}</li>`).join("")}</ul>` : ""}
+            </div>
+          `).join("")}
+        </div>
+      </div>` : ""}
 
       ${explanation.length ? `<details class="intel-details">
         <summary>Explanation</summary>

@@ -128,6 +128,13 @@
       gap: 14px;
     }
 
+    .report-factor-grid,
+    .report-rationale-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
     .report-summary-grid {
       grid-template-columns: repeat(5, minmax(0, 1fr));
       margin: 18px 0;
@@ -165,6 +172,14 @@
     }
 
     .report-metric {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .report-factor-card,
+    .report-rationale-card {
       background: var(--soft);
       border: 1px solid var(--line);
       border-radius: 12px;
@@ -525,7 +540,40 @@
           {% endfor %}
         </div>
       {% endif %}
+      {% if report.smart_intelligence.ranking_factors %}
+        <div class="report-factor-grid">
+          {% for item in report.smart_intelligence.ranking_factors %}
+            <article class="report-factor-card">
+              <div class="report-row-head">
+                <h4>{{ item.label }}</h4>
+                {% if item.value %}<span class="report-score-pill">{{ item.value }}</span>{% endif %}
+              </div>
+              {% if item.why %}<p class="report-muted">{{ item.why }}</p>{% endif %}
+            </article>
+          {% endfor %}
+        </div>
+      {% endif %}
       <p class="report-muted"><b>Clarity signal:</b> {{ report.smart_intelligence.clarity_label }}{% if report.smart_intelligence.clarity_basis %} · {{ report.smart_intelligence.clarity_basis }}{% endif %}</p>
+      {% if report.smart_intelligence.explanation_sections %}
+        <div class="report-rationale-grid">
+          {% for item in report.smart_intelligence.explanation_sections %}
+            <article class="report-rationale-card">
+              <div class="report-row-head">
+                <h4>{{ item.label }}</h4>
+                {% if item.value %}<span class="report-score-pill">{{ item.value }}</span>{% endif %}
+              </div>
+              {% if item.why %}<p class="report-muted">{{ item.why }}</p>{% endif %}
+              {% if item.details %}
+                <ul class="report-reasons">
+                  {% for detail in item.details %}
+                    <li>{{ detail }}</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </article>
+          {% endfor %}
+        </div>
+      {% endif %}
       {% if report.smart_intelligence.positive_signals %}
         <div class="report-pill-row">
           {% for item in report.smart_intelligence.positive_signals %}
