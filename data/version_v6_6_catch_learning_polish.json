@@ -1,0 +1,12 @@
+{
+  "version": "v6.6-catch-learning-polish",
+  "previous_version": "v6.5-ranking-explanation-tuning",
+  "catch_learning_polish": true,
+  "headline_added": true,
+  "takeaway_added": true,
+  "dominant_signals_added": true,
+  "dashboard_learning_summary": true,
+  "water_learning_summary": true,
+  "admin_not_in_normal_nav": true,
+  "installed_at": "2026-07-14T20:53:32-05:00"
+}

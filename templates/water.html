@@ -45,6 +45,56 @@
 
     <section class="water-grid">
       <div class="water-stack">
+        <section class="card water-card water-plan-card">
+          <div class="section-head compact">
+            <div>
+              <p class="eyebrow section-eyebrow">Trip plan</p>
+              <h2>Water plan</h2>
+            </div>
+            <div class="small">Where, what, why, and the next move.</div>
+          </div>
+
+          <div class="water-plan-hero">
+            <div class="water-plan-focus">
+              <img class="species-icon species-icon-lg" src="{{ fish_image(data.selected_species) }}" alt="">
+              <div>
+                <h3>{{ data.smart_intelligence.headline }}</h3>
+                <p class="small">{{ data.smart_intelligence.summary }}</p>
+                <div class="water-badge-row">
+                  <span class="map-chip map-chip-strong">{{ data.water_profile.target_fit_label }}</span>
+                  <span class="map-chip">{{ data.best_time.label }}</span>
+                  {% if data.best_time.range %}<span class="map-chip">{{ data.best_time.range }}</span>{% endif %}
+                  <span class="map-chip">{{ data.water.type }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="water-plan-lure">
+              <img class="lure-art lure-art-md" src="{{ data.best_bet.lure_image }}" alt="{{ data.best_bet.lure_name }}">
+              <div>
+                <strong>{{ data.best_bet.lure_name }}</strong>
+                <div class="small">{{ data.best_bet.speed or "Presentation guide" }}</div>
+                {% if data.best_bet.size %}<div class="small">Size: {{ data.best_bet.size }}</div>{% endif %}
+                <div class="small">{{ data.best_bet.why or "Use the lure profile and current conditions to steer the first cast." }}</div>
+              </div>
+            </div>
+          </div>
+
+          {% if data.smart_intelligence.condition_labels %}
+            <div class="chip-row">
+              {% for item in data.smart_intelligence.condition_labels[:4] %}
+                <span class="map-chip">{{ item }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="water-plan-actions">
+            <a class="button-link" href="/map">Open map</a>
+            <a class="button-link secondary" href="{{ data.detail_actions.smart_picks }}">Open Smart Picks</a>
+            <a class="button-link secondary" href="{{ data.detail_actions.snapshot }}">Trip snapshot</a>
+          </div>
+        </section>
+
         <section class="card water-card">
           <div class="section-head compact">
             <div>
@@ -154,6 +204,12 @@
             <div><strong>Local</strong><br>{{ data.catch_insights.local_total or 0 }}</div>
             <div><strong>Quality</strong><br>{{ data.catch_insights.sample_quality or "unknown" }}</div>
             <div><strong>Sample</strong><br>{{ data.smart_intelligence.catch_history.sample_size.local or 0 }}/{{ data.smart_intelligence.catch_history.sample_size.total or 0 }}</div>
+          </div>
+
+          <div class="water-learning-summary">
+            <strong>What your catches suggest</strong>
+            <p class="small">{{ data.catch_insights.headline or data.catch_insights.summary }}</p>
+            <p class="small">{{ data.catch_insights.takeaway or data.catch_insights.weight }}</p>
           </div>
 
           {% if data.catch_insights.top_species %}

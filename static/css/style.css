@@ -150,6 +150,15 @@ header {
   color: #cfd8e6;
 }
 
+.dashboard-brief-learning {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem 0.8rem;
+  border-radius: 12px;
+  background: rgba(8, 18, 31, 0.45);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
 .release-line {
   display: inline-flex;
   align-items: center;
@@ -435,6 +444,15 @@ button {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
+}
+
+.trip-plan-learning {
+  display: grid;
+  gap: 0.28rem;
+  padding: 0.8rem 0.85rem;
+  border-radius: 12px;
+  background: rgba(8, 18, 31, 0.45);
+  border: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .trip-plan-reason-list {
@@ -1152,11 +1170,43 @@ button {
   gap: 12px;
 }
 
+.insight-summary {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.85rem;
+  margin-bottom: 0.9rem;
+  border-radius: 14px;
+  border: 1px solid rgba(96, 165, 250, 0.14);
+  background: rgba(8, 18, 31, 0.45);
+}
+
+.insight-summary-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.insight-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
 .pill-line {
   background: rgba(31, 41, 55, 0.82);
   padding: 10px 12px;
   border-radius: 12px;
   margin: 8px 0;
+}
+
+.report-learning-line {
+  margin-top: 0.4rem;
+  color: #dbeafe;
+}
+
+.report-learning-line strong {
+  color: #eef3fb;
 }
 
 @media (max-width: 700px) {
@@ -2489,6 +2539,48 @@ button {
   gap: 1rem;
 }
 
+.water-plan-card {
+  border-color: rgba(96, 165, 250, 0.18);
+}
+
+.water-plan-hero {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 0.1rem;
+}
+
+.water-plan-focus,
+.water-plan-lure {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.8rem 0.85rem;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(8, 18, 31, 0.45);
+}
+
+.water-plan-focus h3 {
+  margin: 0;
+  font-size: 1.02rem;
+}
+
+.water-plan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+}
+
+.water-learning-summary {
+  margin-top: 0.9rem;
+  padding: 0.85rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(8, 18, 31, 0.45);
+}
+
 .water-card h3 {
   margin: 1rem 0 0.35rem;
 }
@@ -2530,6 +2622,17 @@ button {
 
   .water-detail-rail {
     grid-template-columns: 1fr;
+  }
+
+  .water-plan-focus,
+  .water-plan-lure,
+  .insight-summary-head {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .insight-summary-head {
+    flex-direction: column;
   }
 }
 

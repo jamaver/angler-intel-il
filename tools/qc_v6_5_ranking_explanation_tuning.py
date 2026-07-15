@@ -71,10 +71,12 @@ for needle, message in (
     ("ranking_factors", "Dashboard payload should carry ranking factors"),
     ("explanation_sections", "Dashboard payload should carry explanation sections"),
     ("decision_factors", "Dashboard payload should carry decision factors"),
-    ("v6.5-ranking-explanation-tuning", "Release label should be updated to v6.5"),
 ):
     if needle not in app_text:
         errors.append(message)
+
+if not any(label in app_text for label in ("v6.5-ranking-explanation-tuning", "v6.9-dashboard-cohesion")):
+    errors.append("Release label should reflect the ranking/explanation or current v6.9 build")
 
 reports_text = read("angler_reports_v38.py")
 for needle, message in (

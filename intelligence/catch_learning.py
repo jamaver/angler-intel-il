@@ -16,6 +16,13 @@ def _pick_waterbody(catch: dict[str, Any]) -> str:
     return ""
 
 
+def _top_entry(counter: Counter[str]) -> dict[str, Any]:
+    if not counter:
+        return {"name": "", "count": 0}
+    name, count = counter.most_common(1)[0]
+    return {"name": name, "count": count}
+
+
 def _sample_strength(total: int, local_total: int) -> str:
     if local_total >= 8 or total >= 25:
         return "strong"
@@ -74,6 +81,9 @@ def build_catch_learning_summary(
     total = len(records)
     local_total = len(local_records)
     strength = _sample_strength(total, local_total)
+    dominant_species = _top_entry(local_species_counts if local_total else species_counts)
+    dominant_lure = _top_entry(local_lure_counts if local_total else lure_counts)
+    dominant_waterbody = _top_entry(local_waterbody_counts if local_total else waterbody_counts)
 
     if local_total > 0:
         summary = f"{local_total} catch log entry(s) already exist for ZIP {zip_code}."
@@ -92,6 +102,24 @@ def build_catch_learning_summary(
         weight = "There is some local history, but the sample is small enough that current conditions should dominate."
     elif total > 0 and local_total == 0 and total < 5:
         weight = "There is some catch history, but the sample is small enough that it should only nudge the decision."
+
+    if total == 0:
+        headline = "No catches logged yet."
+        takeaway = "Log your first fish, lure, and waterbody so Angler Intel can start learning your patterns."
+    elif local_total > 0 and dominant_species["name"] != "Unknown":
+        headline = f"Your local logs lean toward {dominant_species['name']}."
+        if strength == "strong":
+            takeaway = "The sample is strong enough to use as a real tie-breaker, especially when conditions match."
+        elif strength == "moderate":
+            takeaway = "This is a useful pattern, but current weather and water conditions should still lead the call."
+        else:
+            takeaway = "Treat this as a light signal and keep verifying the pattern on the water."
+    elif dominant_species["name"] != "Unknown":
+        headline = f"Your catch history leans toward {dominant_species['name']}."
+        takeaway = "Use this as a soft pattern until more local catches confirm it."
+    else:
+        headline = "Catch history is present, but the pattern is still thin."
+        takeaway = "Keep logging the fish, lure, and waterbody so the app can separate signal from noise."
 
     target_species_summary = None
     if species_key:
@@ -165,6 +193,11 @@ def build_catch_learning_summary(
         "summary": summary,
         "weight": weight,
         "level": level,
+        "headline": headline,
+        "takeaway": takeaway,
+        "dominant_species": dominant_species,
+        "dominant_lure": dominant_lure,
+        "dominant_waterbody": dominant_waterbody,
         "target_species": target_species_summary,
         "target_waterbody": target_waterbody_summary,
         "message": "Personal catch history is active." if total else "No catches logged yet. Once you log catches, Angler Intel will start showing your personal patterns.",

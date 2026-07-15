@@ -1,0 +1,11 @@
+{
+  "version": "v6.9-dashboard-cohesion",
+  "previous_version": "v6.8-report-planning-polish",
+  "dashboard_cohesion": true,
+  "dashboard_learning_metric": true,
+  "trip_plan_learning_signal": true,
+  "map_first_command_center": true,
+  "secondary_sections_collapsed": true,
+  "admin_not_in_normal_nav": true,
+  "installed_at": "2026-07-14T20:53:32-05:00"
+}

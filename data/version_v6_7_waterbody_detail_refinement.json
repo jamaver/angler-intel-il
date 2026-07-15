@@ -1,0 +1,11 @@
+{
+  "version": "v6.7-waterbody-detail-refinement",
+  "previous_version": "v6.6-catch-learning-polish",
+  "waterbody_detail_refinement": true,
+  "water_plan_card": true,
+  "trip_plan_summary": true,
+  "learning_summary_in_water_detail": true,
+  "selected_water_focus": true,
+  "admin_not_in_normal_nav": true,
+  "installed_at": "2026-07-14T20:53:32-05:00"
+}

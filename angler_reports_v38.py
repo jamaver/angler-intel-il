@@ -456,6 +456,7 @@ def _report_overview(report_meta: dict[str, Any]) -> dict[str, Any]:
     context = _build_report_context(report_meta, payload, selected_forecast_date=selected_forecast_date)
     best_bet = context.get("best_bet") if isinstance(context.get("best_bet"), dict) else {}
     smart = context.get("smart_intelligence") if isinstance(context.get("smart_intelligence"), dict) else {}
+    catch_insights = context.get("catch_insights") if isinstance(context.get("catch_insights"), dict) else {}
 
     target_species = _compact_text(
         best_bet.get("species")
@@ -494,6 +495,9 @@ def _report_overview(report_meta: dict[str, Any]) -> dict[str, Any]:
         "rating": _compact_text(context.get("overall_rating"), ""),
         "score": context.get("overall_score"),
         "forecast_rating": _compact_text(context.get("forecast_focus", {}).get("rating"), ""),
+        "learning_summary": _compact_text(catch_insights.get("headline") or catch_insights.get("summary"), ""),
+        "learning_takeaway": _compact_text(catch_insights.get("takeaway") or catch_insights.get("weight"), ""),
+        "catch_quality": _compact_text(catch_insights.get("sample_quality"), ""),
     })
     return overview
 
@@ -1287,6 +1291,9 @@ function renderReportCard(r) {
   const bestTime = overview.best_time || "";
   const score = overview.score != null ? String(overview.score) : "";
   const why = overview.why || overview.summary || "";
+  const learningSummary = overview.learning_summary || "";
+  const learningTakeaway = overview.learning_takeaway || "";
+  const catchQuality = overview.catch_quality || "";
   const fishImage = overview.fish_image || "/static/fish/generic_fish.png";
   const lureImage = overview.lure_image || "/static/lures/generic_lure.png";
 
@@ -1299,6 +1306,7 @@ function renderReportCard(r) {
             ${tripDate ? `<span class="report-card-badge">${escapeHtml(tripDate)}</span>` : ""}
             ${zip ? `<span class="report-card-badge">ZIP ${escapeHtml(zip)}</span>` : ""}
             ${fit ? `<span class="report-card-badge">${escapeHtml(fit)}</span>` : ""}
+            ${catchQuality ? `<span class="report-card-badge">${escapeHtml(catchQuality)} catch sample</span>` : ""}
           </div>
         </div>
         <button type="button" class="danger" data-delete-report="${escapeHtml(r.id || "")}">Delete</button>
@@ -1309,6 +1317,8 @@ function renderReportCard(r) {
           <div class="report-summary-line"><strong>${escapeHtml(targetSpecies || "General")}</strong>${bestTime ? ` · ${escapeHtml(bestTime)}` : ""}</div>
           <div class="report-summary-line">${escapeHtml(lure)}${score ? ` · Score ${escapeHtml(score)}` : ""}</div>
           ${why ? `<div class="report-summary-line">${escapeHtml(why)}</div>` : ""}
+          ${learningSummary ? `<div class="report-learning-line"><strong>Learning:</strong> ${escapeHtml(learningSummary)}</div>` : ""}
+          ${learningTakeaway ? `<div class="report-learning-line">${escapeHtml(learningTakeaway)}</div>` : ""}
         </div>
       </div>
       <div class="report-detail-row">

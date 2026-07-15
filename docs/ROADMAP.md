@@ -124,6 +124,34 @@ Angler Intel is moving toward a map-first, waterbody-centered fishing intelligen
 - Less repeated reasoning between the dashboard and saved reports
 - Stronger emphasis on why a recommendation is ranked where it is
 
+## v6.6 Personal Catch Learning Polish
+
+- More readable catch-history summaries on the dashboard and water pages
+- Stronger sample-quality labels so tiny logs stay in perspective
+- Clearer learning signals for the dominant species, lure, and waterbody patterns
+- Catch history presented as guidance, not as a raw log dump
+
+## v6.7 Waterbody Detail Refinement
+
+- Water pages start with a clear trip plan summary
+- Selected water, target fit, lure, and timing are grouped into one decision view
+- Catch learning appears alongside the water profile and current conditions
+- Water details feel more like a fishing brief than a data sheet
+
+## v6.8 Report Planning Polish
+
+- Saved report cards show trip-plan, learning, and forecast context together
+- Report list entries stay compact while still showing the useful trip summary
+- Better report previews for scanning saved plans quickly
+- Report actions remain simple and review-first
+
+## v6.9 Dashboard Cohesion Pass
+
+- Dashboard summary includes learning context alongside target, score, wind, and focus water
+- Trip plan highlights the catch-history signal without overwhelming the main flow
+- Brief cards stay useful without becoming a second report page
+- Main screen stays focused on where, what, why, and next action
+
 ## Follow-On
 
 - Import/export waterbody datasets

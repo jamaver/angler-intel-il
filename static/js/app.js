@@ -182,6 +182,9 @@ function renderDashboardSummary(data) {
   const focusWater = data.water || waters[0] || {};
   const focusWaterLabel = focusWater.name ? `${focusWater.name}${focusWater.distance ? ` · ${focusWater.distance} mi` : ""}` : "Auto from ZIP";
   const focusWaterDetail = focusWater.type || data.area_type || "ZIP search";
+  const catchInsights = data.catch_insights || {};
+  const learningLabel = catchInsights.total ? `${catchInsights.sample_quality || "active"} sample` : "no catches";
+  const learningDetail = catchInsights.headline || catchInsights.summary || "Log catches to build your pattern.";
 
   return `
     <div class="dashboard-metric-grid">
@@ -189,6 +192,7 @@ function renderDashboardSummary(data) {
       ${renderMetric("Score", `${data.overall?.score ?? "?"}/100`, data.overall?.rating || "")}
       ${renderMetric("Wind", `${weather.wind ?? "?"} mph`, weather.fallback ? "fallback weather" : "live weather")}
       ${renderMetric("Focus", focusWaterLabel, focusWaterDetail)}
+      ${renderMetric("Learning", learningLabel, learningDetail)}
     </div>
   `;
 }
@@ -211,6 +215,8 @@ function renderDashboardBrief(data) {
 
   const topWaterIcon = waterIconForRecord(topWater);
   const secondWaterLabel = secondWater ? `${secondWater.name}${secondWater.distance ? ` · ${secondWater.distance} mi` : ""}` : "";
+  const catchInsights = data.catch_insights || {};
+  const catchSignal = catchInsights.headline || catchInsights.summary || "";
 
   return `
     <div class="dashboard-brief-top">
@@ -227,6 +233,12 @@ function renderDashboardBrief(data) {
       <span class="mini">${topWater.favorite ? "Favorite" : "Near you"}</span>
       ${secondWaterLabel ? `<span class="mini">Next: ${secondWaterLabel}</span>` : ""}
     </div>
+    ${catchSignal ? `
+      <div class="dashboard-brief-learning">
+        <span class="mini">Catch signal</span>
+        <div class="small">${escapeHtml(catchSignal)}</div>
+      </div>
+    ` : ""}
     <div class="dashboard-brief-actions">
       <a class="hero-action" href="/map">Open Map</a>
       <a class="hero-action secondary-link" href="/waters">Local Waters</a>
@@ -253,6 +265,7 @@ function renderTripPlan(data) {
   const lureColors = asList(bestBet.colors).slice(0, 3);
   const reasons = asList(bestBet.reasons).slice(0, 4);
   const decisionFactors = asList(intel.decision_factors).slice(0, 4);
+  const catchInsights = data.catch_insights || {};
   const signalReasons = decisionFactors.length ? decisionFactors : (reasons.length ? reasons : asList(intel.positive_signals).slice(0, 4));
   const reasonList = signalReasons.length ? signalReasons : [planWhy];
   const conditionBits = [];
@@ -329,6 +342,14 @@ function renderTripPlan(data) {
       ${conditionBits.length ? `
         <div class="trip-plan-condition-row">
           ${conditionBits.slice(0, 5).map(bit => `<span class="mini">${escapeHtml(bit)}</span>`).join("")}
+        </div>
+      ` : ""}
+
+      ${(catchInsights.headline || catchInsights.takeaway || catchInsights.summary) ? `
+        <div class="trip-plan-learning">
+          <span class="mini">Learning signal</span>
+          <div class="small">${escapeHtml(catchInsights.headline || catchInsights.summary || "Catch history is active.")}</div>
+          ${catchInsights.takeaway || catchInsights.weight ? `<div class="small">${escapeHtml(catchInsights.takeaway || catchInsights.weight)}</div>` : ""}
         </div>
       ` : ""}
 
@@ -713,8 +734,29 @@ function renderInsights(insights) {
   const topWaterbodies = insights.top_waterbodies || [];
   const localTopWaterbodies = insights.local_top_waterbodies || [];
   const sampleQuality = insights.sample_quality || "unknown";
+  const headline = insights.headline || insights.summary || "Catch history is active.";
+  const takeaway = insights.takeaway || insights.weight || "Use catch history as a tie-breaker, not the whole decision.";
+  const dominantSpecies = insights.dominant_species || {};
+  const dominantLure = insights.dominant_lure || {};
+  const dominantWaterbody = insights.dominant_waterbody || {};
 
   return `
+    <div class="insight-summary">
+      <div class="insight-summary-head">
+        <div>
+          <b>What your catches suggest</b>
+          <div class="small">${headline}</div>
+        </div>
+        <span class="mini">${sampleQuality}</span>
+      </div>
+      <div class="small">${takeaway}</div>
+      <div class="insight-chip-row">
+        ${dominantSpecies.name ? `<span class="mini"><img class="${speciesIconClass("sm")} icon-mini" src="${fishIconPath(dominantSpecies.name)}" alt=""> ${dominantSpecies.name}${dominantSpecies.count ? ` · ${dominantSpecies.count}` : ""}</span>` : ""}
+        ${dominantLure.name ? `<span class="mini"><img class="icon-mini lure-art lure-art-sm" src="${lureIconPath(dominantLure.name)}" alt=""> ${dominantLure.name}${dominantLure.count ? ` · ${dominantLure.count}` : ""}</span>` : ""}
+        ${dominantWaterbody.name ? `<span class="mini"><img class="icon-mini" src="${waterIconForRecord({ type: dominantWaterbody.type || dominantWaterbody.name, name: dominantWaterbody.name })}" alt=""> ${dominantWaterbody.name}${dominantWaterbody.count ? ` · ${dominantWaterbody.count}` : ""}</span>` : ""}
+      </div>
+    </div>
+
     <div class="insight-grid">
       <div>
         <b>Total catches logged</b>
