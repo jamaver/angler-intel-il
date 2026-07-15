@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import ast
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -48,6 +49,11 @@ if "<details class=\"report-card report-debug-json\">" not in snapshot_text:
     errors.append("Trip report should keep a collapsed raw JSON debug section")
 if "Raw saved JSON - debugging" not in snapshot_text:
     errors.append("Trip report debug section should be clearly labeled")
+
+if not re.search(r"\.report-species-grid\s*\{[^}]*grid-template-columns:\s*1fr;", snapshot_text, re.S):
+    errors.append("Trip report species ranking should use a single-column grid")
+if not re.search(r"\.report-lure-grid\s*\{[^}]*grid-template-columns:\s*1fr;", snapshot_text, re.S):
+    errors.append("Trip report lure recommendations should use a single-column grid")
 
 from app import app as flask_app
 
@@ -199,7 +205,7 @@ else:
     else:
         html = view_res.get_data(as_text=True)
         prefix = strip_debug_section(html)
-        for needle in ("lure_asset", "fish_image", "lure_image", "fallback_used", "filename", "species_score", "{\"date\":", "{'date':", "{\"fish_image\"", "{\"color\""):
+        for needle in ("lure_asset", "fish_image", "lure_image", "fallback_used", "filename", "species_score", "best_hour", "{\"date\":", "{'date':", "{\"fish_image\"", "{\"color\""):
             if needle in prefix:
                 errors.append(f"Main report view still exposes {needle}")
         for needle in ("Best Bet Today", "Trip Conditions", "Species Ranking", "Recommended Lures", "7-Day Fishing Outlook"):

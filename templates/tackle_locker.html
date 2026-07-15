@@ -1,0 +1,389 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>My Tackle Locker - Angler Intel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="gear-page">
+  <nav class="ai-main-tabs" aria-label="Angler Intel navigation">
+    <a class="ai-main-tab" href="/">Dashboard</a>
+    <a class="ai-main-tab" href="/waters">Local Waters</a>
+    <a class="ai-main-tab active" href="/rigs">My Tackle Locker</a>
+    <a class="ai-main-tab" href="/reports">Saved Reports</a>
+    <a class="ai-main-tab" href="/app-health">App Health</a>
+  </nav>
+
+  <main class="gear-shell">
+    <header class="gear-hero">
+      <div class="gear-hero-copy">
+        <p class="eyebrow section-eyebrow">Gear inventory</p>
+        <h1>My Tackle Locker</h1>
+        <p class="gear-hero-subtitle">Track the gear you own, mark favorites, retire old items, and keep the generic rig reference as a guide at the bottom.</p>
+        <div class="hero-actions gear-hero-actions">
+          <a class="hero-action" href="#gear-form">Add gear</a>
+          <a class="hero-action secondary-link" href="#rig-reference">Fishing Rig Reference</a>
+        </div>
+      </div>
+      <div class="gear-hero-summary card">
+        <div class="gear-summary-grid">
+          <div class="gear-summary-card"><span>Total gear</span><strong>{{ locker.summary.total }}</strong></div>
+          <div class="gear-summary-card"><span>Owned</span><strong>{{ locker.summary.owned }}</strong></div>
+          <div class="gear-summary-card"><span>Favorites</span><strong>{{ locker.summary.favorites }}</strong></div>
+          <div class="gear-summary-card"><span>Retired</span><strong>{{ locker.summary.retired }}</strong></div>
+        </div>
+      </div>
+    </header>
+
+    <section class="card gear-toolbar">
+      <div class="section-head compact">
+        <div>
+          <p class="eyebrow section-eyebrow">Locker tools</p>
+          <h2>Search, add, and manage gear</h2>
+        </div>
+      </div>
+      <div class="gear-toolbar-grid">
+        <label class="gear-field">
+          <span>Search inventory</span>
+          <input id="gearSearchInput" type="search" placeholder="Search brand, model, specs, or notes">
+        </label>
+        <label class="gear-field">
+          <span>Filter category</span>
+          <select id="gearCategoryFilter">
+            <option value="">All categories</option>
+            {% for section in locker.categories %}
+              <option value="{{ section.key }}">{{ section.label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="gear-field">
+          <span>Filter status</span>
+          <select id="gearStatusFilter">
+            <option value="">All statuses</option>
+            <option value="owned">Owned</option>
+            <option value="wishlist">Wishlist</option>
+            <option value="retired">Retired</option>
+          </select>
+        </label>
+        <button type="button" class="gear-toolbar-button" id="gearClearFilters">Clear filters</button>
+      </div>
+    </section>
+
+    <section class="card gear-form-card" id="gear-form">
+      <div class="section-head compact">
+        <div>
+          <p class="eyebrow section-eyebrow">Add / edit gear</p>
+          <h2 id="gearFormTitle">Add gear</h2>
+        </div>
+      </div>
+      <form id="gearForm" class="gear-form-grid">
+        <input type="hidden" name="id" id="gearId">
+        <div class="gear-form-columns">
+          <label class="gear-field">
+            <span>Category</span>
+            <select name="category" id="gearCategory">
+              <option value="rod">Rod</option>
+              <option value="reel">Reel</option>
+              <option value="line">Line</option>
+              <option value="lure">Lure</option>
+              <option value="terminal">Terminal Tackle</option>
+              <option value="misc">Miscellaneous</option>
+            </select>
+          </label>
+          <label class="gear-field">
+            <span>Status</span>
+            <select name="status" id="gearStatus">
+              <option value="owned">Owned</option>
+              <option value="wishlist">Wishlist</option>
+              <option value="retired">Retired</option>
+            </select>
+          </label>
+          <label class="gear-field">
+            <span>Brand</span>
+            <input name="brand" id="gearBrand" placeholder="St. Croix">
+          </label>
+          <label class="gear-field">
+            <span>Model</span>
+            <input name="model" id="gearModel" placeholder="Mojo Bass">
+          </label>
+          <label class="gear-field gear-field-wide">
+            <span>Display name</span>
+            <input name="display_name" id="gearDisplayName" placeholder="St. Croix Mojo Bass 7'1&quot; MH Fast">
+          </label>
+          <label class="gear-field">
+            <span>Image</span>
+            <input name="image" id="gearImage" placeholder="/static/gear/fallback/rod.svg">
+          </label>
+          <label class="gear-field">
+            <span>Source name</span>
+            <input name="source_name" id="gearSourceName" placeholder="Manual entry">
+          </label>
+          <label class="gear-field">
+            <span>Source URL</span>
+            <input name="source_url" id="gearSourceUrl" placeholder="https://...">
+          </label>
+          <label class="gear-field">
+            <span>Retrieved at</span>
+            <input name="retrieved_at" id="gearRetrievedAt" placeholder="2026-07-15T14:03:00">
+          </label>
+          <label class="gear-field">
+            <span>Confidence</span>
+            <select name="confidence" id="gearConfidence">
+              <option value="user-added">User-added</option>
+              <option value="manual">Manual</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </label>
+          <label class="gear-field gear-field-wide">
+            <span>Notes</span>
+            <textarea name="notes" id="gearNotes" rows="3" placeholder="Fit notes, trip notes, maintenance notes, or where you like to use it."></textarea>
+          </label>
+          <label class="gear-field gear-field-inline">
+            <input type="checkbox" name="favorite" id="gearFavorite">
+            <span>Favorite</span>
+          </label>
+          <label class="gear-field gear-field-inline">
+            <input type="checkbox" id="gearAutoDisplayName" checked>
+            <span>Auto-fill display name</span>
+          </label>
+        </div>
+
+        <div class="gear-category-fields">
+          <fieldset class="gear-category-block" data-gear-category-block="rod">
+            <legend>Rod details</legend>
+            <div class="gear-form-columns">
+              <label class="gear-field"><span>Length (ft)</span><input name="length_ft" id="gearLengthFt" placeholder="7.1"></label>
+              <label class="gear-field"><span>Length label</span><input name="length_label" id="gearLengthLabel" placeholder="7'1&quot;"></label>
+              <label class="gear-field"><span>Power</span><input name="power" id="gearPower" placeholder="medium_heavy"></label>
+              <label class="gear-field"><span>Action</span><input name="action" id="gearAction" placeholder="fast"></label>
+              <label class="gear-field"><span>Pieces</span><input name="pieces" id="gearPieces" type="number" min="1" step="1" placeholder="1"></label>
+              <label class="gear-field"><span>Lure weight min (oz)</span><input name="lure_weight_min_oz" id="gearLureWeightMin" placeholder="0.25"></label>
+              <label class="gear-field"><span>Lure weight max (oz)</span><input name="lure_weight_max_oz" id="gearLureWeightMax" placeholder="1.0"></label>
+              <label class="gear-field"><span>Line rating min (lb)</span><input name="line_rating_min_lb" id="gearLineMin" placeholder="12"></label>
+              <label class="gear-field"><span>Line rating max (lb)</span><input name="line_rating_max_lb" id="gearLineMax" placeholder="20"></label>
+              <label class="gear-field gear-field-wide"><span>Technique tags</span><input name="technique_tags" id="gearTechniqueTags" placeholder="spinnerbait, jig, chatterbait"></label>
+              <label class="gear-field gear-field-wide"><span>Species tags</span><input name="species_tags" id="gearSpeciesTags" placeholder="largemouth_bass, smallmouth_bass"></label>
+            </div>
+          </fieldset>
+
+          <fieldset class="gear-category-block" data-gear-category-block="reel">
+            <legend>Reel details</legend>
+            <div class="gear-form-columns">
+              <label class="gear-field"><span>Reel type</span><input name="reel_type" id="gearReelType" placeholder="baitcasting"></label>
+              <label class="gear-field"><span>Gear ratio</span><input name="gear_ratio" id="gearGearRatio" placeholder="7.4"></label>
+              <label class="gear-field"><span>Max drag (lb)</span><input name="max_drag_lb" id="gearMaxDrag" placeholder="11"></label>
+              <label class="gear-field"><span>Line capacity</span><input name="line_capacity" id="gearLineCapacity" placeholder="12 lb / 120 yd"></label>
+              <label class="gear-field"><span>Weight (oz)</span><input name="weight_oz" id="gearWeightOz" placeholder="7.8"></label>
+              <label class="gear-field"><span>Handedness</span><input name="handedness" id="gearHandedness" placeholder="right"></label>
+            </div>
+          </fieldset>
+
+          <fieldset class="gear-category-block" data-gear-category-block="line">
+            <legend>Line details</legend>
+            <div class="gear-form-columns">
+              <label class="gear-field"><span>Line type</span><input name="line_type" id="gearLineType" placeholder="braid"></label>
+              <label class="gear-field"><span>Strength (lb)</span><input name="strength_lb" id="gearStrengthLb" placeholder="30"></label>
+              <label class="gear-field"><span>Diameter equivalent</span><input name="diameter_equivalent" id="gearDiameterEquivalent" placeholder=".008 in"></label>
+              <label class="gear-field"><span>Color</span><input name="color" id="gearLineColor" placeholder="moss_green"></label>
+              <label class="gear-field"><span>Length (yd)</span><input name="length_yd" id="gearLengthYd" placeholder="150"></label>
+            </div>
+          </fieldset>
+
+          <fieldset class="gear-category-block" data-gear-category-block="lure">
+            <legend>Lure details</legend>
+            <div class="gear-form-columns">
+              <label class="gear-field"><span>Lure type</span><input name="lure_type" id="gearLureType" placeholder="spinnerbait"></label>
+              <label class="gear-field"><span>Color</span><input name="color" id="gearLureColor" placeholder="white_chartreuse"></label>
+              <label class="gear-field"><span>Weight (oz)</span><input name="weight_oz" id="gearLureWeight" placeholder="0.375"></label>
+              <label class="gear-field"><span>Hook size</span><input name="hook_size" id="gearHookSize" placeholder="4/0"></label>
+              <label class="gear-field"><span>Depth min (ft)</span><input name="depth_min_ft" id="gearDepthMin" placeholder="0"></label>
+              <label class="gear-field"><span>Depth max (ft)</span><input name="depth_max_ft" id="gearDepthMax" placeholder="8"></label>
+              <label class="gear-field gear-field-wide"><span>Technique tags</span><input name="technique_tags" id="gearLureTechniqueTags" placeholder="steady_retrieve, burning, slow_roll"></label>
+              <label class="gear-field gear-field-wide"><span>Species tags</span><input name="species_tags" id="gearLureSpeciesTags" placeholder="largemouth_bass"></label>
+              <label class="gear-field"><span>Quantity</span><input name="quantity" id="gearQuantity" type="number" min="1" step="1" placeholder="1"></label>
+            </div>
+          </fieldset>
+
+          <fieldset class="gear-category-block" data-gear-category-block="terminal">
+            <legend>Terminal tackle details</legend>
+            <div class="gear-form-columns">
+              <label class="gear-field"><span>Subtype</span><input name="subtype" id="gearSubtype" placeholder="hook"></label>
+              <label class="gear-field"><span>Size</span><input name="size" id="gearTerminalSize" placeholder="3/0"></label>
+              <label class="gear-field"><span>Weight (oz)</span><input name="weight_oz" id="gearTerminalWeight" placeholder="0.25"></label>
+              <label class="gear-field"><span>Hook size</span><input name="hook_size" id="gearTerminalHookSize" placeholder="2/0"></label>
+              <label class="gear-field"><span>Quantity</span><input name="quantity" id="gearTerminalQuantity" type="number" min="1" step="1" placeholder="10"></label>
+            </div>
+          </fieldset>
+
+          <fieldset class="gear-category-block" data-gear-category-block="misc">
+            <legend>Miscellaneous gear</legend>
+            <div class="gear-form-columns">
+              <label class="gear-field gear-field-wide"><span>Notes</span><textarea name="notes" id="gearMiscNotes" rows="3" placeholder="Use notes for nets, tools, electronics, or any custom item."></textarea></label>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="gear-form-actions">
+          <button type="submit" class="hero-action">Save gear</button>
+          <button type="button" class="hero-action secondary-link" id="gearFormReset">Clear form</button>
+        </div>
+      </form>
+      <p class="gear-form-note">Manual entry is always available. Catalog lookup can prefill items from cached product data when present.</p>
+    </section>
+
+    <section class="card gear-catalog-card">
+      <div class="section-head compact">
+        <div>
+          <p class="eyebrow section-eyebrow">Catalog lookup</p>
+          <h2>Search cached product matches</h2>
+        </div>
+      </div>
+      <div class="gear-toolbar-grid">
+        <label class="gear-field">
+          <span>Search text</span>
+          <input id="catalogQuery" type="search" placeholder="Curado DC 150, Mojo Bass, Super 8 Slick...">
+        </label>
+        <label class="gear-field">
+          <span>Category</span>
+          <select id="catalogCategory">
+            <option value="">Any category</option>
+            {% for section in locker.categories %}
+              <option value="{{ section.key }}">{{ section.label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <button type="button" class="gear-toolbar-button" id="catalogSearchButton">Search catalog</button>
+      </div>
+      <div id="catalogResults" class="gear-catalog-results">
+        <p class="gear-empty">Search results will appear here when catalog data is available. Manual entry still works immediately.</p>
+      </div>
+    </section>
+
+    <section class="gear-section-list">
+      {% for section in locker.categories %}
+        <section class="card gear-section" id="gear-{{ section.key }}">
+          <div class="section-head compact">
+            <div>
+              <p class="eyebrow section-eyebrow">{{ section.label }}</p>
+              <h2>{{ section.label }}</h2>
+            </div>
+            <span class="gear-section-count">{{ section.count }} item{{ 's' if section.count != 1 else '' }}</span>
+          </div>
+
+          {% if section["items"] %}
+            <div class="gear-item-grid">
+              {% for item in section["items"] %}
+                <article class="gear-item-card" data-gear-card data-item-id="{{ item.id }}" data-category="{{ item.category }}" data-status="{{ item.status }}" data-favorite="{{ 'true' if item.favorite else 'false' }}">
+                  <img class="gear-item-image" src="{{ item.image }}" alt="{{ item.display_name }}" onerror="this.src='{{ item.fallback_image }}'">
+                  <div class="gear-item-body">
+                    <div class="gear-item-head">
+                      <div>
+                        <h3>{{ item.display_name }}</h3>
+                        <p class="gear-muted">{{ item.brand }}{% if item.model %} · {{ item.model }}{% endif %}</p>
+                      </div>
+                      <div class="gear-badge-row">
+                        <span class="gear-badge">{{ item.status|title }}</span>
+                        {% if item.favorite %}<span class="gear-badge gear-badge-favorite">Favorite</span>{% endif %}
+                        <span class="gear-badge">{{ section.label }}</span>
+                      </div>
+                    </div>
+
+                    <div class="gear-item-specs">
+                      {% if item.category == "rod" %}
+                        <span>{{ item.length_label or item.length_ft or "Unknown length" }}</span>
+                        <span>{{ item.power|replace("_", " ")|title }}{% if item.action %} · {{ item.action|replace("_", " ")|title }}{% endif %}</span>
+                        <span>{% if item.lure_weight_min_oz is not none or item.lure_weight_max_oz is not none %}Lure: {{ item.lure_weight_min_oz if item.lure_weight_min_oz is not none else "?" }} - {{ item.lure_weight_max_oz if item.lure_weight_max_oz is not none else "?" }} oz{% endif %}</span>
+                        <span>{% if item.line_rating_min_lb is not none or item.line_rating_max_lb is not none %}Line: {{ item.line_rating_min_lb if item.line_rating_min_lb is not none else "?" }} - {{ item.line_rating_max_lb if item.line_rating_max_lb is not none else "?" }} lb{% endif %}</span>
+                      {% elif item.category == "reel" %}
+                        <span>{{ item.reel_type|replace("_", " ")|title or "Reel" }}</span>
+                        <span>{% if item.gear_ratio is not none %}{{ item.gear_ratio }}:1{% endif %}{% if item.max_drag_lb is not none %} · Drag {{ item.max_drag_lb }} lb{% endif %}</span>
+                        <span>{{ item.line_capacity or "Line capacity unknown" }}</span>
+                        <span>{{ item.handedness|title if item.handedness else "Handedness unknown" }}</span>
+                      {% elif item.category == "line" %}
+                        <span>{{ item.line_type|replace("_", " ")|title or "Line" }}</span>
+                        <span>{% if item.strength_lb is not none %}{{ item.strength_lb }} lb{% endif %}{% if item.color %} · {{ item.color|replace("_", " ")|title }}{% endif %}</span>
+                        <span>{{ item.diameter_equivalent or "Diameter unknown" }}</span>
+                        <span>{% if item.length_yd is not none %}{{ item.length_yd }} yd{% endif %}</span>
+                      {% elif item.category == "lure" %}
+                        <span>{{ item.lure_type|replace("_", " ")|title or "Lure" }}</span>
+                        <span>{% if item.weight_oz is not none %}{{ item.weight_oz }} oz{% endif %}{% if item.color %} · {{ item.color|replace("_", " ")|title }}{% endif %}</span>
+                        <span>{% if item.hook_size %}Hook {{ item.hook_size }}{% endif %}{% if item.quantity is not none %} · Qty {{ item.quantity }}{% endif %}</span>
+                      {% elif item.category == "terminal" %}
+                        <span>{{ item.subtype|replace("_", " ")|title or "Terminal tackle" }}</span>
+                        <span>{% if item.size %}Size {{ item.size }}{% endif %}{% if item.weight_oz is not none %} · {{ item.weight_oz }} oz{% endif %}</span>
+                        <span>{% if item.quantity is not none %}Qty {{ item.quantity }}{% endif %}</span>
+                      {% else %}
+                        <span>{{ item.notes or "Custom gear item" }}</span>
+                      {% endif %}
+                    </div>
+
+                    {% if item.notes %}
+                      <p class="gear-notes">{{ item.notes }}</p>
+                    {% endif %}
+
+                    <div class="gear-source">
+                      <span>Source: {{ item.source_name or item.source|title }}</span>
+                      {% if item.source_url %}<a href="{{ item.source_url }}" target="_blank" rel="noreferrer">Source URL</a>{% endif %}
+                      {% if item.retrieved_at %}<span>Retrieved {{ item.retrieved_at }}</span>{% endif %}
+                      <span>Confidence: {{ item.confidence|title }}</span>
+                    </div>
+
+                    <div class="gear-card-actions">
+                      <button type="button" data-gear-action="edit" data-gear-id="{{ item.id }}">Edit</button>
+                      <button type="button" data-gear-action="favorite" data-gear-id="{{ item.id }}">{{ 'Unfavorite' if item.favorite else 'Favorite' }}</button>
+                      <button type="button" data-gear-action="archive" data-gear-id="{{ item.id }}">Archive</button>
+                    </div>
+                  </div>
+                </article>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="gear-empty">No {{ section.label|lower }} saved yet. Use the form above to add your first item.</p>
+          {% endif %}
+        </section>
+      {% endfor %}
+    </section>
+
+    <section class="card gear-reference" id="rig-reference">
+      <div class="section-head compact">
+        <div>
+          <p class="eyebrow section-eyebrow">Reference</p>
+          <h2>Fishing Rig Reference</h2>
+        </div>
+        <span class="gear-reference-note">Generic guidance stays here for comparison.</span>
+      </div>
+
+      <div class="gear-reference-grid">
+        {% for rig in locker.reference_rigs %}
+          <article class="gear-reference-card">
+            <h3>{{ rig.name }}</h3>
+            <p class="gear-muted">{% if rig.best_for %}{{ rig.best_for|join(", ") }}{% endif %}</p>
+            <p><strong>Rod:</strong> {{ rig.rod }}</p>
+            <p><strong>Line:</strong> {{ rig.line }}</p>
+            <p><strong>Terminal:</strong> {{ rig.terminal }}</p>
+            <p><strong>Setup:</strong> {{ rig.setup }}</p>
+            <p><strong>When:</strong> {{ rig.when }}</p>
+            {% if rig.tips %}
+              <ul class="gear-reference-tips">
+                {% for tip in rig.tips %}
+                  <li>{{ tip }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  </main>
+
+  <script>
+    window.__TACKLE_LOCKER__ = {{ locker|tojson }};
+  </script>
+  <script src="/static/js/tackle_locker_v610.js"></script>
+  <script src="/static/js/global_nav_v433.js"></script>
+  <script src="/static/js/ui_polish_v442.js"></script>
+</body>
+</html>

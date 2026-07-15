@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Line fallback">
+  <rect width="128" height="128" rx="20" fill="#0f172a"/>
+  <path d="M24 88c16-28 36-44 80-48" stroke="#a7f3c5" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <circle cx="38" cy="78" r="6" fill="#a7f3c5"/>
+  <circle cx="58" cy="66" r="6" fill="#a7f3c5"/>
+  <circle cx="80" cy="56" r="6" fill="#a7f3c5"/>
+  <text x="64" y="112" text-anchor="middle" font-size="18" font-family="system-ui, sans-serif" font-weight="800" fill="#eef3fb">LINE</text>
+</svg>

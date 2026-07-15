@@ -935,7 +935,7 @@ def register_report_routes_v38(app):
     .report-grid {
       display: grid;
       gap: 0.85rem;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: 1fr;
     }
     .report-list-card {
       display: grid;
@@ -945,6 +945,7 @@ def register_report_routes_v38(app):
       background: #ffffff;
       padding: 0.95rem;
       box-shadow: 0 8px 20px rgba(16, 36, 23, 0.08);
+      min-width: 0;
     }
     .report-card-top {
       display: flex;
@@ -976,7 +977,14 @@ def register_report_routes_v38(app):
       display: grid;
       grid-template-columns: 88px 1fr;
       gap: 0.75rem;
-      align-items: center;
+      align-items: start;
+      min-width: 0;
+    }
+    .report-card-art-stack {
+      display: grid;
+      gap: 0.5rem;
+      justify-items: start;
+      align-content: start;
     }
     .report-card-media img {
       width: 100%;
@@ -989,6 +997,8 @@ def register_report_routes_v38(app):
     .report-summary-line {
       color: #2f3a32;
       line-height: 1.45;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .report-detail-row {
       display: grid;
@@ -1012,12 +1022,15 @@ def register_report_routes_v38(app):
     .report-detail strong {
       display: block;
       line-height: 1.25;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .report-actions-row {
       display: flex;
       flex-wrap: wrap;
       gap: 0.55rem;
       align-items: center;
+      justify-content: flex-start;
     }
     .report-actions-row a,
     .report-actions-row button {
@@ -1043,6 +1056,20 @@ def register_report_routes_v38(app):
     }
     .report-actions-row .danger:hover {
       background: #ffdcdc;
+    }
+    .report-card-top,
+    .report-card-top h4,
+    .report-detail-row,
+    .report-detail,
+    .report-card-media > div {
+      min-width: 0;
+    }
+    .report-card-media > div {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .report-card-art-stack img {
+      max-width: 84px;
     }
     a {
       color: #1f8f45;
@@ -1105,6 +1132,15 @@ def register_report_routes_v38(app):
       .ai-main-tab {
         flex: 1 1 calc(50% - 0.5rem);
         padding: 0.55rem 0.5rem;
+      }
+      .report-grid {
+        grid-template-columns: 1fr;
+      }
+      .report-card-media {
+        grid-template-columns: 72px minmax(0, 1fr);
+      }
+      .report-card-media img {
+        max-width: 72px;
       }
     }
   </style>
@@ -1312,7 +1348,10 @@ function renderReportCard(r) {
         <button type="button" class="danger" data-delete-report="${escapeHtml(r.id || "")}">Delete</button>
       </div>
       <div class="report-card-media">
-        <img src="${escapeHtml(fishImage)}" alt="${escapeHtml(targetSpecies || "Fish")}">
+        <div class="report-card-art-stack">
+          <img src="${escapeHtml(fishImage)}" alt="${escapeHtml(targetSpecies || "Fish")}">
+          <img class="report-lure-art" src="${escapeHtml(lureImage)}" alt="${escapeHtml(lure)}">
+        </div>
         <div>
           <div class="report-summary-line"><strong>${escapeHtml(targetSpecies || "General")}</strong>${bestTime ? ` · ${escapeHtml(bestTime)}` : ""}</div>
           <div class="report-summary-line">${escapeHtml(lure)}${score ? ` · Score ${escapeHtml(score)}` : ""}</div>
@@ -1331,7 +1370,6 @@ function renderReportCard(r) {
         <a href="${escapeHtml(r.view_url || "#")}">View</a>
         <a href="${escapeHtml(r.html_url || "#")}">Download HTML</a>
         <a href="${escapeHtml(r.json_url || "#")}">Download JSON</a>
-        <img class="report-lure-art" src="${escapeHtml(lureImage)}" alt="${escapeHtml(lure)}">
       </div>
     </article>
   `;

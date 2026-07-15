@@ -126,6 +126,7 @@
     .report-lure-grid {
       display: grid;
       gap: 14px;
+      min-width: 0;
     }
 
     .report-factor-grid,
@@ -145,11 +146,11 @@
     }
 
     .report-species-grid {
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      grid-template-columns: 1fr;
     }
 
     .report-lure-grid {
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: 1fr;
     }
 
     .report-card {
@@ -160,6 +161,7 @@
       box-shadow: 0 8px 22px rgba(16, 36, 23, 0.08);
       break-inside: avoid;
       page-break-inside: avoid;
+      min-width: 0;
     }
 
     .report-card h2 {
@@ -221,6 +223,7 @@
       border: 1px solid var(--line);
       border-radius: 12px;
       padding: 12px;
+      min-width: 0;
     }
 
     .report-media {
@@ -228,6 +231,7 @@
       grid-template-columns: 96px 1fr;
       gap: 0.85rem;
       align-items: center;
+      min-width: 0;
     }
 
     .report-fish-art {
@@ -252,6 +256,21 @@
       justify-content: space-between;
       gap: 0.75rem;
       align-items: baseline;
+      min-width: 0;
+    }
+
+    .report-row-head h3,
+    .report-row-head h4,
+    .report-media > div,
+    .report-summary-line,
+    .report-muted,
+    .report-detail strong,
+    .report-condition strong,
+    .report-condition div,
+    .report-pill,
+    .report-score-pill {
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
 
     .report-score-pill {
@@ -408,6 +427,16 @@
       .report-outlook-row,
       .report-water-row {
         box-shadow: none;
+        page-break-inside: avoid;
+      }
+
+      .report-species-grid,
+      .report-lure-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .report-media {
+        grid-template-columns: 84px minmax(0, 1fr);
       }
 
       .report-debug-json pre {
@@ -495,7 +524,7 @@
               {% endif %}
             </div>
             <p class="report-muted"><b>Species:</b> {{ report.best_bet.species }}</p>
-            <p class="report-muted"><b>Best Time:</b> {{ report.best_time.label }} · {{ report.best_time.range }}{% if report.best_time.best_hour %} · {{ report.best_time.best_hour }}{% endif %}</p>
+            <p class="report-muted"><b>Best Time:</b> {{ report.best_time.label }} · {{ report.best_time.range }}</p>
             <p class="report-muted"><b>Lure:</b> {{ report.best_bet.lure_name }}</p>
             <p class="report-muted"><b>Retrieve:</b> {{ report.best_bet.speed }}{% if report.best_bet.size %} · <b>Size:</b> {{ report.best_bet.size }}{% endif %}</p>
             {% if report.best_bet.why %}

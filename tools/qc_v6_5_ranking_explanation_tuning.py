@@ -75,7 +75,7 @@ for needle, message in (
     if needle not in app_text:
         errors.append(message)
 
-if not any(label in app_text for label in ("v6.5-ranking-explanation-tuning", "v6.9-dashboard-cohesion")):
+if not any(label in app_text for label in ("v6.5-ranking-explanation-tuning", "v6.9-dashboard-cohesion", "v6.10-tackle-locker")):
     errors.append("Release label should reflect the ranking/explanation or current v6.9 build")
 
 reports_text = read("angler_reports_v38.py")

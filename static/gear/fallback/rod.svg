@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Rod fallback">
+  <rect width="128" height="128" rx="20" fill="#0f172a"/>
+  <path d="M18 104c30-28 52-48 93-78" stroke="#b7d7ff" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M98 24l12-4-4 12" fill="#b7d7ff"/>
+  <circle cx="58" cy="63" r="6" fill="#7dd3fc"/>
+  <circle cx="42" cy="79" r="6" fill="#7dd3fc"/>
+  <text x="64" y="112" text-anchor="middle" font-size="18" font-family="system-ui, sans-serif" font-weight="800" fill="#eef3fb">ROD</text>
+</svg>

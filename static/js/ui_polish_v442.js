@@ -7,7 +7,7 @@
     "/waters": "Browse the starter and manual waters catalog and open waterbody-specific fishing intel.",
     "/map": "Map-first fishing intelligence with satellite, hybrid, and street basemaps plus manual waterbody entry.",
     "/species": "Manage common freshwater fish and optional species used by the recommendation engine.",
-    "/rigs": "Practical rigging guides by fish, lure type, line, and conditions.",
+    "/rigs": "My Tackle Locker for personal gear inventory plus the fishing rig reference guide.",
     "/reports": "Smart Trip Export: create and view saved offline trip reports on this Raspberry Pi.",
     "/data-tools": "Validate and inspect app data before upgrades or recommendation changes.",
     "/app-health": "Check app health, backups, files, routes, reports, and maintenance status."
@@ -43,8 +43,8 @@
     const nav = document.querySelector(".ai-main-tabs");
     if (!nav || nav.querySelector(".ai-version-badge-v442")) return;
 
-    const CURRENT_VERSION = "v6.9";
-    const CURRENT_RELEASE = "v6.9-dashboard-cohesion";
+    const CURRENT_VERSION = "v6.10";
+    const CURRENT_RELEASE = "v6.10-tackle-locker";
 
     const badge = document.createElement("span");
     badge.className = "ai-version-badge-v442";

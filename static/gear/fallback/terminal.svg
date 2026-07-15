@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Terminal tackle fallback">
+  <rect width="128" height="128" rx="20" fill="#0f172a"/>
+  <path d="M34 62h44c12 0 16 8 16 16s-4 16-16 16H34" fill="none" stroke="#dbeafe" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="40" cy="78" r="10" fill="#7dd3fc"/>
+  <path d="M84 78h18" stroke="#a7f3c5" stroke-width="6" stroke-linecap="round"/>
+  <text x="64" y="112" text-anchor="middle" font-size="18" font-family="system-ui, sans-serif" font-weight="800" fill="#eef3fb">TERM</text>
+</svg>

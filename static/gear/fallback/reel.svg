@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Reel fallback">
+  <rect width="128" height="128" rx="20" fill="#0f172a"/>
+  <circle cx="64" cy="56" r="28" fill="#dbeafe"/>
+  <circle cx="64" cy="56" r="12" fill="#0f172a"/>
+  <circle cx="64" cy="56" r="6" fill="#7dd3fc"/>
+  <path d="M30 80h68" stroke="#dbeafe" stroke-width="8" stroke-linecap="round"/>
+  <text x="64" y="112" text-anchor="middle" font-size="18" font-family="system-ui, sans-serif" font-weight="800" fill="#eef3fb">REEL</text>
+</svg>

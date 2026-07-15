@@ -74,6 +74,8 @@ def main() -> int:
         or "v6.5-ranking-explanation-tuning" in read(APP_PATH)
         or "v6.9-dashboard-cohesion" in app_js
         or "v6.9-dashboard-cohesion" in read(APP_PATH)
+        or "v6.10-tackle-locker" in app_js
+        or "v6.10-tackle-locker" in read(APP_PATH)
     )
     if not release_label_present:
         errors.append("app.js/app.py missing release label")

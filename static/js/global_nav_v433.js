@@ -7,7 +7,7 @@
     ["/recommendations", "Smart Picks"],
     ["/waters", "Local Waters"],
     ["/species", "Species"],
-    ["/rigs", "Rig Setups"],
+    ["/rigs", "My Tackle Locker"],
     ["/reports", "Smart Trip Export"],
     ["/data-tools", "Data Tools"],
     ["/app-health", "App Health"]

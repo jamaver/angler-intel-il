@@ -5,7 +5,22 @@ import json
 from pathlib import Path
 from typing import Any
 
-from flask import jsonify, request
+from flask import jsonify, render_template, request
+
+from gear.catalog_providers import search_products
+from gear.inventory import (
+    category_label,
+    category_sections,
+    fallback_image_for,
+    get_item,
+    inventory_summary,
+    list_items,
+    normalize_item,
+    reference_rig_items,
+    set_status,
+    toggle_favorite,
+    upsert_item,
+)
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -105,12 +120,38 @@ def _filter_rigs(q: str = "", species: str = "", lure: str = "") -> list[dict[st
     return results
 
 
+def _enrich_gear_item(item: dict[str, Any]) -> dict[str, Any]:
+    enriched = dict(item)
+    enriched["fallback_image"] = fallback_image_for(enriched.get("category"), enriched.get("subtype"))
+    return enriched
+
+
+def _locker_context() -> dict[str, Any]:
+    items = [_enrich_gear_item(item) for item in list_items()]
+    categories = []
+    for section in category_sections(items):
+        categories.append({
+            "key": section["key"],
+            "label": category_label(section["key"]),
+            "count": section["count"],
+            "items": [ _enrich_gear_item(item) for item in section["items"] ],
+        })
+
+    return {
+        "summary": inventory_summary(items),
+        "categories": categories,
+        "items": items,
+        "recent_items": [_enrich_gear_item(item) for item in items[:4]],
+        "reference_rigs": _rigs(),
+    }
+
+
 def _nav(active: str) -> str:
     links = [
         ("/", "Dashboard"),
         ("/waters", "Local Waters"),
         ("/species", "Species"),
-        ("/rigs", "Rig Setups"),
+        ("/rigs", "My Tackle Locker"),
         ("/reports", "Saved Reports"),
         ("/data-tools", "Data Tools"),
         ("/app-health", "App Health"),
@@ -308,7 +349,11 @@ def register_species_rig_routes_v43(app):
 
     @app.route("/rigs")
     def rigs_page_v43():
-        return _render_rigs_page()
+        return render_template("tackle_locker.html", locker=_locker_context())
+
+    @app.route("/tackle-locker")
+    def tackle_locker_page_v43():
+        return render_template("tackle_locker.html", locker=_locker_context())
 
     @app.route("/api/species-profiles")
     def species_api_v43():
@@ -353,8 +398,58 @@ def register_species_rig_routes_v43(app):
             "routes": [
                 "/species",
                 "/rigs",
+                "/tackle-locker",
                 "/api/species-profiles",
                 "/api/rigs",
                 "/api/species-rigs/status",
             ],
+        })
+
+    @app.route("/api/gear/items", methods=["GET", "POST"])
+    def gear_items_api_v610():
+        if request.method == "GET":
+            items = [_enrich_gear_item(item) for item in list_items()]
+            return jsonify({
+                "ok": True,
+                "version": "v6.10-tackle-locker",
+                "summary": inventory_summary(items),
+                "items": items,
+                "categories": category_sections(items),
+            })
+
+        payload = request.get_json(silent=True) or {}
+        item = upsert_item(payload if isinstance(payload, dict) else {})
+        return jsonify({
+            "ok": True,
+            "version": "v6.10-tackle-locker",
+            "item": _enrich_gear_item(item),
+            "summary": inventory_summary(),
+        })
+
+    @app.route("/api/gear/items/<item_id>/favorite", methods=["POST"])
+    def gear_item_favorite_api_v610(item_id: str):
+        payload = request.get_json(silent=True) or {}
+        favorite = payload.get("favorite")
+        item = toggle_favorite(item_id, favorite if favorite is not None else None)
+        if not item:
+            return jsonify({"ok": False, "error": "Gear item not found"}), 404
+        return jsonify({"ok": True, "item": _enrich_gear_item(item), "summary": inventory_summary()})
+
+    @app.route("/api/gear/items/<item_id>/archive", methods=["POST"])
+    def gear_item_archive_api_v610(item_id: str):
+        item = set_status(item_id, "retired")
+        if not item:
+            return jsonify({"ok": False, "error": "Gear item not found"}), 404
+        return jsonify({"ok": True, "item": _enrich_gear_item(item), "summary": inventory_summary()})
+
+    @app.route("/api/gear/catalog/search")
+    def gear_catalog_search_api_v610():
+        query = request.args.get("q", "")
+        category = request.args.get("category", "")
+        results = search_products(query, category=category)
+        return jsonify({
+            "ok": True,
+            "version": "v6.10-tackle-locker",
+            "count": len(results),
+            "products": results,
         })

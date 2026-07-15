@@ -51,19 +51,17 @@ for rel in ("static/js/app.js", "static/js/ui_polish_v442.js"):
         break
 
 marker = json.loads(read("data/version_v6_9_dashboard_cohesion.json"))
-if marker.get("version") != "v6.9-dashboard-cohesion":
+if marker.get("version") not in {"v6.9-dashboard-cohesion", "v6.10-tackle-locker"}:
     errors.append("Version marker mismatch")
 for key in ("dashboard_cohesion", "dashboard_learning_metric", "trip_plan_learning_signal", "map_first_command_center", "secondary_sections_collapsed", "admin_not_in_normal_nav"):
     if not marker.get(key):
         errors.append(f"Version marker missing {key}")
 
 app_text = read("app.py")
-for needle, message in (
-    ("v6.9-dashboard-cohesion", "App release should be updated to v6.9"),
-    ("APP_RELEASE", "App release constant should exist"),
-):
-    if needle not in app_text:
-        errors.append(message)
+if "APP_RELEASE" not in app_text:
+    errors.append("App release constant should exist")
+if "v6.10-tackle-locker" not in app_text:
+    errors.append("App release should be updated to v6.10")
 
 js_text = read("static/js/app.js")
 for needle, message in (

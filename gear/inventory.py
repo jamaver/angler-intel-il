@@ -1,0 +1,413 @@
+from __future__ import annotations
+
+import os
+import json
+import uuid
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+BASE_DIR = Path(__file__).resolve().parents[1]
+DATA_DIR = BASE_DIR / "data"
+
+DEFAULT_VERSION = "v6.10-tackle-locker"
+CATEGORY_ORDER = ["rod", "reel", "line", "lure", "terminal", "misc"]
+CATEGORY_LABELS = {
+    "rod": "Rods",
+    "reel": "Reels",
+    "line": "Line",
+    "lure": "Lures",
+    "terminal": "Terminal Tackle",
+    "misc": "Miscellaneous",
+}
+CATEGORY_FALLBACKS = {
+    "rod": "/static/gear/fallback/rod.svg",
+    "reel": "/static/gear/fallback/reel.svg",
+    "line": "/static/gear/fallback/line.svg",
+    "lure": "/static/gear/fallback/lure.svg",
+    "terminal": "/static/gear/fallback/terminal.svg",
+    "misc": "/static/gear/fallback/generic.svg",
+}
+STATUS_VALUES = {"owned", "wishlist", "retired"}
+TERMINAL_SUBTYPE_LABELS = {
+    "hook": "Hook",
+    "weight": "Weight",
+    "swivel": "Swivel",
+    "snap": "Snap",
+    "jig_head": "Jig Head",
+    "leader": "Leader",
+}
+
+
+def _path_from_env(name: str, default: Path) -> Path:
+    value = os.environ.get(name, "").strip()
+    return Path(value) if value else default
+
+
+def inventory_path() -> Path:
+    return _path_from_env("AI_GEAR_INVENTORY_PATH", DATA_DIR / "gear_inventory.json")
+
+
+def catalog_cache_path() -> Path:
+    return _path_from_env("AI_GEAR_CATALOG_CACHE_PATH", DATA_DIR / "gear_catalog_cache.json")
+
+
+def _now() -> str:
+    return datetime.now().isoformat(timespec="seconds")
+
+
+def _slug(value: Any, fallback: str = "gear") -> str:
+    text = " ".join(str(value or "").split()).strip().lower()
+    text = "".join(ch if ch.isalnum() else "-" for ch in text)
+    text = "-".join(part for part in text.split("-") if part)
+    return text or fallback
+
+
+def _text(value: Any, fallback: str = "") -> str:
+    text = " ".join(str(value or "").split()).strip()
+    return text or fallback
+
+
+def _as_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    text = str(value or "").strip().lower()
+    return text in {"1", "true", "yes", "y", "on"}
+
+
+def _as_int(value: Any, fallback: int | None = None) -> int | None:
+    try:
+        return int(float(str(value).strip()))
+    except Exception:
+        return fallback
+
+
+def _as_float(value: Any, fallback: float | None = None) -> float | None:
+    try:
+        return float(str(value).strip())
+    except Exception:
+        return fallback
+
+
+def _split_tags(value: Any) -> list[str]:
+    if isinstance(value, list):
+        return [_text(item) for item in value if _text(item)]
+    return [part.strip() for part in str(value or "").replace("\n", ",").split(",") if part.strip()]
+
+
+def ensure_inventory_file() -> None:
+    path = inventory_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not path.exists():
+        save_inventory(_default_inventory())
+
+
+def _default_inventory() -> dict[str, Any]:
+    return {
+        "version": DEFAULT_VERSION,
+        "updated_at": _now(),
+        "items": [],
+        "maintenance": [],
+        "catalog_cache": [],
+    }
+
+
+def _read_json(path: Path, default: Any) -> Any:
+    if not path.exists():
+        return default
+    try:
+        text = path.read_text(encoding="utf-8").strip()
+        if not text:
+            return default
+        return json.loads(text)
+    except Exception:
+        return default
+
+
+def load_inventory() -> dict[str, Any]:
+    ensure_inventory_file()
+    data = _read_json(inventory_path(), _default_inventory())
+    if not isinstance(data, dict):
+        data = _default_inventory()
+    data.setdefault("version", DEFAULT_VERSION)
+    data.setdefault("updated_at", _now())
+    items = data.get("items")
+    data["items"] = items if isinstance(items, list) else []
+    data["maintenance"] = data.get("maintenance") if isinstance(data.get("maintenance"), list) else []
+    data["catalog_cache"] = data.get("catalog_cache") if isinstance(data.get("catalog_cache"), list) else []
+    return data
+
+
+def save_inventory(data: dict[str, Any]) -> None:
+    payload = dict(data or {})
+    payload.setdefault("version", DEFAULT_VERSION)
+    payload["updated_at"] = _now()
+    payload["items"] = payload.get("items") if isinstance(payload.get("items"), list) else []
+    payload["maintenance"] = payload.get("maintenance") if isinstance(payload.get("maintenance"), list) else []
+    payload["catalog_cache"] = payload.get("catalog_cache") if isinstance(payload.get("catalog_cache"), list) else []
+    path = inventory_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def category_label(category: Any) -> str:
+    key = _text(category, "misc").lower()
+    return CATEGORY_LABELS.get(key, key.replace("_", " ").title() or "Miscellaneous")
+
+
+def fallback_image_for(category: Any, subtype: Any = None) -> str:
+    key = _text(category, "misc").lower()
+    if key == "terminal":
+        sub = _text(subtype, "").lower()
+        if sub == "hook":
+            return "/static/gear/fallback/terminal-hook.svg"
+        if sub == "weight":
+            return "/static/gear/fallback/terminal-weight.svg"
+    return CATEGORY_FALLBACKS.get(key, CATEGORY_FALLBACKS["misc"])
+
+
+def _default_display_name(item: dict[str, Any]) -> str:
+    category = _text(item.get("category"), "misc").lower()
+    brand = _text(item.get("brand"), "")
+    model = _text(item.get("model"), "")
+    if category == "rod":
+        parts = [brand, model, _text(item.get("length_label"), ""), _text(item.get("power"), "").replace("_", " ").title(), _text(item.get("action"), "").title()]
+        return " ".join(part for part in parts if part)
+    if category == "reel":
+        parts = [brand, model, _text(item.get("reel_type"), "").title(), f'{item.get("gear_ratio")} :1' if item.get("gear_ratio") not in (None, "") else ""]
+        return " ".join(part for part in parts if part)
+    if category == "line":
+        parts = [brand, model, _text(item.get("strength_lb"), ""), _text(item.get("line_type"), "").title()]
+        return " ".join(part for part in parts if part)
+    if category == "lure":
+        parts = [brand, model, _text(item.get("lure_type"), "").replace("_", " ").title(), _text(item.get("color"), "").replace("_", " ").title()]
+        return " ".join(part for part in parts if part)
+    if category == "terminal":
+        parts = [brand, model, TERMINAL_SUBTYPE_LABELS.get(_text(item.get("subtype"), "").lower(), _text(item.get("subtype"), "").title()), _text(item.get("size"), "")]
+        return " ".join(part for part in parts if part)
+    return " ".join(part for part in [brand, model, _text(item.get("display_name"), "")] if part)
+
+
+def normalize_item(payload: dict[str, Any], existing: dict[str, Any] | None = None) -> dict[str, Any]:
+    existing = existing or {}
+    category = _text(payload.get("category") or existing.get("category"), "misc").lower()
+    if category not in CATEGORY_ORDER:
+        category = "misc"
+
+    item_id = _text(payload.get("id") or existing.get("id"), "")
+    if not item_id:
+        item_id = f"gear-{uuid.uuid4().hex[:12]}"
+
+    item: dict[str, Any] = dict(existing)
+    item.update({
+        "id": item_id,
+        "category": category,
+        "brand": _text(payload.get("brand"), _text(existing.get("brand"), "")),
+        "model": _text(payload.get("model"), _text(existing.get("model"), "")),
+        "display_name": _text(payload.get("display_name"), _text(existing.get("display_name"), "")),
+        "status": _text(payload.get("status"), _text(existing.get("status"), "owned")).lower(),
+        "favorite": _as_bool(payload.get("favorite") if "favorite" in payload else existing.get("favorite")),
+        "notes": _text(payload.get("notes"), _text(existing.get("notes"), "")),
+        "image": _text(payload.get("image"), _text(existing.get("image"), fallback_image_for(category, payload.get("subtype") or existing.get("subtype")))),
+        "source": _text(payload.get("source"), _text(existing.get("source"), "manual")).lower(),
+        "source_name": _text(payload.get("source_name"), _text(existing.get("source_name"), "Manual entry")),
+        "source_url": _text(payload.get("source_url"), _text(existing.get("source_url"), "")),
+        "retrieved_at": _text(payload.get("retrieved_at"), _text(existing.get("retrieved_at"), "")),
+        "confidence": _text(payload.get("confidence"), _text(existing.get("confidence"), "user-added")).lower(),
+        "quantity": _as_int(payload.get("quantity"), _as_int(existing.get("quantity"), 1)) or 1,
+        "created_at": _text(existing.get("created_at"), _now()),
+        "updated_at": _now(),
+    })
+
+    if item["status"] not in STATUS_VALUES:
+        item["status"] = "owned"
+
+    if category == "rod":
+        item.update({
+            "length_ft": _as_float(payload.get("length_ft"), _as_float(existing.get("length_ft"))),
+            "length_label": _text(payload.get("length_label"), _text(existing.get("length_label"), "")),
+            "power": _text(payload.get("power"), _text(existing.get("power"), "")).lower().replace(" ", "_"),
+            "action": _text(payload.get("action"), _text(existing.get("action"), "")).lower().replace(" ", "_"),
+            "pieces": _as_int(payload.get("pieces"), _as_int(existing.get("pieces"), 1)) or 1,
+            "lure_weight_min_oz": _as_float(payload.get("lure_weight_min_oz"), _as_float(existing.get("lure_weight_min_oz"))),
+            "lure_weight_max_oz": _as_float(payload.get("lure_weight_max_oz"), _as_float(existing.get("lure_weight_max_oz"))),
+            "line_rating_min_lb": _as_int(payload.get("line_rating_min_lb"), _as_int(existing.get("line_rating_min_lb"))),
+            "line_rating_max_lb": _as_int(payload.get("line_rating_max_lb"), _as_int(existing.get("line_rating_max_lb"))),
+            "technique_tags": _split_tags(payload.get("technique_tags", existing.get("technique_tags", []))),
+            "species_tags": _split_tags(payload.get("species_tags", existing.get("species_tags", []))),
+        })
+        if not item["display_name"]:
+            item["display_name"] = _default_display_name(item)
+        if not item["length_label"] and item.get("length_ft"):
+            item["length_label"] = f"{item['length_ft']:.1f} ft"
+        if not item["power"]:
+            item["power"] = "medium"
+        if not item["action"]:
+            item["action"] = "fast"
+
+    elif category == "reel":
+        item.update({
+            "reel_type": _text(payload.get("reel_type"), _text(existing.get("reel_type"), "")).lower().replace(" ", "_"),
+            "gear_ratio": _as_float(payload.get("gear_ratio"), _as_float(existing.get("gear_ratio"))),
+            "max_drag_lb": _as_float(payload.get("max_drag_lb"), _as_float(existing.get("max_drag_lb"))),
+            "line_capacity": _text(payload.get("line_capacity"), _text(existing.get("line_capacity"), "")),
+            "weight_oz": _as_float(payload.get("weight_oz"), _as_float(existing.get("weight_oz"))),
+            "handedness": _text(payload.get("handedness"), _text(existing.get("handedness"), "")).lower(),
+        })
+        if not item["display_name"]:
+            item["display_name"] = _default_display_name(item)
+
+    elif category == "line":
+        item.update({
+            "line_type": _text(payload.get("line_type"), _text(existing.get("line_type"), "")).lower().replace(" ", "_"),
+            "strength_lb": _as_int(payload.get("strength_lb"), _as_int(existing.get("strength_lb"))),
+            "diameter_equivalent": _text(payload.get("diameter_equivalent"), _text(existing.get("diameter_equivalent"), "")),
+            "color": _text(payload.get("color"), _text(existing.get("color"), "")).lower().replace(" ", "_"),
+            "length_yd": _as_int(payload.get("length_yd"), _as_int(existing.get("length_yd"))),
+        })
+        if not item["display_name"]:
+            item["display_name"] = _default_display_name(item)
+
+    elif category == "lure":
+        item.update({
+            "lure_type": _text(payload.get("lure_type"), _text(existing.get("lure_type"), "")).lower().replace(" ", "_"),
+            "color": _text(payload.get("color"), _text(existing.get("color"), "")).lower().replace(" ", "_"),
+            "weight_oz": _as_float(payload.get("weight_oz"), _as_float(existing.get("weight_oz"))),
+            "hook_size": _text(payload.get("hook_size"), _text(existing.get("hook_size"), "")),
+            "depth_min_ft": _as_float(payload.get("depth_min_ft"), _as_float(existing.get("depth_min_ft"))),
+            "depth_max_ft": _as_float(payload.get("depth_max_ft"), _as_float(existing.get("depth_max_ft"))),
+            "species_tags": _split_tags(payload.get("species_tags", existing.get("species_tags", []))),
+            "technique_tags": _split_tags(payload.get("technique_tags", existing.get("technique_tags", []))),
+        })
+        if not item["display_name"]:
+            item["display_name"] = _default_display_name(item)
+
+    elif category == "terminal":
+        item.update({
+            "subtype": _text(payload.get("subtype"), _text(existing.get("subtype"), "")).lower().replace(" ", "_"),
+            "size": _text(payload.get("size"), _text(existing.get("size"), "")),
+            "weight_oz": _as_float(payload.get("weight_oz"), _as_float(existing.get("weight_oz"))),
+            "hook_size": _text(payload.get("hook_size"), _text(existing.get("hook_size"), "")),
+            "quantity": _as_int(payload.get("quantity"), _as_int(existing.get("quantity"), 1)) or 1,
+        })
+        if not item["display_name"]:
+            item["display_name"] = _default_display_name(item)
+
+    else:
+        item["display_name"] = _text(payload.get("display_name"), _text(existing.get("display_name"), "")) or _default_display_name(item)
+
+    if not item["display_name"]:
+        item["display_name"] = _default_display_name(item)
+
+    return item
+
+
+def list_items() -> list[dict[str, Any]]:
+    data = load_inventory()
+    items = data.get("items") if isinstance(data.get("items"), list) else []
+    return sorted([item for item in items if isinstance(item, dict)], key=lambda x: (x.get("favorite", False), x.get("updated_at", ""), x.get("created_at", "")), reverse=True)
+
+
+def get_item(item_id: str) -> dict[str, Any] | None:
+    item_id = _text(item_id, "")
+    if not item_id:
+        return None
+    for item in list_items():
+        if _text(item.get("id"), "") == item_id:
+            return item
+    return None
+
+
+def upsert_item(payload: dict[str, Any]) -> dict[str, Any]:
+    data = load_inventory()
+    items = [item for item in data.get("items", []) if isinstance(item, dict)]
+    existing = None
+    item_id = _text(payload.get("id"), "")
+    if item_id:
+        for idx, item in enumerate(items):
+            if _text(item.get("id"), "") == item_id:
+                existing = item
+                items[idx] = normalize_item(payload, existing=item)
+                break
+    if existing is None:
+        items.append(normalize_item(payload))
+    data["items"] = items
+    save_inventory(data)
+    return get_item(item_id) if item_id else items[-1]
+
+
+def delete_item(item_id: str) -> bool:
+    data = load_inventory()
+    items = [item for item in data.get("items", []) if isinstance(item, dict)]
+    before = len(items)
+    items = [item for item in items if _text(item.get("id"), "") != _text(item_id, "")]
+    if len(items) == before:
+        return False
+    data["items"] = items
+    save_inventory(data)
+    return True
+
+
+def set_status(item_id: str, status: str) -> dict[str, Any] | None:
+    item = get_item(item_id)
+    if not item:
+        return None
+    payload = dict(item)
+    payload["status"] = _text(status, "owned").lower()
+    if payload["status"] not in STATUS_VALUES:
+        payload["status"] = "owned"
+    return upsert_item(payload)
+
+
+def toggle_favorite(item_id: str, favorite: bool | None = None) -> dict[str, Any] | None:
+    item = get_item(item_id)
+    if not item:
+        return None
+    payload = dict(item)
+    payload["favorite"] = (not bool(item.get("favorite"))) if favorite is None else bool(favorite)
+    return upsert_item(payload)
+
+
+def category_sections(items: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+    items = items if isinstance(items, list) else list_items()
+    sections: list[dict[str, Any]] = []
+    for category in CATEGORY_ORDER:
+        category_items = [item for item in items if _text(item.get("category"), "misc").lower() == category]
+        sections.append({
+            "key": category,
+            "label": category_label(category),
+            "count": len(category_items),
+            "items": category_items,
+        })
+    return sections
+
+
+def inventory_summary(items: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    items = items if isinstance(items, list) else list_items()
+    owned = [item for item in items if _text(item.get("status"), "owned") == "owned"]
+    favorites = [item for item in items if _as_bool(item.get("favorite"))]
+    retired = [item for item in items if _text(item.get("status"), "") == "retired"]
+    return {
+        "total": len(items),
+        "owned": len(owned),
+        "favorites": len(favorites),
+        "retired": len(retired),
+        "wishlist": sum(1 for item in items if _text(item.get("status"), "") == "wishlist"),
+        "recent": len([item for item in items if _text(item.get("updated_at"), "")][:4]),
+        "by_category": {section["key"]: section["count"] for section in category_sections(items)},
+    }
+
+
+def recent_items(items: list[dict[str, Any]] | None = None, limit: int = 4) -> list[dict[str, Any]]:
+    items = items if isinstance(items, list) else list_items()
+    return sorted(items, key=lambda x: _text(x.get("updated_at"), _text(x.get("created_at"), "")), reverse=True)[:limit]
+
+
+def reference_rig_items() -> list[dict[str, Any]]:
+    path = DATA_DIR / "lure_rig_setups_v43.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+    except Exception:
+        data = []
+    return data if isinstance(data, list) else []
+

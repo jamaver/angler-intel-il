@@ -1,0 +1,11 @@
+{
+  "version": "v6.10-tackle-locker",
+  "previous_version": "v6.9-dashboard-cohesion",
+  "tackle_locker": true,
+  "gear_inventory": true,
+  "manual_entry": true,
+  "catalog_abstraction": true,
+  "current_rig_reference_preserved": true,
+  "sqlite_authority_flipped": false,
+  "installed_at": "2026-07-15T14:03:48"
+}

@@ -25,10 +25,10 @@
     panel.innerHTML = `
       <div class="ai-rig-head">
         <div>
-          <h2>Rig Setup Guide</h2>
-          <p class="muted">Quick rigging help for trout, pike, bass, walleye, panfish, and catfish.</p>
+          <h2>My Tackle Locker</h2>
+          <p class="muted">Quick gear reference for trout, pike, bass, walleye, panfish, and catfish.</p>
         </div>
-        <a href="/rigs" class="ai-rig-link">Open Full Rig Guide</a>
+        <a href="/rigs" class="ai-rig-link">Open Tackle Locker</a>
       </div>
 
       <div class="ai-rig-controls">
@@ -74,7 +74,7 @@
     const status = panel.querySelector("#aiRigStatus");
     const results = panel.querySelector("#aiRigResults");
 
-    status.textContent = "Loading rig setups...";
+    status.textContent = "Loading tackle locker suggestions...";
     results.innerHTML = "";
 
     try {
@@ -85,11 +85,11 @@
       const rigs = Array.isArray(data.rigs) ? data.rigs.slice(0, 3) : [];
 
       if (!rigs.length) {
-        status.textContent = "No rig setups matched.";
+        status.textContent = "No tackle locker suggestions matched.";
         return;
       }
 
-      status.textContent = `${rigs.length} rig setup option(s) for ${species}`;
+      status.textContent = `${rigs.length} tackle locker suggestion(s) for ${species}`;
 
       results.innerHTML = rigs.map(r => `
         <article class="ai-rig-card">
@@ -98,11 +98,11 @@
           <p><strong>Line:</strong> ${escapeHtml(r.line)}</p>
           <p><strong>Terminal:</strong> ${escapeHtml(r.terminal)}</p>
           <p><strong>Setup:</strong> ${escapeHtml(r.setup)}</p>
-          <a href="/rigs?species=${encodeURIComponent(species)}">More rig details</a>
+          <a href="/rigs?species=${encodeURIComponent(species)}">More tackle locker details</a>
         </article>
       `).join("");
     } catch (err) {
-      status.textContent = "Unable to load rig setups: " + err;
+      status.textContent = "Unable to load tackle locker suggestions: " + err;
     }
   }
 
