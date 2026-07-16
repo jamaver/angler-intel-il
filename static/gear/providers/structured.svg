@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Structured product page provider">
+  <rect width="128" height="128" rx="24" fill="#0f172a"/>
+  <rect x="14" y="14" width="100" height="100" rx="20" fill="#1e293b" stroke="#94a3b8" stroke-width="4"/>
+  <path d="M34 42h60v10H34zM34 60h48v10H34zM34 78h36v10H34z" fill="#38bdf8"/>
+  <path d="M94 34l12 12-12 12" fill="none" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

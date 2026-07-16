@@ -41,6 +41,20 @@
     return PAGE.searchSettings || {};
   }
 
+  function providerIconFor(provider) {
+    const key = String(provider || "").toLowerCase();
+    const map = {
+      amazon: "/static/gear/providers/amazon.svg",
+      walmart: "/static/gear/providers/walmart.svg",
+      structured: "/static/gear/providers/structured.svg",
+      local: "/static/gear/providers/local.svg",
+      manual: "/static/gear/providers/manual.svg",
+      cache: "/static/gear/providers/cache.svg",
+      generic: "/static/gear/providers/manual.svg",
+    };
+    return map[key] || "/static/gear/providers/manual.svg";
+  }
+
   function setSettings(settings) {
     PAGE.searchSettings = settings || {};
   }
@@ -305,6 +319,7 @@
       item.raw_provider_data_cached ? `<span class="gear-badge">Cached</span>` : "",
       duplicateMatches.length ? `<span class="gear-badge gear-badge-favorite">Possible duplicate</span>` : "",
     ].filter(Boolean).join("");
+    const providerIcon = providerIconFor(item.provider);
 
     return `
       <article class="gear-catalog-result" data-result-key="${escapeHtml(actionValue)}">
@@ -313,6 +328,7 @@
             <h3>${escapeHtml(title)}</h3>
             <p class="gear-muted">${escapeHtml(sourceLine || subtitle)}</p>
           </div>
+          <img class="gear-provider-icon" src="${escapeHtml(item.provider_icon || providerIcon)}" alt="${escapeHtml(item.provider || "provider")}">
           <div class="gear-badge-row">${statusBadges}</div>
         </div>
         <div class="gear-catalog-result-body">
@@ -364,6 +380,18 @@
       ? `<div class="gear-result-messages">${messages.map(message => `<p class="gear-empty">${escapeHtml(message)}</p>`).join("")}</div>`
       : "";
 
+    const providerCards = Array.isArray(payload?.providers) && payload.providers.length
+      ? `<section class="gear-results-group gear-provider-panel"><h3>Online providers</h3><div class="gear-provider-grid">${payload.providers.map(provider => `
+          <article class="gear-provider-card">
+            <img class="gear-provider-icon" src="${escapeHtml(provider.icon || providerIconFor(provider.provider_id))}" alt="${escapeHtml(provider.name || provider.provider_id || "provider")}">
+            <div>
+              <strong>${escapeHtml(provider.name || provider.provider_id || "Provider")}</strong>
+              <p class="gear-muted">${escapeHtml(provider.status || (provider.enabled ? "enabled" : "disabled"))}${provider.requires_credentials ? " · credentials needed" : ""}</p>
+            </div>
+          </article>
+        `).join("")}</div></section>`
+      : "";
+
     if (!localCount && !onlineCount && !messages.length) {
       box.innerHTML = `
         <p class="gear-empty">No matching local or online products were found.</p>
@@ -379,6 +407,7 @@
 
     box.innerHTML = `
       ${messageMarkup}
+      ${providerCards}
       ${localSections || `<p class="gear-empty">No local matches in the locker or cache.</p>`}
       ${onlineSection}
       <p class="gear-empty">Local results are shown first. Review imported products before saving them to your locker.</p>

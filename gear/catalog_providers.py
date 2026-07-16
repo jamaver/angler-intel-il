@@ -55,6 +55,15 @@ def _default_cache() -> dict[str, Any]:
     }
 
 
+def provider_icon_for(provider_id: Any) -> str:
+    key = _slug(_text(provider_id, "generic"))
+    if key in {"manual", "cache", "local"}:
+        return "/static/gear/providers/local.svg" if key == "local" else f"/static/gear/providers/{key}.svg"
+    if key in {"structured", "amazon", "walmart"}:
+        return f"/static/gear/providers/{key}.svg"
+    return "/static/gear/providers/manual.svg"
+
+
 def load_cache() -> dict[str, Any]:
     data = _read_json(catalog_cache_path(), _default_cache())
     if not isinstance(data, dict):
@@ -91,6 +100,7 @@ def normalize_product(raw_product: dict[str, Any]) -> dict[str, Any]:
     product["retrieved_at"] = _text(product.get("retrieved_at"), _now())
     product["query_key"] = _slug(" ".join(part for part in [product.get("brand"), product.get("model"), product.get("display_name")] if _text(part)))
     product["image"] = _text(product.get("image"), product["image_url"] or fallback_image_for(product.get("category"), product.get("subtype")))
+    product["provider_icon"] = _text(product.get("provider_icon"), provider_icon_for(product.get("provider")))
     if not product["image_url"] and product["image"].startswith("http"):
         product["image_url"] = product["image"]
     return product
@@ -165,6 +175,7 @@ def available_providers() -> list[dict[str, Any]]:
     for provider in providers:
         if provider.get("provider_id") in settings.get("enabled_providers", {}):
             provider["enabled"] = bool(settings["enabled_providers"].get(provider["provider_id"]))
+        provider.setdefault("icon", provider_icon_for(provider.get("provider_id")))
     return providers
 
 
@@ -187,6 +198,7 @@ def search_gear_catalog(query: str, category: str = "", scope: str = "both", lim
                 cache_product(product)
                 product["duplicate_matches"] = find_duplicate_items(product)
                 product["match_group"] = "online"
+                product["provider_icon"] = provider_icon_for(product.get("provider"))
                 online.append(product)
             else:
                 messages.append(imported.get("error", "Unable to import the product URL."))
@@ -203,6 +215,7 @@ def search_gear_catalog(query: str, category: str = "", scope: str = "both", lim
                     product = normalize_product(result)
                     product["duplicate_matches"] = find_duplicate_items(product)
                     product["match_group"] = "online"
+                    product["provider_icon"] = provider_icon_for(product.get("provider"))
                     online.append(product)
 
             if not _enabled_online_providers() and query:

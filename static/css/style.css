@@ -3343,6 +3343,14 @@ button {
   justify-content: flex-end;
 }
 
+.gear-provider-icon {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  flex: 0 0 auto;
+  border-radius: 8px;
+}
+
 .gear-badge {
   display: inline-flex;
   align-items: center;
@@ -3532,6 +3540,31 @@ button {
 .gear-catalog-result-actions a {
   color: #7ee49a;
   font-weight: 800;
+}
+
+.gear-provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.gear-provider-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid rgba(110, 167, 182, 0.18);
+  background: rgba(10, 16, 30, 0.55);
+}
+
+.gear-provider-card strong {
+  display: block;
+  color: #e6f8e9;
+}
+
+.gear-provider-card p {
+  margin: 0.2rem 0 0;
 }
 
 .gear-inline-link {

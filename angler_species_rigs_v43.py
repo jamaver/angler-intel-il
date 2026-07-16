@@ -16,6 +16,7 @@ from gear.inventory import (
     fallback_image_for,
     inventory_summary,
     list_items,
+    provider_icon_for,
     set_status,
     toggle_favorite,
     upsert_item,
@@ -123,6 +124,7 @@ def _enrich_gear_item(item: dict[str, Any]) -> dict[str, Any]:
     enriched = dict(item)
     enriched["fallback_image"] = fallback_image_for(enriched.get("category"), enriched.get("subtype"))
     enriched["display_image"] = enriched.get("image_url") or enriched.get("image") or enriched["fallback_image"]
+    enriched["provider_icon"] = enriched.get("provider_icon") or provider_icon_for(enriched.get("provider"), enriched.get("source"))
     enriched["duplicate_matches"] = enriched.get("duplicate_matches") if isinstance(enriched.get("duplicate_matches"), list) else []
     return enriched
 

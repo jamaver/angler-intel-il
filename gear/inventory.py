@@ -210,6 +210,18 @@ def fallback_image_for(category: Any, subtype: Any = None) -> str:
     return CATEGORY_FALLBACKS.get(key, CATEGORY_FALLBACKS["misc"])
 
 
+def provider_icon_for(provider: Any, source: Any = None) -> str:
+    key = _text(provider, "").lower()
+    source_key = _text(source, "").lower()
+    if key in {"amazon", "walmart", "structured", "local", "manual", "cache"}:
+        if key in {"manual", "cache"}:
+            return f"/static/gear/providers/{key}.svg"
+        return f"/static/gear/providers/{key}.svg"
+    if source_key in {"manual", "cache"}:
+        return f"/static/gear/providers/{source_key}.svg"
+    return "/static/gear/providers/manual.svg"
+
+
 def _default_display_name(item: dict[str, Any]) -> str:
     category = _text(item.get("category"), "misc").lower()
     brand = _text(item.get("brand"), "")
@@ -262,6 +274,7 @@ def normalize_item(payload: dict[str, Any], existing: dict[str, Any] | None = No
         "confidence": _text(payload.get("confidence"), _text(existing.get("confidence"), "user-added")).lower(),
         "provider": _text(payload.get("provider"), _text(existing.get("provider"), "")),
         "provider_product_id": _text(payload.get("provider_product_id"), _text(existing.get("provider_product_id"), "")),
+        "provider_icon": _text(payload.get("provider_icon"), _text(existing.get("provider_icon"), provider_icon_for(payload.get("provider"), payload.get("source") or existing.get("source")))),
         "price": payload.get("price", existing.get("price")),
         "availability": _text(payload.get("availability"), _text(existing.get("availability"), "")),
         "raw_provider_data_cached": _as_bool(payload.get("raw_provider_data_cached") if "raw_provider_data_cached" in payload else existing.get("raw_provider_data_cached")),
@@ -403,6 +416,7 @@ def search_items(query: str = "", category: str = "", status: str = "", limit: i
 
         enriched = dict(item)
         enriched["fallback_image"] = fallback_image_for(item_category, item.get("subtype"))
+        enriched["provider_icon"] = provider_icon_for(item.get("provider"), item.get("source"))
         results.append((score, enriched))
 
     results.sort(key=lambda pair: (pair[0], _text(pair[1].get("updated_at"), ""), _text(pair[1].get("display_name"), "")), reverse=True)

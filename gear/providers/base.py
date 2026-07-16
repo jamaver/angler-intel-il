@@ -19,8 +19,8 @@ class GearCatalogProvider:
         return {
             "provider_id": self.provider_id,
             "name": self.name,
+            "icon": f"/static/gear/providers/{self.provider_id}.svg",
             "enabled": bool(self.enabled),
             "requires_credentials": bool(self.requires_credentials),
             "status": "enabled" if self.enabled else "disabled",
         }
-

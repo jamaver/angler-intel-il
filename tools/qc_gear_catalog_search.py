@@ -47,6 +47,55 @@ def _fake_product_html() -> str:
 </html>"""
 
 
+def _fake_amazon_response() -> dict[str, object]:
+    return {
+        "SearchResult": {
+            "Items": [
+                {
+                    "ASIN": "B00TEST123",
+                    "DetailPageURL": "https://www.amazon.com/dp/B00TEST123",
+                    "Images": {
+                        "Primary": {
+                            "Large": {"URL": "https://example.com/amazon-rod.jpg"},
+                            "Medium": {"URL": "https://example.com/amazon-rod-med.jpg"},
+                        }
+                    },
+                    "ItemInfo": {
+                        "Title": {"DisplayValue": "Amazon Rod"},
+                        "ByLineInfo": {"Brand": {"DisplayValue": "Amazon"}},
+                        "Features": {"DisplayValues": ["8-foot", "Medium Heavy", "Fast"]},
+                    },
+                    "OffersV2": {
+                        "Listings": [
+                            {
+                                "Price": {"DisplayAmount": "$99.99"},
+                                "Availability": {"Message": {"DisplayValue": "In Stock"}},
+                            }
+                        ]
+                    },
+                }
+            ]
+        }
+    }
+
+
+def _fake_walmart_response() -> dict[str, object]:
+    return {
+        "items": [
+            {
+                "itemId": "WM123",
+                "name": "Walmart Lure",
+                "brand": "Walmart",
+                "url": "https://www.walmart.com/ip/WM123",
+                "image": {"large": "https://example.com/walmart-lure.jpg"},
+                "price": "$7.49",
+                "availability": "In stock",
+                "upc": "123456789012",
+            }
+        ]
+    }
+
+
 class _FakeResponse:
     def __init__(self, html: str, url: str = "https://example.com/product") -> None:
         self._html = html.encode("utf-8")
@@ -90,6 +139,18 @@ def main() -> int:
         except SyntaxError as exc:
             errors.append(f"{rel} syntax error: {exc}")
 
+    for rel in (
+        "static/gear/providers/amazon.svg",
+        "static/gear/providers/walmart.svg",
+        "static/gear/providers/structured.svg",
+        "static/gear/providers/local.svg",
+        "static/gear/providers/manual.svg",
+        "static/gear/providers/cache.svg",
+    ):
+        path = ROOT / rel
+        if not path.exists() or path.stat().st_size <= 0:
+            errors.append(f"Missing provider icon {rel}")
+
     if not (ROOT / "templates" / "tackle_locker.html").read_text(encoding="utf-8").find("gearSearchScope") >= 0:
         errors.append("tackle locker template is missing search scope control")
     template_text = (ROOT / "templates" / "tackle_locker.html").read_text(encoding="utf-8")
@@ -100,9 +161,14 @@ def main() -> int:
         errors.append("Admin should not be present in tackle locker nav")
 
     js_text = (ROOT / "static" / "js" / "tackle_locker_v610.js").read_text(encoding="utf-8")
-    for needle in ("searchCatalog", "importFromUrl", "saveSettings", "gearSearchScope", "gearImportUrlButton"):
+    for needle in ("searchCatalog", "importFromUrl", "saveSettings", "gearSearchScope", "gearImportUrlButton", "providerIconFor", "gear-provider-grid"):
         if needle not in js_text:
             errors.append(f"tackle locker JS missing {needle}")
+
+    style_text = (ROOT / "static" / "css" / "style.css").read_text(encoding="utf-8")
+    for needle in ("gear-provider-icon", "gear-provider-grid", "gear-provider-card"):
+        if needle not in style_text:
+            errors.append(f"style.css missing {needle}")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp = Path(tmpdir)
@@ -224,6 +290,34 @@ def main() -> int:
             data = settings_res.get_json(silent=True) or {}
             if not data.get("providers"):
                 errors.append("Gear settings should expose provider health")
+
+        os.environ["AI_AMAZON_PAAPI_ACCESS_KEY"] = "AKIATEST"
+        os.environ["AI_AMAZON_PAAPI_SECRET_KEY"] = "SECRET"
+        os.environ["AI_AMAZON_PAAPI_PARTNER_TAG"] = "anglerintel-20"
+        from gear.providers.amazon_provider import AmazonCatalogProvider
+        amazon = AmazonCatalogProvider()
+        with mock.patch("gear.providers.amazon_provider.requests.post") as fake_post:
+            fake_post.return_value = mock.Mock(
+                status_code=200,
+                json=lambda: _fake_amazon_response(),
+                raise_for_status=lambda: None,
+            )
+            amazon_results = amazon.search("bass rod", category="rod", limit=5)
+        if not amazon_results or amazon_results[0].get("image_url") != "https://example.com/amazon-rod.jpg":
+            errors.append("Amazon provider did not normalize live search results")
+
+        os.environ["AI_WALMART_API_SEARCH_URL"] = "https://example.com/walmart/search"
+        from gear.providers.walmart_provider import WalmartCatalogProvider
+        walmart = WalmartCatalogProvider()
+        with mock.patch("gear.providers.walmart_provider.requests.get") as fake_get:
+            fake_get.return_value = mock.Mock(
+                status_code=200,
+                json=lambda: _fake_walmart_response(),
+                raise_for_status=lambda: None,
+            )
+            walmart_results = walmart.search("spinnerbait", category="lure", limit=5)
+        if not walmart_results or walmart_results[0].get("image_url") != "https://example.com/walmart-lure.jpg":
+            errors.append("Walmart provider did not normalize live search results")
 
     if errors:
         print("QC FAILED: gear catalog search")

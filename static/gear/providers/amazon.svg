@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Amazon provider">
+  <rect width="128" height="128" rx="24" fill="#111827"/>
+  <rect x="14" y="14" width="100" height="100" rx="20" fill="#1f2937" stroke="#f59e0b" stroke-width="4"/>
+  <path d="M28 82c16 10 48 12 72-2" fill="none" stroke="#f59e0b" stroke-width="6" stroke-linecap="round"/>
+  <path d="M86 72l16 8-16 8" fill="none" stroke="#f59e0b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="64" y="60" text-anchor="middle" fill="#ffffff" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="28" font-weight="700">Amazon</text>
+</svg>
