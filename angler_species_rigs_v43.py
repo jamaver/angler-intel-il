@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import html
 import json
+import uuid
 from pathlib import Path
 from typing import Any
 
-from flask import jsonify, render_template, request
+from flask import jsonify, render_template, request, send_from_directory
+from werkzeug.utils import secure_filename
 
 from gear.catalog_providers import available_providers, fetch_product, search_gear_catalog
 from gear.settings import load_settings
@@ -26,8 +28,10 @@ from gear.inventory import (
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
+GEAR_UPLOAD_DIR = DATA_DIR / "gear_uploads"
 SPECIES_PATH = DATA_DIR / "species_profiles_v43.json"
 RIGS_PATH = DATA_DIR / "lure_rig_setups_v43.json"
+ALLOWED_GEAR_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
 
 
 def _read_json(path: Path, default: Any) -> Any:
@@ -128,6 +132,120 @@ def _enrich_gear_item(item: dict[str, Any]) -> dict[str, Any]:
     enriched["provider_icon"] = enriched.get("provider_icon") or provider_icon_for(enriched.get("provider"), enriched.get("source"))
     enriched["duplicate_matches"] = enriched.get("duplicate_matches") if isinstance(enriched.get("duplicate_matches"), list) else []
     return enriched
+
+
+def _is_generic_import(product: dict[str, Any]) -> bool:
+    blob = " ".join([
+        str(product.get("brand", "")),
+        str(product.get("model", "")),
+        str(product.get("display_name", "")),
+        str(product.get("description", "")),
+        str(product.get("import_summary", "")),
+        str(product.get("product_summary", "")),
+    ]).lower()
+    generic_markers = (
+        "site maintenance",
+        "maintenance",
+        "page not found",
+        "not found",
+        "temporarily unavailable",
+        "access denied",
+        "coming soon",
+        "home page",
+    )
+    if any(marker in blob for marker in generic_markers):
+        return True
+    if not str(product.get("brand", "")).strip() and not str(product.get("model", "")).strip():
+        return True
+    if not str(product.get("product_summary", "")).strip() and not str(product.get("import_summary", "")).strip():
+        return True
+    return False
+
+
+def _merge_query_match(base: dict[str, Any], match: dict[str, Any], force: bool = False) -> dict[str, Any]:
+    merged = dict(base or {})
+    if not isinstance(match, dict):
+        return merged
+    for key in (
+        "provider",
+        "provider_product_id",
+        "source_name",
+        "source_url",
+        "category",
+        "brand",
+        "model",
+        "display_name",
+        "image_url",
+        "image_source",
+        "identifiers",
+        "specifications",
+        "price",
+        "availability",
+        "confidence",
+        "raw_provider_data_cached",
+        "provider_icon",
+        "length_ft",
+        "length_label",
+        "power",
+        "action",
+        "pieces",
+        "lure_weight_min_oz",
+        "lure_weight_max_oz",
+        "line_rating_min_lb",
+        "line_rating_max_lb",
+        "reel_type",
+        "gear_ratio",
+        "max_drag_lb",
+        "line_capacity",
+        "weight_oz",
+        "handedness",
+        "line_type",
+        "strength_lb",
+        "diameter_equivalent",
+        "color",
+        "length_yd",
+        "lure_type",
+        "hook_size",
+        "depth_min_ft",
+        "depth_max_ft",
+        "quantity",
+        "subtype",
+        "size",
+        "technique_tags",
+        "species_tags",
+    ):
+        value = match.get(key)
+        if force and key in {"provider", "provider_product_id", "source_name", "source_url", "category", "brand", "model", "display_name", "image_url", "image_source", "identifiers", "specifications", "price", "availability", "confidence", "raw_provider_data_cached", "provider_icon"}:
+            if value not in (None, "", [], {}):
+                merged[key] = value
+            continue
+        if key not in merged or merged.get(key) in (None, "", [], {}):
+            if value not in (None, "", [], {}):
+                merged[key] = value
+    merged["query_match_applied"] = True
+    merged["query_match_source"] = match.get("source_name") or match.get("provider") or ""
+    merged["query_match_label"] = match.get("display_name") or "Suggested match"
+    merged["query_match"] = {
+        "provider": match.get("provider"),
+        "source_name": match.get("source_name"),
+        "source_url": match.get("source_url"),
+        "display_name": match.get("display_name"),
+        "confidence": match.get("confidence"),
+    }
+    return merged
+
+
+def _best_query_matches(query: str, category: str = "", limit: int = 3) -> list[dict[str, Any]]:
+    if not query.strip():
+        return []
+    results = search_gear_catalog(query, category=category, scope="both", limit=max(1, min(limit, 5)))
+    matches: list[dict[str, Any]] = []
+    for group in (results.get("local", {}).get("owned", []), results.get("local", {}).get("cached", []), results.get("online", {}).get("matches", [])):
+        if isinstance(group, list):
+            for item in group:
+                if isinstance(item, dict):
+                    matches.append(item)
+    return matches[:limit]
 
 
 def _locker_context() -> dict[str, Any]:
@@ -462,6 +580,30 @@ def register_species_rig_routes_v43(app):
             return jsonify({"ok": False, "error": "Gear item not found"}), 404
         return jsonify({"ok": True, "deleted": True, "summary": inventory_summary()})
 
+    @app.route("/api/gear/uploads/<path:filename>")
+    def gear_uploads_api_v612(filename: str):
+        return send_from_directory(GEAR_UPLOAD_DIR, filename)
+
+    @app.route("/api/gear/upload-image", methods=["POST"])
+    def gear_upload_image_api_v612():
+        upload = request.files.get("image") or request.files.get("file")
+        if upload is None or not getattr(upload, "filename", ""):
+            return jsonify({"ok": False, "error": "Choose an image file first."}), 400
+        original = secure_filename(upload.filename or "")
+        suffix = Path(original).suffix.lower()
+        if suffix not in ALLOWED_GEAR_IMAGE_EXTENSIONS:
+            suffix = ".png"
+        GEAR_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+        filename = f"gear_{uuid.uuid4().hex[:12]}{suffix}"
+        file_path = GEAR_UPLOAD_DIR / filename
+        upload.save(file_path)
+        return jsonify({
+            "ok": True,
+            "filename": filename,
+            "image_url": f"/api/gear/uploads/{filename}",
+            "image_source": "local-upload",
+        })
+
     @app.route("/api/gear/search")
     def gear_search_api_v611():
         query = request.args.get("q", "")
@@ -489,15 +631,23 @@ def register_species_rig_routes_v43(app):
         payload = request.get_json(silent=True) or {}
         url = payload.get("url", "")
         category = payload.get("category", "misc")
+        query_hint = str(payload.get("query", "") or "").strip()
         import_result = fetch_product(url=url, category=category, allow_remote_images=bool(load_settings().get("allow_remote_images", False)))
         if not import_result:
             return jsonify({"ok": False, "error": "Unable to import the product URL."}), 400
-        duplicates = find_duplicate_items(import_result) if isinstance(import_result, dict) else []
+        product = import_result if isinstance(import_result, dict) else {}
+        query_matches = _best_query_matches(query_hint, category=category, limit=3) if query_hint else []
+        if query_matches and _is_generic_import(product):
+            product = _merge_query_match(product, query_matches[0], force=True)
+            product["query_matches"] = query_matches
+            product["query_hint"] = query_hint
+        duplicates = find_duplicate_items(product) if isinstance(product, dict) else []
         return jsonify({
             "ok": True,
             "version": "v6.12-gear-management-url-assist",
-            "product": import_result,
+            "product": product,
             "duplicate_matches": duplicates if isinstance(duplicates, list) else [],
+            "query_matches": query_matches,
         })
 
     @app.route("/api/gear/settings", methods=["GET", "POST"])

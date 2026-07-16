@@ -7,6 +7,7 @@ import os
 import tempfile
 import sys
 from pathlib import Path
+from io import BytesIO
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -160,6 +161,9 @@ def main() -> int:
     for needle in ("gearSearchScope", "gearProductUrl", "gearImportUrlButton", "gearOnlineLookup", "gearDefaultScope", "My Tackle Locker"):
         if needle not in template_text:
             errors.append(f"tackle locker template missing {needle}")
+    for needle in ("gearImportQuery", "gearImageUpload", "gearImagePreview"):
+        if needle not in template_text:
+            errors.append(f"tackle locker template missing {needle}")
     for needle in ("data-gear-action=\"retire\"", "data-gear-action=\"delete\"", "gear-danger-button"):
         if needle not in template_text:
             errors.append(f"tackle locker template missing {needle}")
@@ -310,6 +314,58 @@ def main() -> int:
                 errors.append("URL import should infer rod lure and line ratings")
             if not product.get("import_summary"):
                 errors.append("URL import should provide a summary for review")
+
+        generic_html = """<!doctype html><html><head><title>Site Maintenance</title></head><body><p>Maintenance</p></body></html>"""
+        query_match = {
+            "provider": "structured",
+            "provider_product_id": "query-match-rod",
+            "source_name": "Structured product page",
+            "source_url": "https://example.com/query-match",
+            "category": "rod",
+            "brand": "St. Croix",
+            "model": "Legend Tournament Bass",
+            "display_name": "St. Croix Legend Tournament Bass 7'1\" MH Fast",
+            "image_url": "https://example.com/query-match.jpg",
+            "confidence": "high",
+            "length_label": "7'1\"",
+            "power": "medium_heavy",
+            "action": "fast",
+        }
+        with mock.patch("gear.product_url_import.requests.get") as fake_get, mock.patch("angler_species_rigs_v43.search_gear_catalog") as fake_search:
+            fake_get.return_value = _FakeResponse(generic_html, url="https://example.com/maintenance")
+            fake_search.return_value = {
+                "local": {"owned": [], "cached": []},
+                "online": {"matches": [query_match], "count": 1},
+                "messages": [],
+            }
+            imported = client.post("/api/gear/import/url", json={
+                "url": "https://example.com/maintenance",
+                "category": "rod",
+                "query": "7'1 medium heavy fast rod",
+            })
+        if imported.status_code != 200:
+            errors.append(f"Query fallback URL import failed: HTTP {imported.status_code}")
+        else:
+            data = imported.get_json(silent=True) or {}
+            product = data.get("product") if isinstance(data, dict) else {}
+            if product.get("brand") != "St. Croix" or "Legend Tournament Bass" not in str(product.get("display_name", "")):
+                errors.append("Query fallback should fill brand/model from a suggested match")
+            if not data.get("query_matches"):
+                errors.append("Query fallback should return suggested matches")
+            if not product.get("query_match_applied"):
+                errors.append("Query fallback should mark the applied match")
+
+        upload = client.post(
+            "/api/gear/upload-image",
+            data={"image": (BytesIO(b"fake image bytes"), "rod.png")},
+            content_type="multipart/form-data",
+        )
+        if upload.status_code != 200:
+            errors.append(f"Image upload failed: HTTP {upload.status_code}")
+        else:
+            data = upload.get_json(silent=True) or {}
+            if not data.get("image_url", "").startswith("/api/gear/uploads/"):
+                errors.append("Image upload should return a local image URL")
 
         blocked = client.post("/api/gear/import/url", json={"url": "http://127.0.0.1/", "category": "rod"})
         if blocked.status_code == 200:

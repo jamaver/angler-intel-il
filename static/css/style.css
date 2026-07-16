@@ -3540,6 +3540,25 @@ button {
   min-width: 0;
 }
 
+.gear-upload-note {
+  display: block;
+  color: #c8d4e5;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.gear-image-preview {
+  width: min(260px, 100%);
+  height: 180px;
+  object-fit: contain;
+  align-self: start;
+  justify-self: start;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  padding: 0.35rem;
+}
+
 .gear-import-summary {
   margin: 0;
   color: #dbeafe;

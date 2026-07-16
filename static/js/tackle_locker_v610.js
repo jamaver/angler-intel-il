@@ -151,6 +151,9 @@
     byId("gearConfidence").value = "user-added";
     byId("gearFavorite").checked = false;
     byId("gearAutoDisplayName").checked = true;
+    setImagePreview("/static/gear/fallback/generic.svg");
+    const imageUpload = byId("gearImageUpload");
+    if (imageUpload) imageUpload.value = "";
     syncCategoryFields();
   }
 
@@ -313,6 +316,7 @@
     const duplicate = resultDuplicateNote(item);
     const duplicateMatches = Array.isArray(item.duplicate_matches) ? item.duplicate_matches : [];
     const summary = item.product_summary || item.import_summary || item.description || "";
+    const importHint = item.query_match_applied ? `<p class="gear-import-summary">Suggested match from search hints${item.query_match_source ? ` · ${escapeHtml(item.query_match_source)}` : ""}</p>` : "";
     const specs = item.specifications && typeof item.specifications === "object"
       ? Object.entries(item.specifications).slice(0, 4).map(([key, value]) => `<span>${escapeHtml(String(key).replaceAll("_", " "))}: ${escapeHtml(value)}</span>`).join("")
       : "";
@@ -340,6 +344,7 @@
           <img class="gear-catalog-result-image" src="${escapeHtml(item.display_image || item.image || item.fallback_image || "")}" alt="${escapeHtml(title)}" onerror="this.src='${escapeHtml(item.fallback_image || "/static/gear/fallback/generic.svg")}'">
           <div class="gear-catalog-result-copy">
             <p class="gear-muted">${escapeHtml(subtitle)}</p>
+            ${importHint}
             ${summary ? `<p class="gear-import-summary">${escapeHtml(summary)}</p>` : ""}
             ${specs ? `<div class="gear-item-specs">${specs}</div>` : ""}
             ${identifiers ? `<div class="gear-item-specs">${identifiers}</div>` : ""}
@@ -369,6 +374,7 @@
       localOwned,
       localCached,
       online,
+      queryMatches: [],
     };
 
     const localCount = localOwned.length + localCached.length;
@@ -445,6 +451,7 @@
 
   async function importFromUrl() {
     const url = byId("gearProductUrl").value.trim();
+    const query = byId("gearImportQuery").value.trim();
     const category = byId("gearImportCategory").value;
     const box = byId("catalogResults");
     if (!box) return;
@@ -458,7 +465,7 @@
       const res = await fetch("/api/gear/import/url", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, category }),
+        body: JSON.stringify({ url, category, query }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
@@ -466,6 +473,10 @@
       }
       const product = data.product || {};
       PAGE.importDraft = product;
+      PAGE.searchResults = {
+        ...(PAGE.searchResults || {}),
+        queryMatches: Array.isArray(data.query_matches) ? data.query_matches : [],
+      };
       populateForm(product);
       box.innerHTML = `
         <section class="gear-results-group">
@@ -473,11 +484,32 @@
           <p class="gear-empty">The imported product has been loaded into the form for review. Confirm the details before saving.</p>
           ${renderResultCard(product, { actionLabel: "Review in form", actionAttr: "data-gear-review-import", actionValue: "imported" })}
         </section>
+        ${Array.isArray(data.query_matches) && data.query_matches.length ? `<section class="gear-results-group"><h3>Suggested query matches</h3><div class="gear-catalog-results">${data.query_matches.map((item, idx) => renderResultCard(item, { actionLabel: idx === 0 ? "Use best match" : "Review match", actionAttr: "data-gear-review-result", actionValue: `query-${idx}` })).join("")}</div></section>` : ""}
         ${Array.isArray(data.duplicate_matches) && data.duplicate_matches.length ? `<section class="gear-results-group"><h3>Possible duplicates</h3><div class="gear-catalog-results">${data.duplicate_matches.map((item, idx) => renderResultCard(item, { actionLabel: "Open existing", actionAttr: "data-gear-open-existing", actionValue: item.id || `duplicate-${idx}` })).join("")}</div></section>` : ""}
       `;
     } catch (err) {
       box.innerHTML = `<p class='gear-empty'>URL import failed: ${escapeHtml(err)}</p>`;
     }
+  }
+
+  async function uploadGearImage(file) {
+    if (!file) return null;
+    const formData = new FormData();
+    formData.append("image", file);
+    const res = await fetch("/api/gear/upload-image", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+    return data;
+  }
+
+  function setImagePreview(url) {
+    const preview = byId("gearImagePreview");
+    if (preview) preview.src = url || "/static/gear/fallback/generic.svg";
   }
 
   function populateForm(item) {
@@ -493,6 +525,7 @@
     setField("Model", item.model);
     setField("DisplayName", item.display_name);
     setField("Image", item.image || item.image_url || item.display_image);
+    setImagePreview(item.image || item.image_url || item.display_image || "/static/gear/fallback/generic.svg");
     setField("SourceName", item.source_name);
     setField("SourceUrl", item.source_url || item.source_page_url);
     setField("RetrievedAt", item.retrieved_at);
@@ -598,6 +631,10 @@
       const idx = Number.parseInt(parts[1], 10);
       return Number.isFinite(idx) && Array.isArray(search.online) ? search.online[idx] : null;
     }
+    if (parts.length === 2 && parts[0] === "query") {
+      const idx = Number.parseInt(parts[1], 10);
+      return Number.isFinite(idx) && Array.isArray(search.queryMatches) ? search.queryMatches[idx] : null;
+    }
     if (parts.length < 3) return null;
     const group = parts[0];
     const bucket = parts[1];
@@ -606,6 +643,7 @@
     if (group === "local" && bucket === "owned") return Array.isArray(search.localOwned) ? search.localOwned[idx] : null;
     if (group === "local" && bucket === "cached") return Array.isArray(search.localCached) ? search.localCached[idx] : null;
     if (group === "online") return Array.isArray(search.online) ? search.online[idx] : null;
+    if (group === "query") return Array.isArray(search.queryMatches) ? search.queryMatches[idx] : null;
     return null;
   }
 
@@ -738,6 +776,25 @@
     byId("catalogSearchButton").addEventListener("click", searchCatalog);
     byId("gearImportUrlButton").addEventListener("click", importFromUrl);
     byId("gearSaveSettings").addEventListener("click", saveSettings);
+    const imageUpload = byId("gearImageUpload");
+    if (imageUpload) {
+      imageUpload.addEventListener("change", async () => {
+        const file = imageUpload.files && imageUpload.files[0] ? imageUpload.files[0] : null;
+        if (!file) return;
+        try {
+          const upload = await uploadGearImage(file);
+          if (upload && upload.image_url) {
+            setField("Image", upload.image_url);
+            setField("Notes", getField("Notes") || "Uploaded local image");
+            setImagePreview(upload.image_url);
+          }
+        } catch (err) {
+          alert(`Image upload failed: ${err.message || err}`);
+        } finally {
+          imageUpload.value = "";
+        }
+      });
+    }
     byId("catalogQuery").addEventListener("keydown", event => {
       if (event.key === "Enter") {
         event.preventDefault();
