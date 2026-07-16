@@ -220,6 +220,7 @@
     if (draft) {
       payload.provider = draft.provider || "";
       payload.provider_product_id = draft.provider_product_id || "";
+      payload.provider_icon = draft.provider_icon || "";
       payload.image_url = draft.image_url || "";
       payload.image_source = draft.image_source || "";
       payload.identifiers = draft.identifiers || {};
@@ -227,6 +228,9 @@
       payload.price = draft.price ?? null;
       payload.availability = draft.availability || "";
       payload.raw_provider_data_cached = Boolean(draft.raw_provider_data_cached);
+      if (!payload.notes && (draft.product_summary || draft.import_summary || draft.description)) {
+        payload.notes = draft.product_summary || draft.import_summary || draft.description;
+      }
       if (!payload.image && draft.image_url && !payload.image) {
         payload.image = draft.image_url;
       }
@@ -308,6 +312,7 @@
     const actionValue = options.actionValue || "";
     const duplicate = resultDuplicateNote(item);
     const duplicateMatches = Array.isArray(item.duplicate_matches) ? item.duplicate_matches : [];
+    const summary = item.product_summary || item.import_summary || item.description || "";
     const specs = item.specifications && typeof item.specifications === "object"
       ? Object.entries(item.specifications).slice(0, 4).map(([key, value]) => `<span>${escapeHtml(String(key).replaceAll("_", " "))}: ${escapeHtml(value)}</span>`).join("")
       : "";
@@ -335,6 +340,7 @@
           <img class="gear-catalog-result-image" src="${escapeHtml(item.display_image || item.image || item.fallback_image || "")}" alt="${escapeHtml(title)}" onerror="this.src='${escapeHtml(item.fallback_image || "/static/gear/fallback/generic.svg")}'">
           <div class="gear-catalog-result-copy">
             <p class="gear-muted">${escapeHtml(subtitle)}</p>
+            ${summary ? `<p class="gear-import-summary">${escapeHtml(summary)}</p>` : ""}
             ${specs ? `<div class="gear-item-specs">${specs}</div>` : ""}
             ${identifiers ? `<div class="gear-item-specs">${identifiers}</div>` : ""}
             ${item.price ? `<p class="gear-muted">Price: ${escapeHtml(item.price)}</p>` : ""}
@@ -491,7 +497,7 @@
     setField("SourceUrl", item.source_url || item.source_page_url);
     setField("RetrievedAt", item.retrieved_at);
     byId("gearConfidence").value = item.confidence || "user-added";
-    setField("Notes", item.notes);
+    setField("Notes", item.notes || item.product_summary || item.import_summary || item.description || "");
     byId("gearFavorite").checked = Boolean(item.favorite);
     byId("gearAutoDisplayName").checked = false;
 
@@ -567,7 +573,12 @@
     if (!itemId) return;
     let url = "";
     if (action === "favorite") url = `/api/gear/items/${encodeURIComponent(itemId)}/favorite`;
-    else if (action === "archive") url = `/api/gear/items/${encodeURIComponent(itemId)}/archive`;
+    else if (action === "archive" || action === "retire") url = `/api/gear/items/${encodeURIComponent(itemId)}/${action === "retire" ? "retire" : "archive"}`;
+    else if (action === "delete") {
+      const confirmed = window.confirm("Delete this gear item permanently? This cannot be undone.");
+      if (!confirmed) return;
+      url = `/api/gear/items/${encodeURIComponent(itemId)}/delete`;
+    }
     else return;
 
     try {

@@ -3,6 +3,7 @@ from __future__ import annotations
 import ipaddress
 import json
 import socket
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from html import unescape
@@ -58,8 +59,10 @@ class _ProductHTMLParser(HTMLParser):
         self.title_parts: list[str] = []
         self.meta_tags: list[dict[str, str]] = []
         self.jsonld_scripts: list[str] = []
+        self.text_parts: list[str] = []
         self._in_title = False
         self._in_script = False
+        self._in_style = False
         self._script_type = ""
         self._script_parts: list[str] = []
 
@@ -69,6 +72,8 @@ class _ProductHTMLParser(HTMLParser):
             self._in_title = True
         elif tag == "meta":
             self.meta_tags.append(attr_map)
+        elif tag == "style":
+            self._in_style = True
         elif tag == "script":
             self._in_script = True
             self._script_type = attr_map.get("type", "").lower()
@@ -77,12 +82,18 @@ class _ProductHTMLParser(HTMLParser):
     def handle_data(self, data: str) -> None:
         if self._in_title:
             self.title_parts.append(data)
+        if not self._in_script and not self._in_style:
+            text = unescape(" ".join(data.split()))
+            if text:
+                self.text_parts.append(text)
         if self._in_script:
             self._script_parts.append(data)
 
     def handle_endtag(self, tag: str) -> None:
         if tag == "title":
             self._in_title = False
+        elif tag == "style":
+            self._in_style = False
         elif tag == "script":
             if self._script_type == "application/ld+json":
                 self.jsonld_scripts.append("".join(self._script_parts))
@@ -93,6 +104,10 @@ class _ProductHTMLParser(HTMLParser):
     @property
     def title_text(self) -> str:
         return unescape("".join(self.title_parts).strip())
+
+    @property
+    def content_text(self) -> str:
+        return " ".join(self.text_parts).strip()
 
 
 def validate_product_url(url: str) -> tuple[bool, str]:
@@ -202,6 +217,272 @@ def _find_product_nodes(blob: Any) -> list[dict[str, Any]]:
     return nodes
 
 
+def _all_text(*parts: Any) -> str:
+    items: list[str] = []
+    for part in parts:
+        text = _text(part, "") if not isinstance(part, dict) else json.dumps(part, ensure_ascii=False)
+        if text:
+            items.append(text)
+    return " ".join(items).strip()
+
+
+def _first_match(text: str, patterns: list[str]) -> str:
+    for pattern in patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            return match.group(1) if match.groups() else match.group(0)
+    return ""
+
+
+def _normalize_number(text: str) -> str:
+    return text.replace(" ", "").replace(",", "").strip()
+
+
+def _token_to_float(token: str) -> float | None:
+    token = _normalize_number(token)
+    if not token:
+        return None
+    if "/" in token and not token.replace("/", "").replace(".", "").isdigit():
+        return None
+    if "/" in token:
+        parts = token.split("/")
+        if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit() and int(parts[1]) != 0:
+            return float(int(parts[0]) / int(parts[1]))
+    try:
+        return float(token)
+    except Exception:
+        return None
+
+
+def _parse_length_value(text: str) -> tuple[float | None, str]:
+    compact = _normalize_number(text.lower().replace("feet", "ft").replace("foot", "ft").replace("inches", "in").replace("inch", "in"))
+    match = re.search(r"(\d+(?:\.\d+)?)\s*ft(?:\s*(\d+(?:\.\d+)?)\s*in)?", compact)
+    if match:
+        feet = float(match.group(1))
+        inches = float(match.group(2) or 0)
+        total = round(feet + (inches / 12.0), 2)
+        label = f"{int(feet) if feet.is_integer() else feet:g}'{int(inches) if inches.is_integer() else inches:g}\""
+        return total, label
+    match = re.search(r"(\d+)'(\d+)?\"?", text)
+    if match:
+        feet = float(match.group(1))
+        inches = float(match.group(2) or 0)
+        total = round(feet + (inches / 12.0), 2)
+        label = f"{int(feet)}'{int(inches) if inches else 0}\""
+        return total, label
+    return None, ""
+
+
+def _parse_float_range(text: str, unit: str) -> tuple[float | None, float | None]:
+    patterns = [
+        rf"([\d./]+)\s*{re.escape(unit)}\s*(?:-|to|–|—)\s*([\d./]+)\s*{re.escape(unit)}",
+        rf"([\d./]+)\s*(?:-|to|–|—)\s*([\d./]+)\s*{re.escape(unit)}",
+        rf"([\d./]+)\s*{re.escape(unit)}\s*(?:-|to|–|—)\s*([\d./]+)",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            left = _token_to_float(match.group(1))
+            right = _token_to_float(match.group(2))
+            return left, right
+    single = re.search(rf"([\d./]+)\s*{re.escape(unit)}", text, re.IGNORECASE)
+    if single:
+        value = _token_to_float(single.group(1))
+        return value, value
+    return None, None
+
+
+def _parse_int_range(text: str, unit: str) -> tuple[int | None, int | None]:
+    patterns = [
+        rf"(\d+)\s*{re.escape(unit)}\s*(?:-|to|–|—)\s*(\d+)\s*{re.escape(unit)}",
+        rf"(\d+)\s*(?:-|to|–|—)\s*(\d+)\s*{re.escape(unit)}",
+        rf"(\d+)\s*{re.escape(unit)}\s*(?:-|to|–|—)\s*(\d+)",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            return int(match.group(1)), int(match.group(2))
+    single = re.search(rf"(\d+)\s*{re.escape(unit)}", text, re.IGNORECASE)
+    if single:
+        value = int(single.group(1))
+        return value, value
+    return None, None
+
+
+def _infer_category(title: str, text: str, category: str) -> str:
+    known = {"rod", "reel", "line", "lure", "terminal"}
+    if category in known:
+        return category
+    blob = f"{title} {text}".lower()
+    if any(token in blob for token in ("rod", "blank", "casting rod", "spinning rod")):
+        return "rod"
+    if any(token in blob for token in ("reel", "baitcaster", "spinning reel")):
+        return "reel"
+    if any(token in blob for token in ("line", "braid", "fluorocarbon", "monofilament", "mono")):
+        return "line"
+    if any(token in blob for token in ("hook", "jig head", "swivel", "weight", "snap", "terminal")):
+        return "terminal"
+    if any(token in blob for token in ("spinnerbait", "crankbait", "topwater", "swimbait", "frog", "jig", "worm", "plastic", "lure", "bait")):
+        return "lure"
+    return "misc"
+
+
+def _infer_text_tags(text: str) -> tuple[list[str], list[str]]:
+    lower = text.lower()
+    technique_map = {
+        "spinnerbait": "spinnerbait",
+        "jig": "jig",
+        "chatterbait": "chatterbait",
+        "crankbait": "crankbait",
+        "topwater": "topwater",
+        "finesse": "finesse",
+        "drop shot": "drop_shot",
+        "dropshot": "drop_shot",
+        "texas rig": "texas_rig",
+        "carolina rig": "carolina_rig",
+        "swimbait": "swimbait",
+        "frog": "frog",
+        "worm": "soft_plastic_worm",
+        "live bait": "live_bait",
+    }
+    species_map = {
+        "bass": "largemouth_bass",
+        "largemouth": "largemouth_bass",
+        "smallmouth": "smallmouth_bass",
+        "crappie": "crappie",
+        "bluegill": "bluegill",
+        "panfish": "bluegill",
+        "catfish": "channel_catfish",
+        "trout": "rainbow_trout",
+        "walleye": "walleye",
+        "sauger": "sauger",
+        "white bass": "white_bass",
+        "pike": "northern_pike",
+        "musky": "northern_pike",
+        "muskie": "northern_pike",
+    }
+    techniques = [value for key, value in technique_map.items() if key in lower]
+    species = [value for key, value in species_map.items() if key in lower]
+    return sorted(set(techniques)), sorted(set(species))
+
+
+def _infer_product_fields(product: dict[str, Any], text: str, category_hint: str) -> dict[str, Any]:
+    title = _text(product.get("display_name") or product.get("model") or product.get("raw_product_name"), "")
+    blob = _all_text(title, product.get("description"), text, product.get("specifications"), product.get("identifiers"))
+    category = _infer_category(title, blob, category_hint)
+    product["category"] = category
+
+    if category == "rod":
+        length_ft, length_label = _parse_length_value(blob)
+        if length_ft is not None:
+            product.setdefault("length_ft", length_ft)
+        if length_label:
+            product.setdefault("length_label", length_label)
+        power = _first_match(blob, [r"\b(extra light|ultra light|ultralight|light medium|medium light|medium heavy|extra heavy|heavy|medium)\b"])
+        action = _first_match(blob, [r"\b(extra fast|fast|moderate fast|moderate|slow)\b"])
+        if power:
+            product.setdefault("power", power.lower().replace(" ", "_"))
+        if action:
+            product.setdefault("action", action.lower().replace(" ", "_"))
+        lure_min, lure_max = _parse_float_range(blob, "oz")
+        if lure_min is not None:
+            product.setdefault("lure_weight_min_oz", lure_min)
+        if lure_max is not None:
+            product.setdefault("lure_weight_max_oz", lure_max)
+        line_min, line_max = _parse_int_range(blob, "lb")
+        if line_min is not None:
+            product.setdefault("line_rating_min_lb", line_min)
+        if line_max is not None:
+            product.setdefault("line_rating_max_lb", line_max)
+        pieces = _first_match(blob, [r"\b(\d+)\s*(?:piece|pc|pcs|pce|sections?)\b"])
+        if pieces:
+            product.setdefault("pieces", int(pieces))
+        techniques, species = _infer_text_tags(blob)
+        if techniques:
+            product.setdefault("technique_tags", techniques)
+        if species:
+            product.setdefault("species_tags", species)
+
+    elif category == "reel":
+        reel_type = _first_match(blob, [r"\b(baitcasting|spinning|spincast|conventional|fly)\b"])
+        gear_ratio = _first_match(blob, [r"\b(\d+(?:\.\d+)?)\s*:\s*1\b"])
+        max_drag = _first_match(blob, [r"\b(?:max\s*)?drag\s*(\d+(?:\.\d+)?)\s*lb\b"])
+        handedness = _first_match(blob, [r"\b(left|right)\s*hand(?:ed)?\b"])
+        weight = _first_match(blob, [r"\b(\d+(?:\.\d+)?)\s*oz\b"])
+        if reel_type:
+            product.setdefault("reel_type", reel_type.replace(" ", "_"))
+        if gear_ratio:
+            product.setdefault("gear_ratio", float(gear_ratio))
+        if max_drag:
+            product.setdefault("max_drag_lb", float(max_drag))
+        if handedness:
+            product.setdefault("handedness", handedness)
+        if weight:
+            product.setdefault("weight_oz", float(weight))
+        line_capacity = _first_match(blob, [r"\b\d+\s*lb\s*/\s*\d+\s*yd\b", r"\b\d+\s*yd\s*/\s*\d+\s*lb\b"])
+        if line_capacity:
+            product.setdefault("line_capacity", line_capacity)
+
+    elif category == "line":
+        line_type = _first_match(blob, [r"\b(braid|fluorocarbon|mono|monofilament|nylon|copolymer)\b"])
+        strength = _first_match(blob, [r"\b(\d+)\s*lb\b"])
+        diameter = _first_match(blob, [r"\b(\d+(?:\.\d+)?)\s*(?:in|inch|inches|mm)\b"])
+        color = _first_match(blob, [r"\b(moss green|green|clear|blue|white|red|yellow|orange|black)\b"])
+        length_yd = _first_match(blob, [r"\b(\d+)\s*yd\b"])
+        if line_type:
+            product.setdefault("line_type", line_type.replace(" ", "_"))
+        if strength:
+            product.setdefault("strength_lb", int(strength))
+        if diameter:
+            product.setdefault("diameter_equivalent", diameter)
+        if color:
+            product.setdefault("color", color.replace(" ", "_"))
+        if length_yd:
+            product.setdefault("length_yd", int(length_yd))
+
+    elif category == "lure":
+        lure_type = _first_match(blob, [r"\b(spinnerbait|crankbait|swimbait|topwater popper|popper|frog|spoon|inline spinner|spinner|drop shot|dropshot|jig|worm|soft plastic|stick bait|senko|buzzbait|chatterbait)\b"])
+        color = _first_match(blob, [r"\b(green pumpkin|black blue|black/blue|black and blue|watermelon red|junebug|shad|natural shad|chartreuse white|chartreuse black back|white pearl|pearl white|bluegill|firetiger|bone|chrome blue|gold|silver|green frog|frog green|leopard frog|brown frog|brown orange|craw|pbj|peanut butter jelly|morning dawn)\b"])
+        weight_min, weight_max = _parse_float_range(blob, "oz")
+        hook = _first_match(blob, [r"\b(\d+(?:/\d+)?(?:/\d+)?)\s*(?:hook|hooks?)\b"])
+        depth_min, depth_max = _parse_int_range(blob, "ft")
+        techniques, species = _infer_text_tags(blob)
+        if lure_type:
+            product.setdefault("lure_type", lure_type.replace(" ", "_"))
+        if color:
+            product.setdefault("color", color.replace(" ", "_"))
+        if weight_min is not None:
+            product.setdefault("weight_oz", weight_min)
+        if hook:
+            product.setdefault("hook_size", hook)
+        if depth_min is not None:
+            product.setdefault("depth_min_ft", depth_min)
+        if depth_max is not None:
+            product.setdefault("depth_max_ft", depth_max)
+        if techniques:
+            product.setdefault("technique_tags", techniques)
+        if species:
+            product.setdefault("species_tags", species)
+
+    elif category == "terminal":
+        subtype = _first_match(blob, [r"\b(hook|weight|swivel|snap|jig head|jighead|leader)\b"])
+        if subtype:
+            product.setdefault("subtype", subtype.replace(" ", "_"))
+        size = _first_match(blob, [r"\b(\d+(?:/\d+)?(?:/\d+)?(?:/\d+)?)\b"])
+        if size:
+            product.setdefault("size", size)
+        weight_min, _ = _parse_float_range(blob, "oz")
+        if weight_min is not None:
+            product.setdefault("weight_oz", weight_min)
+        quantity = _first_match(blob, [r"\b(\d+)\s*(?:count|pack|pieces|pcs|qty)\b"])
+        if quantity:
+            product.setdefault("quantity", int(quantity))
+
+    product["import_summary"] = "Imported product details were inferred from page metadata and page text."
+    product["imported_from_text"] = blob[:1200]
+    return product
+
+
 def extract_jsonld_product(html: str) -> dict[str, Any]:
     parser = _ProductHTMLParser()
     parser.feed(html or "")
@@ -259,6 +540,7 @@ def extract_jsonld_product(html: str) -> dict[str, Any]:
         "model": _first_text(product.get("model")) or name,
         "display_name": name or "Imported product",
         "image_url": image,
+        "description": _first_text(product.get("description")),
         "identifiers": identifiers,
         "specifications": specs,
         "price": price,
@@ -292,7 +574,7 @@ def normalize_structured_product(data: dict[str, Any], source_url: str = "", cat
         "provider_product_id": _text(product.get("provider_product_id"), _slug(display_name)),
         "source_name": _text(product.get("source_name"), "Structured product page"),
         "source_url": _text(product.get("source_url"), source_url),
-        "category": _text(category, "misc") or "misc",
+        "category": _text(product.get("category"), _text(category, "misc")) or "misc",
         "brand": brand,
         "model": model,
         "display_name": display_name,
@@ -306,7 +588,45 @@ def normalize_structured_product(data: dict[str, Any], source_url: str = "", cat
         "raw_provider_data_cached": bool(product.get("raw_provider_data_cached", False)),
         "image_source": "structured-product-page" if image_url else "fallback",
         "image": image_url or fallback_image_for(category),
+        "description": _text(product.get("description"), ""),
+        "import_summary": _text(product.get("import_summary"), ""),
+        "product_summary": _text(product.get("product_summary"), ""),
     }
+    for key in (
+        "length_ft",
+        "length_label",
+        "power",
+        "action",
+        "pieces",
+        "lure_weight_min_oz",
+        "lure_weight_max_oz",
+        "line_rating_min_lb",
+        "line_rating_max_lb",
+        "reel_type",
+        "gear_ratio",
+        "max_drag_lb",
+        "line_capacity",
+        "weight_oz",
+        "handedness",
+        "line_type",
+        "strength_lb",
+        "diameter_equivalent",
+        "color",
+        "length_yd",
+        "lure_type",
+        "hook_size",
+        "depth_min_ft",
+        "depth_max_ft",
+        "quantity",
+        "subtype",
+        "size",
+        "technique_tags",
+        "species_tags",
+        "imported_from_text",
+        "product_summary",
+    ):
+        if key in product and product.get(key) not in (None, "", [], {}):
+            normalized[key] = product.get(key)
     return normalized
 
 
@@ -317,9 +637,9 @@ def import_product_from_url(url: str, category: str = "misc", allow_remote_image
 
     html = result.get("html", "")
     parsed = extract_jsonld_product(html)
+    parser = _ProductHTMLParser()
+    parser.feed(html or "")
     if not parsed:
-        parser = _ProductHTMLParser()
-        parser.feed(html or "")
         title = _first_text(parser.title_text)
         og_title = ""
         og_image = ""
@@ -346,6 +666,49 @@ def import_product_from_url(url: str, category: str = "misc", allow_remote_image
             "raw_provider_data_cached": False,
             "retrieved_at": result.get("retrieved_at"),
         }
+    parsed["description"] = _text(parsed.get("description"), parser.content_text)
+    parsed = _infer_product_fields(parsed, parser.content_text, category)
+
+    title_text = _text(parsed.get("display_name") or parsed.get("raw_product_name") or parser.title_text, "")
+    brand_text = _text(parsed.get("brand"), "")
+    if not brand_text and title_text:
+        title_tokens = [token.strip() for token in title_text.split() if token.strip()]
+        if len(title_tokens) >= 2 and not title_tokens[0].isdigit() and not title_tokens[1].isdigit():
+            parsed["brand"] = " ".join(title_tokens[:2])
+        elif title_tokens:
+            parsed["brand"] = title_tokens[0]
+
+    summary_parts: list[str] = []
+    if parsed.get("brand"):
+        summary_parts.append(_text(parsed.get("brand"), ""))
+    if parsed.get("display_name"):
+        summary_parts.append(_text(parsed.get("display_name"), ""))
+    if parsed.get("length_label"):
+        summary_parts.append(_text(parsed.get("length_label"), ""))
+    if parsed.get("power"):
+        summary_parts.append(_text(parsed.get("power"), "").replace("_", " "))
+    if parsed.get("action"):
+        summary_parts.append(_text(parsed.get("action"), "").replace("_", " "))
+    if parsed.get("lure_weight_min_oz") is not None or parsed.get("lure_weight_max_oz") is not None:
+        low = parsed.get("lure_weight_min_oz")
+        high = parsed.get("lure_weight_max_oz")
+        if low is not None and high is not None and low != high:
+            summary_parts.append(f"{low:g} to {high:g} oz lure rating")
+        elif low is not None:
+            summary_parts.append(f"{low:g} oz lure rating")
+    if parsed.get("line_rating_min_lb") is not None or parsed.get("line_rating_max_lb") is not None:
+        low = parsed.get("line_rating_min_lb")
+        high = parsed.get("line_rating_max_lb")
+        if low is not None and high is not None and low != high:
+            summary_parts.append(f"{low} to {high} lb line rating")
+        elif low is not None:
+            summary_parts.append(f"{low} lb line rating")
+    if parsed.get("technique_tags"):
+        summary_parts.append(", ".join(str(tag).replace("_", " ") for tag in parsed.get("technique_tags", [])[:3]))
+    if parsed.get("species_tags"):
+        summary_parts.append(", ".join(str(tag).replace("_", " ") for tag in parsed.get("species_tags", [])[:3]))
+    if summary_parts and not _text(parsed.get("product_summary"), ""):
+        parsed["product_summary"] = " • ".join(part for part in summary_parts if part)
 
     normalized = normalize_structured_product(parsed, source_url=result.get("url", url), category=category, allow_remote_images=allow_remote_images)
     normalized["source_page_url"] = result.get("url", url)

@@ -3418,9 +3418,19 @@ button {
   cursor: pointer;
 }
 
+.gear-danger-button {
+  border-color: rgba(239, 68, 68, 0.45);
+  background: #fff1f2;
+  color: #7f1d1d;
+}
+
 .gear-card-actions button:hover,
 .gear-toolbar-button:hover {
   background: #dff6e5;
+}
+
+.gear-danger-button:hover {
+  background: #ffe4e6;
 }
 
 .gear-reference-grid {
@@ -3528,6 +3538,12 @@ button {
   display: grid;
   gap: 0.35rem;
   min-width: 0;
+}
+
+.gear-import-summary {
+  margin: 0;
+  color: #dbeafe;
+  line-height: 1.45;
 }
 
 .gear-catalog-result-actions {

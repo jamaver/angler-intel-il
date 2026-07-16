@@ -38,7 +38,10 @@ def _fake_product_html() -> str:
       "additionalProperty": [
         {"@type": "PropertyValue", "name": "Length", "value": "7'1\\\""},
         {"@type": "PropertyValue", "name": "Power", "value": "Medium Heavy"},
-        {"@type": "PropertyValue", "name": "Action", "value": "Fast"}
+        {"@type": "PropertyValue", "name": "Action", "value": "Fast"},
+        {"@type": "PropertyValue", "name": "Lure Weight", "value": "3/8-1 oz"},
+        {"@type": "PropertyValue", "name": "Line Rating", "value": "12-20 lb"},
+        {"@type": "PropertyValue", "name": "Pieces", "value": "1"}
       ]
     }
     </script>
@@ -122,13 +125,13 @@ def main() -> int:
         elif path.stat().st_size <= 0:
             errors.append(f"Empty {rel}")
 
-    version_marker = ROOT / "data" / "version_v6_11_gear_catalog_flexible_search.json"
+    version_marker = ROOT / "data" / "version_v6_12_gear_management_url_assist.json"
     if not version_marker.exists():
-        errors.append("Missing version_v6_11_gear_catalog_flexible_search.json")
+        errors.append("Missing version_v6_12_gear_management_url_assist.json")
     else:
         try:
             marker = json.loads(version_marker.read_text(encoding="utf-8"))
-            if marker.get("version") != "v6.11-gear-catalog-flexible-search":
+            if marker.get("version") != "v6.12-gear-management-url-assist":
                 errors.append("Version marker has unexpected version label")
         except Exception as exc:
             errors.append(f"Version marker could not be parsed: {exc}")
@@ -157,6 +160,9 @@ def main() -> int:
     for needle in ("gearSearchScope", "gearProductUrl", "gearImportUrlButton", "gearOnlineLookup", "gearDefaultScope", "My Tackle Locker"):
         if needle not in template_text:
             errors.append(f"tackle locker template missing {needle}")
+    for needle in ("data-gear-action=\"retire\"", "data-gear-action=\"delete\"", "gear-danger-button"):
+        if needle not in template_text:
+            errors.append(f"tackle locker template missing {needle}")
     if "/admin" in template_text:
         errors.append("Admin should not be present in tackle locker nav")
 
@@ -175,10 +181,10 @@ def main() -> int:
         inventory_path = tmp / "gear_inventory.json"
         cache_path = tmp / "gear_catalog_cache.json"
         settings_path = tmp / "gear_settings.json"
-        _write_json(inventory_path, {"version": "v6.11-gear-catalog-flexible-search", "updated_at": "2026-07-15T00:00:00", "items": [], "maintenance": [], "catalog_cache": []})
-        _write_json(cache_path, {"version": "v6.11-gear-catalog-flexible-search", "updated_at": "2026-07-15T00:00:00", "products": []})
+        _write_json(inventory_path, {"version": "v6.12-gear-management-url-assist", "updated_at": "2026-07-15T00:00:00", "items": [], "maintenance": [], "catalog_cache": []})
+        _write_json(cache_path, {"version": "v6.12-gear-management-url-assist", "updated_at": "2026-07-15T00:00:00", "products": []})
         _write_json(settings_path, {
-            "version": "v6.11-gear-catalog-flexible-search",
+            "version": "v6.12-gear-management-url-assist",
             "updated_at": "2026-07-15T00:00:00",
             "search_scope_default": "both",
             "online_lookup_enabled": False,
@@ -221,6 +227,24 @@ def main() -> int:
             item = (created.get_json(silent=True) or {}).get("item", {})
             if item.get("display_name") != manual_payload["display_name"]:
                 errors.append("Manual gear create did not persist display name")
+
+        retire_test = client.post("/api/gear/items", json={
+            "category": "lure",
+            "brand": "Test",
+            "model": "Delete Me",
+            "display_name": "Test Delete Me",
+            "status": "owned",
+        })
+        retire_item = (retire_test.get_json(silent=True) or {}).get("item", {})
+        if not retire_item.get("id"):
+            errors.append("Delete test item was not created")
+        else:
+            retired = client.post(f"/api/gear/items/{retire_item['id']}/retire")
+            if retired.status_code != 200:
+                errors.append("Retire route failed")
+            deleted = client.post(f"/api/gear/items/{retire_item['id']}/delete")
+            if deleted.status_code != 200:
+                errors.append("Delete route failed")
 
         local = client.get("/api/gear/search", query_string={"q": "Mojo Bass", "scope": "local", "category": "rod"})
         if local.status_code != 200:
@@ -278,6 +302,14 @@ def main() -> int:
                 errors.append("URL import should flag duplicate locker matches")
             if not product.get("image_url") and not product.get("image"):
                 errors.append("URL import should preserve or fallback image data")
+            if not product.get("length_ft") or not product.get("length_label"):
+                errors.append("URL import should infer rod length")
+            if not product.get("power") or not product.get("action"):
+                errors.append("URL import should infer rod power and action")
+            if not product.get("lure_weight_min_oz") or not product.get("line_rating_min_lb"):
+                errors.append("URL import should infer rod lure and line ratings")
+            if not product.get("import_summary"):
+                errors.append("URL import should provide a summary for review")
 
         blocked = client.post("/api/gear/import/url", json={"url": "http://127.0.0.1/", "category": "rod"})
         if blocked.status_code == 200:

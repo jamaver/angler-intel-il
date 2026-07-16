@@ -49,7 +49,7 @@ def _write_json(path: Path, data: Any) -> None:
 
 def _default_cache() -> dict[str, Any]:
     return {
-        "version": "v6.11-gear-catalog-flexible-search",
+        "version": "v6.12-gear-management-url-assist",
         "updated_at": _now(),
         "products": [],
     }
@@ -68,7 +68,7 @@ def load_cache() -> dict[str, Any]:
     data = _read_json(catalog_cache_path(), _default_cache())
     if not isinstance(data, dict):
         data = _default_cache()
-    data.setdefault("version", "v6.11-gear-catalog-flexible-search")
+    data.setdefault("version", "v6.12-gear-management-url-assist")
     data.setdefault("updated_at", _now())
     data["products"] = data.get("products") if isinstance(data.get("products"), list) else []
     return data
@@ -76,7 +76,7 @@ def load_cache() -> dict[str, Any]:
 
 def save_cache(data: dict[str, Any]) -> None:
     payload = dict(data or {})
-    payload.setdefault("version", "v6.11-gear-catalog-flexible-search")
+    payload.setdefault("version", "v6.12-gear-management-url-assist")
     payload["updated_at"] = _now()
     payload["products"] = payload.get("products") if isinstance(payload.get("products"), list) else []
     _write_json(catalog_cache_path(), payload)
@@ -101,6 +101,43 @@ def normalize_product(raw_product: dict[str, Any]) -> dict[str, Any]:
     product["query_key"] = _slug(" ".join(part for part in [product.get("brand"), product.get("model"), product.get("display_name")] if _text(part)))
     product["image"] = _text(product.get("image"), product["image_url"] or fallback_image_for(product.get("category"), product.get("subtype")))
     product["provider_icon"] = _text(product.get("provider_icon"), provider_icon_for(product.get("provider")))
+    for key in (
+        "description",
+        "import_summary",
+        "product_summary",
+        "imported_from_text",
+        "length_ft",
+        "length_label",
+        "power",
+        "action",
+        "pieces",
+        "lure_weight_min_oz",
+        "lure_weight_max_oz",
+        "line_rating_min_lb",
+        "line_rating_max_lb",
+        "reel_type",
+        "gear_ratio",
+        "max_drag_lb",
+        "line_capacity",
+        "weight_oz",
+        "handedness",
+        "line_type",
+        "strength_lb",
+        "diameter_equivalent",
+        "color",
+        "length_yd",
+        "lure_type",
+        "hook_size",
+        "depth_min_ft",
+        "depth_max_ft",
+        "quantity",
+        "subtype",
+        "size",
+        "technique_tags",
+        "species_tags",
+    ):
+        if key in product and product.get(key) not in (None, "", [], {}):
+            product[key] = product.get(key)
     if not product["image_url"] and product["image"].startswith("http"):
         product["image_url"] = product["image"]
     return product
@@ -223,7 +260,7 @@ def search_gear_catalog(query: str, category: str = "", scope: str = "both", lim
 
     return {
         "ok": True,
-        "version": "v6.11-gear-catalog-flexible-search",
+        "version": "v6.12-gear-management-url-assist",
         "query": query,
         "category": category,
         "scope": scope,

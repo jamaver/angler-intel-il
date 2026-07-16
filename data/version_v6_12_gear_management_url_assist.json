@@ -1,0 +1,11 @@
+{
+  "version": "v6.12-gear-management-url-assist",
+  "previous_version": "v6.11-gear-catalog-flexible-search",
+  "feature": "gear management and url assist",
+  "gear_delete": true,
+  "retire_action": true,
+  "url_autofill": true,
+  "url_query_inference": true,
+  "provider_icons": true,
+  "created_at": "2026-07-15T20:06:05"
+}

@@ -408,7 +408,8 @@
                     <div class="gear-card-actions">
                       <button type="button" data-gear-action="edit" data-gear-id="{{ item.id }}">Edit</button>
                       <button type="button" data-gear-action="favorite" data-gear-id="{{ item.id }}">{{ 'Unfavorite' if item.favorite else 'Favorite' }}</button>
-                      <button type="button" data-gear-action="archive" data-gear-id="{{ item.id }}">Archive</button>
+                      <button type="button" data-gear-action="retire" data-gear-id="{{ item.id }}">Retire</button>
+                      <button type="button" class="gear-danger-button" data-gear-action="delete" data-gear-id="{{ item.id }}">Delete</button>
                     </div>
                   </div>
                 </article>

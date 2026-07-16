@@ -15,6 +15,7 @@ from gear.inventory import (
     find_duplicate_items,
     fallback_image_for,
     inventory_summary,
+    delete_item,
     list_items,
     provider_icon_for,
     set_status,
@@ -416,7 +417,7 @@ def register_species_rig_routes_v43(app):
             items = [_enrich_gear_item(item) for item in list_items()]
             return jsonify({
                 "ok": True,
-                "version": "v6.10-tackle-locker",
+                "version": "v6.12-gear-management-url-assist",
                 "summary": inventory_summary(items),
                 "items": items,
                 "categories": category_sections(items),
@@ -426,7 +427,7 @@ def register_species_rig_routes_v43(app):
         item = upsert_item(payload if isinstance(payload, dict) else {})
         return jsonify({
             "ok": True,
-            "version": "v6.10-tackle-locker",
+            "version": "v6.12-gear-management-url-assist",
             "item": _enrich_gear_item(item),
             "summary": inventory_summary(),
         })
@@ -447,6 +448,20 @@ def register_species_rig_routes_v43(app):
             return jsonify({"ok": False, "error": "Gear item not found"}), 404
         return jsonify({"ok": True, "item": _enrich_gear_item(item), "summary": inventory_summary()})
 
+    @app.route("/api/gear/items/<item_id>/retire", methods=["POST"])
+    def gear_item_retire_api_v612(item_id: str):
+        item = set_status(item_id, "retired")
+        if not item:
+            return jsonify({"ok": False, "error": "Gear item not found"}), 404
+        return jsonify({"ok": True, "item": _enrich_gear_item(item), "summary": inventory_summary()})
+
+    @app.route("/api/gear/items/<item_id>/delete", methods=["POST", "DELETE"])
+    def gear_item_delete_api_v612(item_id: str):
+        deleted = delete_item(item_id)
+        if not deleted:
+            return jsonify({"ok": False, "error": "Gear item not found"}), 404
+        return jsonify({"ok": True, "deleted": True, "summary": inventory_summary()})
+
     @app.route("/api/gear/search")
     def gear_search_api_v611():
         query = request.args.get("q", "")
@@ -462,7 +477,7 @@ def register_species_rig_routes_v43(app):
         results = search_gear_catalog(query, category=category, scope="local")
         return jsonify({
             "ok": True,
-            "version": "v6.11-gear-catalog-flexible-search",
+            "version": "v6.12-gear-management-url-assist",
             "count": len(results.get("local", {}).get("owned", [])) + len(results.get("local", {}).get("cached", [])),
             "products": results.get("local", {}).get("cached", []),
             "local": results.get("local", {}),
@@ -480,7 +495,7 @@ def register_species_rig_routes_v43(app):
         duplicates = find_duplicate_items(import_result) if isinstance(import_result, dict) else []
         return jsonify({
             "ok": True,
-            "version": "v6.11-gear-catalog-flexible-search",
+            "version": "v6.12-gear-management-url-assist",
             "product": import_result,
             "duplicate_matches": duplicates if isinstance(duplicates, list) else [],
         })

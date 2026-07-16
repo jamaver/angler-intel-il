@@ -9,7 +9,7 @@ from typing import Any
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "data"
 
-DEFAULT_VERSION = "v6.11-gear-catalog-flexible-search"
+DEFAULT_VERSION = "v6.12-gear-management-url-assist"
 
 
 def _now() -> str:
@@ -79,4 +79,3 @@ def save_settings(data: dict[str, Any]) -> dict[str, Any]:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     return payload
-
