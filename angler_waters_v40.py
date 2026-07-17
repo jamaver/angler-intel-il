@@ -282,10 +282,15 @@ def _render_waters_page() -> str:
   <nav class="ai-main-tabs" aria-label="Angler Intel navigation">
   <a class="ai-main-tab" href="/">Dashboard</a>
   <a class="ai-main-tab" href="/map">Map</a>
+  <a class="ai-main-tab" href="/recommendations">Smart Picks</a>
   <a class="ai-main-tab active" href="/waters">Local Waters</a>
+  <a class="ai-main-tab" href="/species">Species</a>
+  <a class="ai-main-tab" href="/rigs">My Tackle Locker</a>
   <a class="ai-main-tab" href="/reports">Saved Reports</a>
+  <a class="ai-main-tab" href="/data-tools">Data Tools</a>
   <a class="ai-main-tab" href="/app-health">App Health</a>
 </nav>
+  <main class="app waters-shell">
   <h1>Local Waters</h1>
   <p class="muted release-line">Current release: {{ app_version }}</p>
   <p class="muted">Local waters now uses the starter database plus any manually added waters, with broader ZIP-based detection available alongside it.</p>
@@ -328,6 +333,7 @@ def _render_waters_page() -> str:
     <a href="/map">Map</a> |
     <a href="/app-health">App Health</a>
   </p>
+  </main>
 
 <script>
 async function loadWaters() {

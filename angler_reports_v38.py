@@ -1145,7 +1145,7 @@ def register_report_routes_v38(app):
     }
   </style>
 </head>
-<body>
+<body class="reports-page">
   <nav class="ai-main-tabs" aria-label="Angler Intel navigation">
     <a class="ai-main-tab" href="/">Dashboard</a>
     <a class="ai-main-tab" href="/map">Map</a>
@@ -1157,6 +1157,7 @@ def register_report_routes_v38(app):
     <a class="ai-main-tab" href="/data-tools">Data Tools</a>
     <a class="ai-main-tab" href="/app-health">App Health</a>
   </nav>
+  <main class="app reports-shell">
 
   <h1 class="page-title">Saved Offline Reports</h1>
   <p>Saved reports keep local fishing trip snapshots on this Pi using your current Angler Intel data.</p>
@@ -1199,6 +1200,7 @@ def register_report_routes_v38(app):
     <a href="/">Back to dashboard</a> |
     <a href="/app-health">App Health</a>
   </p>
+  </main>
 
 <script>
 async function createReport() {

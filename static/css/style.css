@@ -34,6 +34,12 @@ header {
   max-width: 1200px;
 }
 
+.reports-shell,
+.waters-shell {
+  display: grid;
+  gap: 14px;
+}
+
 .dashboard-hero-copy {
   max-width: 52rem;
   display: grid;
@@ -173,6 +179,11 @@ header {
   letter-spacing: 0;
   line-height: 1.1;
   white-space: nowrap;
+}
+
+body.reports-page {
+  margin: 0 !important;
+  max-width: none !important;
 }
 
 h1 {
@@ -3051,6 +3062,11 @@ button {
 .local-waters-page {
   background: #0b1710;
   color: #f4fff6;
+}
+
+body.local-waters-page {
+  margin: 0 !important;
+  max-width: none !important;
 }
 
 .local-waters-page .card {
