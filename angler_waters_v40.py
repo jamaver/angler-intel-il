@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import html
 import json
 import math
 from pathlib import Path
 from typing import Any
 
-from flask import current_app, jsonify, render_template, render_template_string, request
+from flask import current_app, jsonify, render_template, request
 
 from intelligence.water_registry import (
     export_waterbody_dataset,
@@ -205,131 +204,8 @@ def _filter_rank_waters(
         },
     }
 
-
-def _esc(value: Any) -> str:
-    return html.escape("" if value is None else str(value))
-
-
 def _render_waters_page() -> str:
     return render_template("waters.html", app_version=_current_app_version())
-
-
-def _render_water_detail(water: dict[str, Any]) -> str:
-    species = "".join(f"<span class='tag'>{_esc(x)}</span>" for x in water.get("species", []))
-    access = "".join(f"<span class='tag'>{_esc(x)}</span>" for x in water.get("access", []))
-    habitat = "".join(f"<span class='tag'>{_esc(x)}</span>" for x in water.get("habitat", []))
-    meta_tags = []
-    if water.get("manual") or str(water.get("source") or "").lower() == "manual":
-        meta_tags.append("<span class='tag tag-manual'>Manual waterbody</span>")
-    if water.get("favorite"):
-        meta_tags.append("<span class='tag tag-favorite'>Favorite</span>")
-    if water.get("stocked_trout"):
-        meta_tags.append("<span class='tag tag-trout'>Stocked trout</span>")
-    if water.get("catch_history_count"):
-        meta_tags.append(f"<span class='tag tag-history'>Catch history {int(water.get('catch_history_count') or 0)}</span>")
-    if water.get("confidence"):
-        meta_tags.append(f"<span class='tag tag-confidence'>{_esc(water.get('confidence'))}</span>")
-    if water.get("source"):
-        meta_tags.append(f"<span class='tag tag-source'>{_esc(water.get('source'))}</span>")
-    raw = json.dumps(water, indent=2, ensure_ascii=False)
-
-    return render_template_string("""<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>{{ water_name }} - Angler Intel</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      margin: 2rem;
-      max-width: 900px;
-      line-height: 1.45;
-      color: #172018;
-    }
-    .card {
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem 0;
-    }
-    .tag {
-      display: inline-block;
-      padding: 0.15rem 0.4rem;
-      margin: 0.12rem;
-      border-radius: 999px;
-      background: #e9f8ee;
-      border: 1px solid #b9ddc5;
-      font-size: 0.85rem;
-    }
-    .muted { color: #666; }
-    pre {
-      background: #f5f5f5;
-      padding: 1rem;
-      border-radius: 8px;
-      white-space: pre-wrap;
-      overflow-x: auto;
-    }
-    a { color: #0b5d2a; }
-  </style>
-</head>
-<body class="local-waters-page">
-  <h1>{{ water_name }}</h1>
-  <p class="muted release-line">Current release: {{ app_version }}</p>
-  <p class="muted">{{ water_type }} · {{ water_city }} · {{ water_county }}</p>
-
-  <div class="card">
-    <h2>Map Tags</h2>
-    <p>{{ meta_html | safe }}</p>
-    <p class="muted">Lat {{ water_lat }}, Lon {{ water_lon }}</p>
-  </div>
-
-  <div class="card">
-    <h2>Species</h2>
-    <p>{{ species_html | safe }}</p>
-  </div>
-
-  <div class="card">
-    <h2>Access</h2>
-    <p>{{ access_html | safe }}</p>
-  </div>
-
-  <div class="card">
-    <h2>Habitat</h2>
-    <p>{{ habitat_html | safe }}</p>
-  </div>
-
-  <div class="card">
-    <h2>Notes</h2>
-    <p>{{ notes }}</p>
-  </div>
-
-  <details class="card">
-    <summary>Raw local water record</summary>
-    <pre>{{ raw }}</pre>
-  </details>
-
-  <p>
-    <a href="/waters">Back to local waters</a> |
-    <a href="/">Dashboard</a>
-  </p>
-</body>
-</html>
-""",
-        water_name=water.get("name") or "",
-        water_type=water.get("type") or "",
-        water_city=water.get("city") or "",
-        water_county=water.get("county") or "",
-        species_html=species or "No species listed.",
-        access_html=access or "No access data listed.",
-        habitat_html=habitat or "No habitat data listed.",
-        meta_html="".join(meta_tags) or "No extra flags.",
-        water_lat=water.get("lat"),
-        water_lon=water.get("lon"),
-        notes=water.get("notes") or "",
-        raw=raw,
-        app_version=_current_app_version(),
-    )
 
 
 def register_local_waters_routes_v40(app):

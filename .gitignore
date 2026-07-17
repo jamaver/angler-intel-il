@@ -18,3 +18,4 @@ data/angler_intel.sqlite3-*
 data/exports/
 data/gear_catalog_cache.json
 data/gear_uploads/
+data/gear_settings.json
