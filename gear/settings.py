@@ -9,7 +9,7 @@ from typing import Any
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "data"
 
-DEFAULT_VERSION = "v6.12-gear-management-url-assist"
+DEFAULT_VERSION = "v6.13-gear-intelligence-packing-catch-linking"
 
 
 def _now() -> str:

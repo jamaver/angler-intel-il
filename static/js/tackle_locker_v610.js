@@ -5,6 +5,11 @@
   PAGE.searchSettings = PAGE.settings || PAGE.searchSettings || {};
   PAGE.importDraft = PAGE.importDraft || null;
   PAGE.searchResults = PAGE.searchResults || {};
+  PAGE.tripContext = PAGE.tripContext || {};
+  PAGE.recommendation = PAGE.recommendation || null;
+  PAGE.packingList = PAGE.packingList || null;
+  PAGE.usage = PAGE.usage || null;
+  PAGE.maintenance = PAGE.maintenance || null;
   const FORM_ID = "gearForm";
   const CATEGORY_FIELDS = [
     "rod",
@@ -160,6 +165,226 @@
     `;
   }
 
+  function tripContextPayload() {
+    return {
+      species: byId("gearTripSpecies")?.value.trim() || "",
+      expected_fish_weight: byId("gearTripFishWeight")?.value.trim() || "",
+      lure_type: byId("gearTripLureType")?.value.trim() || "",
+      lure_weight_oz: byId("gearTripLureWeight")?.value.trim() || "",
+      technique: byId("gearTripTechnique")?.value.trim() || "",
+      habitat: byId("gearTripHabitat")?.value.trim() || "",
+      cover: byId("gearTripCover")?.value.trim() || "",
+      conditions: byId("gearTripConditions")?.value.trim() || "",
+    };
+  }
+
+  function tripContextQueryParams() {
+    const context = tripContextPayload();
+    const params = new URLSearchParams();
+    if (context.species) params.set("species", context.species);
+    if (context.expected_fish_weight) params.set("expected_fish_weight", context.expected_fish_weight);
+    if (context.lure_type) params.set("lure_type", context.lure_type);
+    if (context.lure_weight_oz) params.set("lure_weight_oz", context.lure_weight_oz);
+    if (context.technique) params.set("technique", context.technique);
+    if (context.habitat) params.set("habitat", context.habitat);
+    if (context.cover) params.set("cover", context.cover);
+    if (context.conditions) {
+      const conditionBits = String(context.conditions).split(",").map(bit => bit.trim().toLowerCase()).filter(Boolean);
+      conditionBits.forEach(bit => {
+        if (["clear", "stained", "dirty", "muddy", "bright"].includes(bit)) params.set("clarity", bit);
+        else if (["night", "morning", "afternoon", "evening", "low_light"].includes(bit)) params.set("time_of_day", bit);
+        else if (["spring", "summer", "fall", "autumn", "winter"].includes(bit)) params.set("season", bit);
+        else if (bit.startsWith("wind")) params.set("wind_mph", bit.replace(/[^0-9.]/g, "") || "");
+        else if (bit.startsWith("cloud")) params.set("cloud_cover", bit.replace(/[^0-9.]/g, "") || "");
+      });
+    }
+    return params;
+  }
+
+  function renderRecommendationCard(data) {
+    const recommendation = data && data.recommendation ? data.recommendation : data;
+    const score = recommendation?.score ?? 0;
+    const confidence = recommendation?.confidence || "low";
+    const headline = recommendation?.headline || "No owned setup matched yet.";
+    const summary = recommendation?.summary || "Add more gear to improve the locker's recommendations.";
+    const sections = [];
+    const selectedRows = [
+      ["Rod", recommendation?.rod],
+      ["Reel", recommendation?.reel],
+      ["Line", recommendation?.line],
+      ["Lure", recommendation?.lure],
+      ["Terminal", recommendation?.terminal],
+    ].map(([label, item]) => item ? `
+      <article class="gear-trip-picked">
+        <div class="gear-trip-picked-head">
+          <span class="gear-badge">${escapeHtml(label)}</span>
+          ${item.score != null ? `<span class="gear-badge gear-badge-favorite">${escapeHtml(item.score)}%</span>` : ""}
+        </div>
+        <div class="gear-trip-picked-body">
+          <img class="gear-item-image gear-trip-picked-image" src="${escapeHtml(item.image || "/static/gear/fallback/generic.svg")}" alt="${escapeHtml(item.display_name || item.label || label)}" onerror="this.src='/static/gear/fallback/generic.svg'">
+          <div>
+            <strong>${escapeHtml(item.display_name || item.label || label)}</strong>
+            ${item.reasons && item.reasons.length ? `<p class="gear-muted">${escapeHtml(item.reasons[0])}</p>` : ""}
+            ${item.warnings && item.warnings.length ? `<p class="gear-warning">${escapeHtml(item.warnings[0])}</p>` : ""}
+          </div>
+        </div>
+      </article>
+      ` : "").join("");
+
+    if (recommendation) {
+      sections.push(`
+        <article class="gear-trip-plan-summary">
+          <div class="gear-trip-plan-head">
+            <div>
+              <p class="eyebrow section-eyebrow">Gear intelligence</p>
+              <h3>${escapeHtml(headline)}</h3>
+              <p class="gear-muted">${escapeHtml(summary)}</p>
+            </div>
+            <div class="gear-trip-score">
+              <strong>${escapeHtml(score)}%</strong>
+              <span>${escapeHtml(confidence)} confidence</span>
+            </div>
+          </div>
+          ${recommendation.reasons && recommendation.reasons.length ? `<ul class="gear-reason-list">${recommendation.reasons.slice(0, 4).map(reason => `<li>${escapeHtml(reason)}</li>`).join("")}</ul>` : ""}
+          ${recommendation.warnings && recommendation.warnings.length ? `<div class="gear-warning-list">${recommendation.warnings.slice(0, 4).map(reason => `<p class="gear-warning">${escapeHtml(reason)}</p>`).join("")}</div>` : ""}
+          <div class="gear-trip-picked-grid">${selectedRows || ""}</div>
+        </article>
+      `);
+    } else {
+      sections.push(`<div class="gear-empty">No recommendation available yet.</div>`);
+    }
+
+    return sections.join("");
+  }
+
+  function renderPackingCard(packing) {
+    if (!packing) return "";
+    const core = Array.isArray(packing.core) ? packing.core : [];
+    const alternatives = Array.isArray(packing.alternatives) ? packing.alternatives : [];
+    const extras = Array.isArray(packing.extras) ? packing.extras : [];
+
+    const renderItem = item => `
+      <label class="gear-pack-item">
+        <input type="checkbox">
+        <span>
+          <strong>${escapeHtml(item.name || item.label || "Item")}</strong>
+          ${item.notes && item.notes.length ? `<small>${escapeHtml(item.notes.join(" · "))}</small>` : ""}
+          ${item.reason ? `<small>${escapeHtml(item.reason)}</small>` : ""}
+        </span>
+      </label>
+    `;
+
+    return `
+      <article class="gear-trip-plan-summary gear-trip-pack-card">
+        <div class="gear-trip-plan-head">
+          <div>
+            <p class="eyebrow section-eyebrow">Packing list</p>
+            <h3>${escapeHtml(packing.title || "Gear to Pack")}</h3>
+            <p class="gear-muted">${escapeHtml(packing.summary || "")}</p>
+          </div>
+        </div>
+        <div class="gear-pack-grid">
+          <div>
+            <h4>Core setup</h4>
+            ${core.length ? core.map(renderItem).join("") : `<div class="gear-empty">No core items matched yet.</div>`}
+          </div>
+          <div>
+            <h4>Alternatives</h4>
+            ${alternatives.length ? alternatives.map(renderItem).join("") : `<div class="gear-empty">No alternatives yet.</div>`}
+          </div>
+          <div>
+            <h4>Extras</h4>
+            ${extras.length ? extras.map(renderItem).join("") : `<div class="gear-empty">No extras suggested yet.</div>`}
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderUsageCard(usage) {
+    const recent = Array.isArray(usage.recently_used) ? usage.recently_used : [];
+    const used = Array.isArray(usage.most_used) ? usage.most_used : [];
+    return `
+      <article class="gear-trip-plan-summary gear-trip-usage-card">
+        <div class="gear-trip-plan-head">
+          <div>
+            <p class="eyebrow section-eyebrow">Usage</p>
+            <h3>Used gear</h3>
+            <p class="gear-muted">Track what you actually used in catches and trips.</p>
+          </div>
+        </div>
+        <div class="gear-trip-stat-row">
+          <span class="mini">Recent: ${escapeHtml(usage.summary?.recent ?? 0)}</span>
+          <span class="mini">Trips used: ${escapeHtml(usage.summary?.used ?? 0)}</span>
+          <span class="mini">Catches logged: ${escapeHtml(usage.summary?.caught ?? 0)}</span>
+        </div>
+        ${recent.length ? `<div class="gear-trip-mini-list">${recent.slice(0, 4).map(item => `<div class="gear-trip-mini-item"><strong>${escapeHtml(item.display_name || item.label || "")}</strong><span>${escapeHtml(item.last_used || "")}</span></div>`).join("")}</div>` : `<div class="gear-empty">No recent gear use yet.</div>`}
+        ${used.length ? `<div class="gear-trip-mini-list">${used.slice(0, 4).map(item => `<div class="gear-trip-mini-item"><strong>${escapeHtml(item.display_name || item.label || "")}</strong><span>${escapeHtml((item.catches_logged || 0) + " catches · " + (item.trips_used || 0) + " trips")}</span></div>`).join("")}</div>` : ""}
+      </article>
+    `;
+  }
+
+  function renderMaintenanceCard(maintenance) {
+    const due = Array.isArray(maintenance.due) ? maintenance.due : [];
+    const soon = Array.isArray(maintenance.soon) ? maintenance.soon : [];
+    const retired = Array.isArray(maintenance.retired) ? maintenance.retired : [];
+    return `
+      <article class="gear-trip-plan-summary gear-trip-maintenance-card">
+        <div class="gear-trip-plan-head">
+          <div>
+            <p class="eyebrow section-eyebrow">Maintenance</p>
+            <h3>Service reminders</h3>
+            <p class="gear-muted">Keep gear ready without turning the locker into a noisy maintenance dashboard.</p>
+          </div>
+        </div>
+        <div class="gear-trip-stat-row">
+          <span class="mini">Due: ${escapeHtml(maintenance.summary?.due ?? 0)}</span>
+          <span class="mini">Soon: ${escapeHtml(maintenance.summary?.soon ?? 0)}</span>
+          <span class="mini">Retired: ${escapeHtml(maintenance.summary?.retired ?? 0)}</span>
+        </div>
+        ${due.length ? `<div class="gear-trip-mini-list">${due.slice(0, 4).map(item => `<div class="gear-trip-mini-item"><strong>${escapeHtml(item.label || "")}</strong><span>${escapeHtml(item.reason || "")}</span></div>`).join("")}</div>` : ""}
+        ${soon.length ? `<div class="gear-trip-mini-list">${soon.slice(0, 4).map(item => `<div class="gear-trip-mini-item"><strong>${escapeHtml(item.label || "")}</strong><span>${escapeHtml(item.reason || "")}</span></div>`).join("")}</div>` : `<div class="gear-empty">No maintenance reminders right now.</div>`}
+        ${retired.length ? `<div class="gear-trip-mini-list">${retired.slice(0, 3).map(item => `<div class="gear-trip-mini-item"><strong>${escapeHtml(item.label || "")}</strong><span>${escapeHtml(item.reason || "")}</span></div>`).join("")}</div>` : ""}
+      </article>
+    `;
+  }
+
+  async function loadTripRecommendation() {
+    const box = byId("gearRecommendation");
+    const packingBox = byId("gearPackingList");
+    const usageBox = byId("gearUsageSummary");
+    const maintenanceBox = byId("gearMaintenanceSummary");
+    if (!box || !packingBox || !usageBox || !maintenanceBox) return;
+
+    const params = tripContextQueryParams();
+    box.innerHTML = `<div class="gear-empty">Calculating setup from your owned gear...</div>`;
+    packingBox.innerHTML = `<div class="gear-empty">Loading packing list...</div>`;
+    usageBox.innerHTML = `<div class="gear-empty">Loading gear usage...</div>`;
+    maintenanceBox.innerHTML = `<div class="gear-empty">Loading maintenance reminders...</div>`;
+
+    try {
+      const res = await fetch(`/api/gear/recommendation?${params.toString()}`);
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+      PAGE.recommendation = data.recommendation || null;
+      PAGE.packingList = data.packing_list || null;
+      PAGE.usage = data.usage || null;
+      PAGE.maintenance = data.maintenance || null;
+      box.innerHTML = renderRecommendationCard(data);
+      packingBox.innerHTML = renderPackingCard(data.packing_list || data.recommendation?.packing_list || null) || `<div class="gear-empty">No packing list available.</div>`;
+      usageBox.innerHTML = renderUsageCard(data.usage || null) || `<div class="gear-empty">No usage data yet.</div>`;
+      maintenanceBox.innerHTML = renderMaintenanceCard(data.maintenance || null) || `<div class="gear-empty">No maintenance data yet.</div>`;
+    } catch (err) {
+      const message = `Could not load trip recommendation: ${err.message || err}`;
+      box.innerHTML = `<div class="gear-empty">${escapeHtml(message)}</div>`;
+      packingBox.innerHTML = `<div class="gear-empty">${escapeHtml(message)}</div>`;
+      usageBox.innerHTML = `<div class="gear-empty">${escapeHtml(message)}</div>`;
+      maintenanceBox.innerHTML = `<div class="gear-empty">${escapeHtml(message)}</div>`;
+    }
+  }
+
   function setSettings(settings) {
     PAGE.searchSettings = settings || {};
   }
@@ -175,6 +400,33 @@
     if (byId("gearCacheLookupResults")) byId("gearCacheLookupResults").checked = settings.cache_lookup_results !== false;
     if (byId("gearPreferManufacturerSpecs")) byId("gearPreferManufacturerSpecs").checked = settings.prefer_manufacturer_specs !== false;
     if (importCategory && !importCategory.value) importCategory.value = "misc";
+  }
+
+  function applyTripContextToControls() {
+    const context = PAGE.tripContext || {};
+    const mappings = {
+      gearTripSpecies: context.target_species || "",
+      gearTripFishWeight: context.expected_fish_weight || "",
+      gearTripLureType: context.lure_type || "",
+      gearTripLureWeight: context.lure_weight_oz || "",
+      gearTripTechnique: context.technique || "",
+      gearTripHabitat: context.habitat || "",
+      gearTripCover: context.cover || "",
+    };
+    Object.entries(mappings).forEach(([id, value]) => {
+      const node = byId(id);
+      if (node && !node.value) node.value = value == null ? "" : String(value);
+    });
+    const conditions = context.conditions || {};
+    const conditionText = [
+      conditions.clarity,
+      conditions.time_of_day,
+      conditions.season,
+    ].filter(Boolean).join(", ");
+    const conditionNode = byId("gearTripConditions");
+    if (conditionNode && !conditionNode.value && conditionText) {
+      conditionNode.value = conditionText;
+    }
   }
 
   function setField(name, value) {
@@ -209,6 +461,16 @@
       "SourceUrl",
       "RetrievedAt",
       "Notes",
+      "PurchaseDate",
+      "PurchasePrice",
+      "LastUsed",
+      "TripsUsed",
+      "CatchesLogged",
+      "LastCleaned",
+      "MaintenanceInterval",
+      "MaintenanceNotes",
+      "RetiredAt",
+      "RetiredReason",
       "LengthFt",
       "LengthLabel",
       "Power",
@@ -323,6 +585,16 @@
       confidence: byId("gearConfidence").value,
       notes: getField("Notes"),
       favorite: byId("gearFavorite").checked,
+      purchase_date: getField("PurchaseDate"),
+      purchase_price: getField("PurchasePrice"),
+      last_used: getField("LastUsed"),
+      trips_used: getField("TripsUsed"),
+      catches_logged: getField("CatchesLogged"),
+      last_cleaned: getField("LastCleaned"),
+      maintenance_interval_days: getField("MaintenanceInterval"),
+      maintenance_notes: getField("MaintenanceNotes"),
+      retired_at: getField("RetiredAt"),
+      retired_reason: getField("RetiredReason"),
     };
 
     const draft = PAGE.importDraft && typeof PAGE.importDraft === "object" ? PAGE.importDraft : null;
@@ -643,6 +915,16 @@
     setField("RetrievedAt", item.retrieved_at);
     byId("gearConfidence").value = item.confidence || "user-added";
     setField("Notes", item.notes || item.product_summary || item.import_summary || item.description || "");
+    setField("PurchaseDate", item.purchase_date);
+    setField("PurchasePrice", item.purchase_price);
+    setField("LastUsed", item.last_used);
+    setField("TripsUsed", item.trips_used);
+    setField("CatchesLogged", item.catches_logged);
+    setField("LastCleaned", item.last_cleaned);
+    setField("MaintenanceInterval", item.maintenance_interval_days);
+    setField("MaintenanceNotes", item.maintenance_notes);
+    setField("RetiredAt", item.retired_at);
+    setField("RetiredReason", item.retired_reason);
     byId("gearFavorite").checked = Boolean(item.favorite);
     byId("gearAutoDisplayName").checked = false;
 
@@ -874,6 +1156,7 @@
 
   function init() {
     applySettingsToControls();
+    applyTripContextToControls();
     const form = getForm();
     if (form) form.addEventListener("submit", submitForm);
 
@@ -930,10 +1213,21 @@
       setSettings({ ...getSettings(), search_scope_default: scope });
       byId("gearDefaultScope").value = scope;
     });
+    const refreshTripPlan = () => loadTripRecommendation();
+    ["gearTripSpecies", "gearTripFishWeight", "gearTripLureType", "gearTripLureWeight", "gearTripTechnique", "gearTripHabitat", "gearTripCover", "gearTripConditions"].forEach(id => {
+      const node = byId(id);
+      if (node) node.addEventListener("change", refreshTripPlan);
+      if (node && node.tagName === "INPUT") node.addEventListener("input", () => {
+        window.clearTimeout(node._gearTripRefreshTimer);
+        node._gearTripRefreshTimer = window.setTimeout(refreshTripPlan, 350);
+      });
+    });
+    byId("gearRefreshTripPlan")?.addEventListener("click", loadTripRecommendation);
 
     wireItemButtons();
     wireFilters();
     syncCategoryFields();
+    loadTripRecommendation();
   }
 
   if (document.readyState === "loading") {

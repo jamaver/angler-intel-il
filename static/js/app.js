@@ -12,6 +12,7 @@ let currentZip = "60543";
 let currentFocusWaterIdValue = localStorage.getItem(FOCUS_WATER_STORAGE_KEY) || "";
 let latestData = null;
 let targetProfile = null;
+let gearInventory = [];
 
 function el(id) {
   return document.getElementById(id);
@@ -75,6 +76,46 @@ function fishIconPath(value) {
 
 function speciesIconClass(size = "md") {
   return `species-icon species-icon-${size}`;
+}
+
+function gearLabel(item) {
+  if (!item) return "";
+  return item.display_name || [item.brand, item.model].filter(Boolean).join(" ") || item.category || "";
+}
+
+function populateGearSelect(selectId, items, placeholder) {
+  const node = el(selectId);
+  if (!node) return;
+  const options = [`<option value="">${escapeHtml(placeholder || "Optional")}</option>`];
+  (items || []).forEach(item => {
+    const value = item && item.id ? item.id : "";
+    if (!value) return;
+    options.push(`<option value="${escapeHtml(value)}">${escapeHtml(gearLabel(item))}</option>`);
+  });
+  node.innerHTML = options.join("");
+}
+
+async function loadCatchGearOptions() {
+  try {
+    const res = await fetch("/api/gear/items");
+    const data = await res.json();
+    if (!res.ok || !data.ok) return;
+    gearInventory = Array.isArray(data.items) ? data.items : [];
+    const owned = gearInventory.filter(item => String(item.status || "").toLowerCase() === "owned");
+    const lineItems = gearInventory.filter(item => String(item.category || "").toLowerCase() === "line" && String(item.status || "").toLowerCase() === "owned");
+    const rodItems = gearInventory.filter(item => String(item.category || "").toLowerCase() === "rod" && String(item.status || "").toLowerCase() === "owned");
+    const reelItems = gearInventory.filter(item => String(item.category || "").toLowerCase() === "reel" && String(item.status || "").toLowerCase() === "owned");
+    const lureItems = gearInventory.filter(item => String(item.category || "").toLowerCase() === "lure" && String(item.status || "").toLowerCase() === "owned");
+    const terminalItems = gearInventory.filter(item => String(item.category || "").toLowerCase() === "terminal" && String(item.status || "").toLowerCase() === "owned");
+
+    populateGearSelect("catchRod", rodItems.length ? rodItems : owned, "Optional");
+    populateGearSelect("catchReel", reelItems.length ? reelItems : owned, "Optional");
+    populateGearSelect("catchLine", lineItems.length ? lineItems : owned, "Optional");
+    populateGearSelect("catchGearLure", lureItems.length ? lureItems : owned, "Optional");
+    populateGearSelect("catchTerminal", terminalItems.length ? terminalItems : owned, "Optional");
+  } catch (err) {
+    console.error("Could not load gear inventory for catches", err);
+  }
 }
 
 function lureIconPath(value) {
@@ -620,6 +661,8 @@ async function loadCatchLog() {
         <b><img class="${speciesIconClass("sm")} icon-mini" src="${fishIconPath(c.species)}" alt=""> ${c.species}</b>
         <div class="small">${c.timestamp} · ZIP ${c.zip || "unknown"}${c.waterbody ? ` · ${c.waterbody}` : ""}</div>
         <div><img class="icon-mini lure-art lure-art-sm" src="${lureIconPath(c.lure || "worm")}" alt=""> ${c.lure || "No lure recorded"}</div>
+        ${c.gear_labels ? `<div class="small">${Object.entries(c.gear_labels).map(([key, value]) => `${escapeHtml(key)}: ${escapeHtml(value)}`).join(" · ")}</div>` : ""}
+        ${c.gear_summary ? `<div class="small">${escapeHtml(c.gear_summary)}</div>` : ""}
         <div class="small">${c.notes || ""}</div>
         <button class="danger small-btn" onclick="deleteCatch('${c.id}')">Delete</button>
       </div>
@@ -634,6 +677,11 @@ async function saveCatch() {
   const lureNode = el("catchLure");
   const waterbodyNode = el("catchWaterbody");
   const notesNode = el("catchNotes");
+  const rodNode = el("catchRod");
+  const reelNode = el("catchReel");
+  const lineNode = el("catchLine");
+  const lureGearNode = el("catchGearLure");
+  const terminalNode = el("catchTerminal");
 
   const species = speciesNode ? speciesNode.value : "";
   const lure = lureNode ? lureNode.value.trim() : "";
@@ -653,7 +701,12 @@ async function saveCatch() {
       species,
       lure,
       waterbody,
-      notes
+      notes,
+      rod_id: rodNode ? rodNode.value : "",
+      reel_id: reelNode ? reelNode.value : "",
+      line_id: lineNode ? lineNode.value : "",
+      lure_id: lureGearNode ? lureGearNode.value : "",
+      terminal_id: terminalNode ? terminalNode.value : "",
     })
   });
 
@@ -665,6 +718,11 @@ async function saveCatch() {
   if (lureNode) lureNode.value = "";
   if (waterbodyNode) waterbodyNode.value = "";
   if (notesNode) notesNode.value = "";
+  if (rodNode) rodNode.value = "";
+  if (reelNode) reelNode.value = "";
+  if (lineNode) lineNode.value = "";
+  if (lureGearNode) lureGearNode.value = "";
+  if (terminalNode) terminalNode.value = "";
 
   await loadCatchLog();
   await loadIntel(currentZip);
@@ -1118,7 +1176,9 @@ function render(data) {
 }
 
 loadFavorites();
-loadCatchLog();
+loadCatchGearOptions().finally(() => {
+  loadCatchLog();
+});
 loadFocusWaters().finally(() => {
   loadTargetProfile().finally(() => {
     loadIntel("60543");

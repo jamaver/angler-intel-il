@@ -2,7 +2,7 @@
 
 Gear intelligence is the layer that matches owned gear to the current trip.
 
-Near-term matching factors:
+Current matching factors:
 - target species
 - expected fish size
 - lure type and weight
@@ -13,6 +13,6 @@ Near-term matching factors:
 - cover and structure
 - presentation style
 - catch history
+- gear usage and maintenance state
 
-This is deliberately staged. v6.10 adds the inventory foundation first, then later versions can score and recommend a real setup from the user's gear.
-
+v6.13 adds the first owned-gear recommendation, packing, and usage/maintenance summaries. V7 can refine the same model with a stronger data layer after backup and rollback gates are proven.

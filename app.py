@@ -11,6 +11,7 @@ from intelligence.waters import detect_water, infer_area_type
 from intelligence.species import SPECIES, score_species
 from intelligence.species_assets import get_species_image
 from intelligence.lure_assets import resolve_lure_asset
+from intelligence.gear_intelligence import recommend_owned_setup, build_trip_packing_list, summarize_gear_maintenance, summarize_gear_usage
 from intelligence.lures import choose_lure
 from intelligence.scoring import overall_score, time_blocks, rating, hourly_bite_forecast
 from intelligence.smart_intelligence import build_smart_intelligence, build_smart_intelligence_fallback
@@ -29,6 +30,7 @@ from intelligence.app_health_sqlite_transition import get_sqlite_transition_heal
 from intelligence.app_health_map_data import get_map_data_health_for_app
 from intelligence.map_data import get_map_data_readiness
 from intelligence.water_registry import append_custom_water_record, load_water_catalog, get_water_record_by_id
+from gear.inventory import get_item as get_gear_item, record_item_usage as record_gear_item_usage
 
 app = Flask(__name__)
 
@@ -114,7 +116,7 @@ except Exception as exc:
 
 
 APP_VERSION = "v5.9-modern-ui-refresh"
-APP_RELEASE = "v6.12-gear-management-url-assist"
+APP_RELEASE = "v6.13-gear-intelligence-packing-catch-linking"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the
@@ -122,6 +124,7 @@ app.config["APP_RELEASE"] = APP_RELEASE
 # modern_ui_refresh compatibility marker
 # v6.10-tackle-locker compatibility marker
 # v6.11-gear-catalog-flexible-search compatibility marker
+# v6.13-gear-intelligence-packing-catch-linking compatibility marker
 
 
 @app.context_processor
@@ -176,6 +179,50 @@ def load_catches():
 
 def save_catches(catches):
     write_json(CATCHES_FILE, catches)
+
+
+def _catch_gear_fields(payload):
+    fields = {}
+    labels = {}
+    for key in ("rod", "reel", "line", "lure", "terminal"):
+        ref = str(payload.get(f"{key}_id", "")).strip()
+        if not ref:
+            continue
+        fields[key] = ref
+        item = get_gear_item(ref)
+        if item:
+            labels[key] = item.get("display_name") or item.get("brand") or key.title()
+    return fields, labels
+
+
+def _enrich_catch_record(catch):
+    record = dict(catch or {})
+    gear_refs = record.get("gear_refs") if isinstance(record.get("gear_refs"), dict) else {}
+    gear_labels = record.get("gear_labels") if isinstance(record.get("gear_labels"), dict) else {}
+
+    if not gear_refs:
+        gear_refs = {}
+        for key in ("rod", "reel", "line", "lure", "terminal"):
+            value = str(record.get(f"{key}_id", "")).strip()
+            if value:
+                gear_refs[key] = value
+
+    if not gear_labels and gear_refs:
+        for key, ref in gear_refs.items():
+            item = get_gear_item(ref)
+            if item:
+                gear_labels[key] = item.get("display_name") or item.get("brand") or key.title()
+
+    if gear_refs:
+        record["gear_refs"] = gear_refs
+    if gear_labels:
+        record["gear_labels"] = gear_labels
+        record["gear_summary"] = ", ".join(
+            f"{label}: {gear_labels[label]}"
+            for label in ("rod", "reel", "line", "lure", "terminal")
+            if gear_labels.get(label)
+        )
+    return record
 
 
 def slugify_species(name):
@@ -1229,13 +1276,17 @@ def api_delete_favorite(zip_code):
 @app.route("/api/catches", methods=["GET"])
 def api_get_catches():
     catches = load_catches()
+    catches = [_enrich_catch_record(catch) for catch in catches if isinstance(catch, dict)]
     catches.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
     return jsonify(catches)
 
 
 @app.route("/api/catches", methods=["POST"])
 def api_add_catch():
-    payload = request.get_json(force=True)
+    payload = request.get_json(force=True) or {}
+    if not isinstance(payload, dict):
+        payload = {}
+    gear_refs, gear_labels = _catch_gear_fields(payload if isinstance(payload, dict) else {})
 
     catch = {
         "id": str(uuid.uuid4()),
@@ -1244,7 +1295,10 @@ def api_add_catch():
         "species": str(payload.get("species", "")).strip(),
         "lure": str(payload.get("lure", "")).strip(),
         "waterbody": str(payload.get("waterbody", "")).strip(),
-        "notes": str(payload.get("notes", "")).strip()
+        "notes": str(payload.get("notes", "")).strip(),
+        "setup_name": str(payload.get("setup_name", "")).strip(),
+        "gear_refs": gear_refs,
+        "gear_labels": gear_labels,
     }
 
     if not catch["species"]:
@@ -1254,7 +1308,14 @@ def api_add_catch():
     catches.append(catch)
     save_catches(catches)
 
-    return jsonify(catch)
+    try:
+        used_at = catch.get("timestamp")
+        for ref in set(gear_refs.values()):
+            record_gear_item_usage(ref, used_at=used_at, trips=1, catches=1)
+    except Exception:
+        pass
+
+    return jsonify(_enrich_catch_record(catch))
 
 
 @app.route("/api/catches/<catch_id>", methods=["DELETE"])

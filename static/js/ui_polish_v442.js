@@ -43,8 +43,8 @@
     const nav = document.querySelector(".ai-main-tabs");
     if (!nav || nav.querySelector(".ai-version-badge-v442")) return;
 
-    const CURRENT_VERSION = "v6.10";
-    const CURRENT_RELEASE = "v6.10-tackle-locker";
+    const CURRENT_VERSION = "v6.13";
+    const CURRENT_RELEASE = "v6.13-gear-intelligence-packing-catch-linking";
 
     const badge = document.createElement("span");
     badge.className = "ai-version-badge-v442";

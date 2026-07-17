@@ -467,6 +467,53 @@ button {
   line-height: 1.45;
 }
 
+.catch-form {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.catch-gear-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.catch-gear-grid label {
+  display: grid;
+  gap: 0.3rem;
+  color: #d0d9e7;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.catch-gear-grid select {
+  min-width: 0;
+  min-height: 2.4rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: #f8fbff;
+  color: #0f172a;
+  padding: 0.55rem 0.7rem;
+}
+
+.catch-log {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.catch-row {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem 0.8rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(8, 18, 31, 0.45);
+}
+
+.catch-row button {
+  justify-self: start;
+}
+
 .dashboard-secondary-stack {
   margin-top: 2px;
 }
@@ -3176,6 +3223,152 @@ button {
   line-height: 1.15;
 }
 
+.gear-trip-card {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.gear-trip-context-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  gap: 0.65rem;
+  align-items: end;
+}
+
+.gear-trip-recommendation,
+.gear-trip-secondary-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.gear-trip-secondary-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gear-trip-panel {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.gear-trip-plan-summary {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(8, 18, 31, 0.45);
+}
+
+.gear-trip-plan-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.85rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.gear-trip-score {
+  display: grid;
+  gap: 0.15rem;
+  text-align: right;
+}
+
+.gear-trip-score strong {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.gear-trip-picked-grid,
+.gear-pack-grid,
+.gear-trip-mini-list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.gear-trip-picked-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.gear-trip-picked {
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.gear-trip-picked-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.45rem;
+}
+
+.gear-trip-picked-body {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.gear-trip-picked-image {
+  width: 64px;
+  height: 64px;
+}
+
+.gear-reason-list,
+.gear-warning-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.gear-warning-list {
+  padding-left: 0;
+}
+
+.gear-warning {
+  margin: 0;
+  color: #fde68a;
+}
+
+.gear-pack-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gear-pack-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.55rem;
+  align-items: start;
+  padding: 0.6rem 0.65rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.gear-pack-item strong,
+.gear-trip-mini-item strong {
+  display: block;
+}
+
+.gear-pack-item small,
+.gear-trip-mini-item span {
+  display: block;
+  color: #c8d4e5;
+}
+
+.gear-trip-mini-item {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.6rem 0.65rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+}
+
 .gear-toolbar,
 .gear-form-card,
 .gear-catalog-card,
@@ -3739,9 +3932,19 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .gear-trip-context-grid,
   .gear-toolbar-grid,
   .gear-form-columns {
     grid-template-columns: 1fr;
+  }
+
+  .gear-trip-secondary-grid,
+  .gear-pack-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .catch-gear-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -3762,5 +3965,15 @@ button {
   .gear-catalog-result-image {
     width: 96px;
     height: 96px;
+  }
+
+  .gear-trip-picked-body,
+  .gear-import-review-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gear-trip-context-grid,
+  .catch-gear-grid {
+    grid-template-columns: 1fr;
   }
 }

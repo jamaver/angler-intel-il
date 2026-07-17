@@ -49,7 +49,7 @@ def _write_json(path: Path, data: Any) -> None:
 
 def _default_cache() -> dict[str, Any]:
     return {
-        "version": "v6.12-gear-management-url-assist",
+        "version": "v6.13-gear-intelligence-packing-catch-linking",
         "updated_at": _now(),
         "products": [],
     }
@@ -68,7 +68,7 @@ def load_cache() -> dict[str, Any]:
     data = _read_json(catalog_cache_path(), _default_cache())
     if not isinstance(data, dict):
         data = _default_cache()
-    data.setdefault("version", "v6.12-gear-management-url-assist")
+    data.setdefault("version", "v6.13-gear-intelligence-packing-catch-linking")
     data.setdefault("updated_at", _now())
     data["products"] = data.get("products") if isinstance(data.get("products"), list) else []
     return data
@@ -76,7 +76,7 @@ def load_cache() -> dict[str, Any]:
 
 def save_cache(data: dict[str, Any]) -> None:
     payload = dict(data or {})
-    payload.setdefault("version", "v6.12-gear-management-url-assist")
+    payload.setdefault("version", "v6.13-gear-intelligence-packing-catch-linking")
     payload["updated_at"] = _now()
     payload["products"] = payload.get("products") if isinstance(payload.get("products"), list) else []
     _write_json(catalog_cache_path(), payload)
@@ -261,7 +261,7 @@ def search_gear_catalog(query: str, category: str = "", scope: str = "both", lim
 
     return {
         "ok": True,
-        "version": "v6.12-gear-management-url-assist",
+        "version": "v6.13-gear-intelligence-packing-catch-linking",
         "query": query,
         "category": category,
         "scope": scope,

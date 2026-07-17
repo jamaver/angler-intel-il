@@ -27,14 +27,81 @@
         </div>
       </div>
       <div class="gear-hero-summary card">
-        <div class="gear-summary-grid">
-          <div class="gear-summary-card"><span>Total gear</span><strong>{{ locker.summary.total }}</strong></div>
-          <div class="gear-summary-card"><span>Owned</span><strong>{{ locker.summary.owned }}</strong></div>
-          <div class="gear-summary-card"><span>Favorites</span><strong>{{ locker.summary.favorites }}</strong></div>
-          <div class="gear-summary-card"><span>Retired</span><strong>{{ locker.summary.retired }}</strong></div>
+          <div class="gear-summary-grid">
+            <div class="gear-summary-card"><span>Total gear</span><strong>{{ locker.summary.total }}</strong></div>
+            <div class="gear-summary-card"><span>Owned</span><strong>{{ locker.summary.owned }}</strong></div>
+            <div class="gear-summary-card"><span>Favorites</span><strong>{{ locker.summary.favorites }}</strong></div>
+            <div class="gear-summary-card"><span>Retired</span><strong>{{ locker.summary.retired }}</strong></div>
+          </div>
         </div>
-      </div>
     </header>
+
+    <section class="card gear-trip-card">
+      <div class="section-head compact">
+        <div>
+          <p class="eyebrow section-eyebrow">Trip planning</p>
+          <h2>Recommended Setup for Current Trip</h2>
+        </div>
+        <span class="gear-reference-note">Built from your owned gear.</span>
+      </div>
+      <div class="gear-trip-context-grid">
+        <label class="gear-field">
+          <span>Target species</span>
+          <input id="gearTripSpecies" placeholder="Largemouth Bass" value="{{ locker.trip_context.target_species }}">
+        </label>
+        <label class="gear-field">
+          <span>Expected fish size</span>
+          <input id="gearTripFishWeight" placeholder="2.5" value="{{ locker.trip_context.expected_fish_weight }}">
+        </label>
+        <label class="gear-field">
+          <span>Lure type</span>
+          <input id="gearTripLureType" placeholder="spinnerbait, jig, worm">
+        </label>
+        <label class="gear-field">
+          <span>Lure weight (oz)</span>
+          <input id="gearTripLureWeight" placeholder="0.375">
+        </label>
+        <label class="gear-field">
+          <span>Technique</span>
+          <input id="gearTripTechnique" placeholder="steady_retrieve, slow_roll">
+        </label>
+        <label class="gear-field">
+          <span>Habitat</span>
+          <input id="gearTripHabitat" placeholder="lake, pond, river, creek">
+        </label>
+        <label class="gear-field">
+          <span>Cover</span>
+          <input id="gearTripCover" placeholder="weeds, wood, open_water">
+        </label>
+        <label class="gear-field">
+          <span>Conditions</span>
+          <input id="gearTripConditions" placeholder="clear, windy, cloudy, low_light">
+        </label>
+        <button type="button" class="gear-toolbar-button" id="gearRefreshTripPlan">Refresh trip plan</button>
+      </div>
+      <div id="gearRecommendation" class="gear-trip-recommendation"></div>
+      <div class="gear-trip-secondary-grid">
+        <section class="gear-trip-panel">
+          <div class="section-head compact">
+            <div>
+              <p class="eyebrow section-eyebrow">Packing</p>
+              <h3>Gear to Pack</h3>
+            </div>
+          </div>
+          <div id="gearPackingList"></div>
+        </section>
+        <section class="gear-trip-panel">
+          <div class="section-head compact">
+            <div>
+              <p class="eyebrow section-eyebrow">Usage</p>
+              <h3>Usage and maintenance</h3>
+            </div>
+          </div>
+          <div id="gearUsageSummary"></div>
+          <div id="gearMaintenanceSummary"></div>
+        </section>
+      </div>
+    </section>
 
     <section class="card gear-toolbar">
       <div class="section-head compact">
@@ -149,6 +216,21 @@
             <span>Notes</span>
             <textarea name="notes" id="gearNotes" rows="3" placeholder="Fit notes, trip notes, maintenance notes, or where you like to use it."></textarea>
           </label>
+          <fieldset class="gear-category-block gear-maintenance-block">
+            <legend>Maintenance / ownership</legend>
+            <div class="gear-form-columns">
+              <label class="gear-field"><span>Purchase date</span><input name="purchase_date" id="gearPurchaseDate" placeholder="2026-07-16"></label>
+              <label class="gear-field"><span>Purchase price</span><input name="purchase_price" id="gearPurchasePrice" placeholder="$149.99"></label>
+              <label class="gear-field"><span>Last used</span><input name="last_used" id="gearLastUsed" placeholder="2026-07-16T19:51:39"></label>
+              <label class="gear-field"><span>Trips used</span><input name="trips_used" id="gearTripsUsed" type="number" min="0" step="1" placeholder="0"></label>
+              <label class="gear-field"><span>Catches logged</span><input name="catches_logged" id="gearCatchesLogged" type="number" min="0" step="1" placeholder="0"></label>
+              <label class="gear-field"><span>Last cleaned</span><input name="last_cleaned" id="gearLastCleaned" placeholder="2026-07-16T19:51:39"></label>
+              <label class="gear-field"><span>Maintenance interval (days)</span><input name="maintenance_interval_days" id="gearMaintenanceInterval" type="number" min="0" step="1" placeholder="90"></label>
+              <label class="gear-field gear-field-wide"><span>Maintenance notes</span><textarea name="maintenance_notes" id="gearMaintenanceNotes" rows="2" placeholder="Line change reminder, reel service note, guide inspection, hook sharpening..."></textarea></label>
+              <label class="gear-field"><span>Retired at</span><input name="retired_at" id="gearRetiredAt" placeholder="2026-07-16T19:51:39"></label>
+              <label class="gear-field gear-field-wide"><span>Retired reason</span><input name="retired_reason" id="gearRetiredReason" placeholder="Broken guide, outdated, replaced by better setup"></label>
+            </div>
+          </fieldset>
           <label class="gear-field gear-field-inline">
             <input type="checkbox" name="favorite" id="gearFavorite">
             <span>Favorite</span>

@@ -1,0 +1,12 @@
+{
+  "version": "v6.13-gear-intelligence-packing-catch-linking",
+  "previous_version": "v6.12-gear-management-url-assist",
+  "gear_intelligence": true,
+  "gear_packing": true,
+  "catch_linking": true,
+  "maintenance_tracking": true,
+  "app_health_maintenance_only": true,
+  "json_source_of_truth": true,
+  "sqlite_authority_flipped": false,
+  "installed_at": "2026-07-17T00:00:00-05:00"
+}

@@ -10,7 +10,7 @@ from typing import Any
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "data"
 
-DEFAULT_VERSION = "v6.10-tackle-locker"
+DEFAULT_VERSION = "v6.13-gear-intelligence-packing-catch-linking"
 CATEGORY_ORDER = ["rod", "reel", "line", "lure", "terminal", "misc"]
 CATEGORY_LABELS = {
     "rod": "Rods",
@@ -244,6 +244,19 @@ def _default_display_name(item: dict[str, Any]) -> str:
     return " ".join(part for part in [brand, model, _text(item.get("display_name"), "")] if part)
 
 
+def gear_item_label(item: dict[str, Any] | None) -> str:
+    if not isinstance(item, dict):
+        return ""
+    label = _text(item.get("display_name"), "")
+    if label:
+        return label
+    brand = _text(item.get("brand"), "")
+    model = _text(item.get("model"), "")
+    if brand or model:
+        return " ".join(part for part in [brand, model] if part)
+    return category_label(item.get("category"))
+
+
 def normalize_item(payload: dict[str, Any], existing: dict[str, Any] | None = None) -> dict[str, Any]:
     existing = existing or {}
     category = _text(payload.get("category") or existing.get("category"), "misc").lower()
@@ -282,6 +295,16 @@ def normalize_item(payload: dict[str, Any], existing: dict[str, Any] | None = No
         "specifications": _as_dict(payload.get("specifications")) or _as_dict(existing.get("specifications")),
         "field_sources": _as_dict(payload.get("field_sources")) or _as_dict(existing.get("field_sources")),
         "quantity": _as_int(payload.get("quantity"), _as_int(existing.get("quantity"), 1)) or 1,
+        "purchase_date": _text(payload.get("purchase_date"), _text(existing.get("purchase_date"), "")),
+        "purchase_price": _text(payload.get("purchase_price"), _text(existing.get("purchase_price"), "")),
+        "last_used": _text(payload.get("last_used"), _text(existing.get("last_used"), "")),
+        "trips_used": _as_int(payload.get("trips_used"), _as_int(existing.get("trips_used"), 0)) or 0,
+        "catches_logged": _as_int(payload.get("catches_logged"), _as_int(existing.get("catches_logged"), 0)) or 0,
+        "last_cleaned": _text(payload.get("last_cleaned"), _text(existing.get("last_cleaned"), "")),
+        "maintenance_interval_days": _as_int(payload.get("maintenance_interval_days"), _as_int(existing.get("maintenance_interval_days"), 0)) or 0,
+        "maintenance_notes": _text(payload.get("maintenance_notes"), _text(existing.get("maintenance_notes"), "")),
+        "retired_at": _text(payload.get("retired_at"), _text(existing.get("retired_at"), "")),
+        "retired_reason": _text(payload.get("retired_reason"), _text(existing.get("retired_reason"), "")),
         "created_at": _text(existing.get("created_at"), _now()),
         "updated_at": _now(),
     })
@@ -541,6 +564,32 @@ def toggle_favorite(item_id: str, favorite: bool | None = None) -> dict[str, Any
         return None
     payload = dict(item)
     payload["favorite"] = (not bool(item.get("favorite"))) if favorite is None else bool(favorite)
+    return upsert_item(payload)
+
+
+def record_item_usage(
+    item_id: str,
+    *,
+    used_at: str | None = None,
+    trips: int = 1,
+    catches: int = 0,
+) -> dict[str, Any] | None:
+    item = get_item(item_id)
+    if not item:
+        return None
+    payload = dict(item)
+    payload["last_used"] = _text(used_at, _now())
+    payload["trips_used"] = max(0, _as_int(payload.get("trips_used"), 0) or 0) + max(0, int(trips or 0))
+    payload["catches_logged"] = max(0, _as_int(payload.get("catches_logged"), 0) or 0) + max(0, int(catches or 0))
+    return upsert_item(payload)
+
+
+def mark_item_cleaned(item_id: str, cleaned_at: str | None = None) -> dict[str, Any] | None:
+    item = get_item(item_id)
+    if not item:
+        return None
+    payload = dict(item)
+    payload["last_cleaned"] = _text(cleaned_at, _now())
     return upsert_item(payload)
 
 

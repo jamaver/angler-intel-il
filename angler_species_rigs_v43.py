@@ -24,6 +24,13 @@ from gear.inventory import (
     toggle_favorite,
     upsert_item,
 )
+from intelligence.gear_intelligence import (
+    build_trip_packing_list,
+    recommend_owned_setup,
+    summarize_gear_maintenance,
+    summarize_gear_usage,
+)
+from intelligence.target_profile import load_target_profile, resolve_target_species
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -257,6 +264,18 @@ def _best_query_matches(query: str, category: str = "", limit: int = 3) -> list[
 
 def _locker_context() -> dict[str, Any]:
     items = [_enrich_gear_item(item) for item in list_items()]
+    trip_context = _trip_context()
+    recommendation = recommend_owned_setup(
+        trip_context["target_species"],
+        expected_fish_weight=trip_context["expected_fish_weight"],
+        lure_type=trip_context["lure_type"],
+        lure_weight_oz=trip_context["lure_weight_oz"],
+        technique=trip_context["technique"],
+        habitat=trip_context["habitat"],
+        cover=trip_context["cover"],
+        conditions=trip_context["conditions"],
+        owned_gear=items,
+    )
     categories = []
     for section in category_sections(items):
         categories.append({
@@ -274,6 +293,34 @@ def _locker_context() -> dict[str, Any]:
         "reference_rigs": _rigs(),
         "settings": load_settings(),
         "providers": available_providers(),
+        "trip_context": trip_context,
+        "recommendation": recommendation,
+        "packing_list": build_trip_packing_list(recommendation),
+        "usage": summarize_gear_usage(items),
+        "maintenance": summarize_gear_maintenance(items),
+    }
+
+
+def _trip_context() -> dict[str, Any]:
+    profile = load_target_profile()
+    trip_species, trip_species_source = resolve_target_species("", profile)
+    return {
+        "target_species": trip_species,
+        "target_species_source": trip_species_source,
+        "expected_fish_weight": request.args.get("expected_fish_weight", ""),
+        "lure_type": request.args.get("lure_type", ""),
+        "lure_weight_oz": request.args.get("lure_weight_oz", ""),
+        "technique": request.args.get("technique", ""),
+        "habitat": request.args.get("habitat", ""),
+        "cover": request.args.get("cover", ""),
+        "conditions": {
+            "temperature": request.args.get("temperature", ""),
+            "wind_mph": request.args.get("wind_mph", ""),
+            "cloud_cover": request.args.get("cloud_cover", ""),
+            "clarity": request.args.get("clarity", ""),
+            "time_of_day": request.args.get("time_of_day", ""),
+            "season": request.args.get("season", ""),
+        },
     }
 
 
@@ -286,8 +333,6 @@ def _nav(active: str) -> str:
         ("/reports", "Saved Reports"),
         ("/data-tools", "Data Tools"),
         ("/app-health", "App Health"),
-        ("/admin", "Admin"),
-        ("/exports", "Export"),
     ]
 
     out = ['<nav class="ai-main-tabs" aria-label="Angler Intel navigation">']
@@ -542,7 +587,7 @@ def register_species_rig_routes_v43(app):
             items = [_enrich_gear_item(item) for item in list_items()]
             return jsonify({
                 "ok": True,
-                "version": "v6.12-gear-management-url-assist",
+                "version": "v6.13-gear-intelligence-packing-catch-linking",
                 "summary": inventory_summary(items),
                 "items": items,
                 "categories": category_sections(items),
@@ -552,7 +597,7 @@ def register_species_rig_routes_v43(app):
         item = upsert_item(payload if isinstance(payload, dict) else {})
         return jsonify({
             "ok": True,
-            "version": "v6.12-gear-management-url-assist",
+            "version": "v6.13-gear-intelligence-packing-catch-linking",
             "item": _enrich_gear_item(item),
             "summary": inventory_summary(),
         })
@@ -626,7 +671,7 @@ def register_species_rig_routes_v43(app):
         results = search_gear_catalog(query, category=category, scope="local")
         return jsonify({
             "ok": True,
-            "version": "v6.12-gear-management-url-assist",
+            "version": "v6.13-gear-intelligence-packing-catch-linking",
             "count": len(results.get("local", {}).get("owned", [])) + len(results.get("local", {}).get("cached", [])),
             "products": results.get("local", {}).get("cached", []),
             "local": results.get("local", {}),
@@ -651,7 +696,7 @@ def register_species_rig_routes_v43(app):
         duplicates = find_duplicate_items(product) if isinstance(product, dict) else []
         return jsonify({
             "ok": True,
-            "version": "v6.12-gear-management-url-assist",
+            "version": "v6.13-gear-intelligence-packing-catch-linking",
             "product": product,
             "duplicate_matches": duplicates if isinstance(duplicates, list) else [],
             "query_matches": query_matches,
@@ -667,3 +712,41 @@ def register_species_rig_routes_v43(app):
         from gear.settings import save_settings
         settings = save_settings(payload)
         return jsonify({"ok": True, "settings": settings, "providers": available_providers()})
+
+    @app.route("/api/gear/recommendation")
+    def gear_recommendation_api_v613():
+        items = [_enrich_gear_item(item) for item in list_items()]
+        profile = load_target_profile()
+        trip_species = str(request.args.get("species", "")).strip()
+        if not trip_species:
+            trip_species = resolve_target_species("", profile)[0]
+        recommendation = recommend_owned_setup(
+            trip_species,
+            expected_fish_weight=request.args.get("expected_fish_weight", ""),
+            lure_type=request.args.get("lure_type", ""),
+            lure_weight_oz=request.args.get("lure_weight_oz", ""),
+            technique=request.args.get("technique", ""),
+            habitat=request.args.get("habitat", ""),
+            cover=request.args.get("cover", ""),
+            conditions={
+                "temperature": request.args.get("temperature", ""),
+                "wind_mph": request.args.get("wind_mph", ""),
+                "cloud_cover": request.args.get("cloud_cover", ""),
+                "clarity": request.args.get("clarity", ""),
+                "time_of_day": request.args.get("time_of_day", ""),
+                "season": request.args.get("season", ""),
+            },
+            owned_gear=items,
+        )
+        return jsonify({
+            "ok": True,
+            "version": "v6.13-gear-intelligence-packing-catch-linking",
+            "recommendation": recommendation,
+            "packing_list": build_trip_packing_list(recommendation),
+            "usage": summarize_gear_usage(items),
+            "maintenance": summarize_gear_maintenance(items),
+            "trip_context": {
+                "target_species": trip_species,
+                "target_species_source": resolve_target_species("", profile)[1],
+            },
+        })
