@@ -1,0 +1,184 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Angler Intel - Smart Recommendations</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <nav class="ai-main-tabs" aria-label="Angler Intel navigation">
+    <a class="ai-main-tab" href="/">Dashboard</a>
+    <a class="ai-main-tab" href="/map">Map</a>
+    <a class="ai-main-tab" href="/waters">Local Waters</a>
+    <a class="ai-main-tab" href="/species">Species</a>
+    <a class="ai-main-tab" href="/rigs">My Tackle Locker</a>
+    <a class="ai-main-tab active" href="/recommendations">Smart Picks</a>
+    <a class="ai-main-tab" href="/reports">Saved Reports</a>
+    <a class="ai-main-tab" href="/data-tools">Data Tools</a>
+    <a class="ai-main-tab" href="/app-health">App Health</a>
+  </nav>
+  <main class="app recommendations-shell">
+    <h1>Smart Recommendations</h1>
+    <p>v4.4 connects local waters, active species, rig setups, seasonal patterns, and distance scoring.</p>
+
+    <div class="card">
+      <h2>Build a recommendation</h2>
+      <label>
+        ZIP code<br>
+        <input id="zipInput" value="60543" placeholder="60543">
+      </label>
+      <br>
+      <label>
+        Target species<br>
+        <select id="speciesSelect">
+          <option value="">Active species mix</option>
+        </select>
+      </label>
+      <br>
+      <label>
+        Radius<br>
+        <select id="radiusSelect">
+          <option value="15">15 mi</option>
+          <option value="25">25 mi</option>
+          <option value="35" selected>35 mi</option>
+          <option value="50">50 mi</option>
+          <option value="75">75 mi</option>
+        </select>
+      </label>
+      <br>
+      <label>
+        Conditions<br>
+        <select id="conditionSelect">
+          <option value="">General</option>
+          <option value="wind">Wind</option>
+          <option value="clouds">Clouds</option>
+          <option value="clear">Clear water / high visibility</option>
+          <option value="stained">Stained water</option>
+          <option value="cold">Cold water</option>
+          <option value="warm">Warm water</option>
+        </select>
+      </label>
+      <br>
+      <button onclick="loadRecommendations()">Get Smart Picks</button>
+    </div>
+
+    <div class="card">
+      <h2>Best Bet</h2>
+      <div id="bestBetBox">Loading...</div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Top Waters</h2>
+        <div id="watersBox"></div>
+      </div>
+      <div class="card">
+        <h2>Top Rig Setups</h2>
+        <div id="rigsBox"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Next Actions</h2>
+      <ul id="actionsBox"></ul>
+    </div>
+
+    <div class="card">
+      <h2>Raw recommendation JSON</h2>
+      <pre id="rawBox">Loading...</pre>
+    </div>
+  </main>
+
+<script src="/static/js/global_nav_v433.js"></script>
+<script>
+function esc(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+async function loadSpecies() {
+  try {
+    const res = await fetch("/api/species/active");
+    const data = await res.json();
+    const select = document.getElementById("speciesSelect");
+    const current = select.value;
+    select.innerHTML = '<option value="">Active species mix</option>' + (data.species || []).map(s =>
+      `<option value="${esc(s.id)}">${esc(s.name)}</option>`
+    ).join("");
+    select.value = current;
+  } catch (err) {
+    console.log("Unable to load active species", err);
+  }
+}
+
+async function loadRecommendations() {
+  const zip = document.getElementById("zipInput").value.trim() || "60543";
+  const species = document.getElementById("speciesSelect").value;
+  const radius = document.getElementById("radiusSelect").value;
+  const condition = document.getElementById("conditionSelect").value;
+
+  const params = new URLSearchParams({ zip, radius, limit: "5" });
+  if (species) params.set("species", species);
+  if (condition) params.set("conditions", condition);
+
+  const bestBetBox = document.getElementById("bestBetBox");
+  const watersBox = document.getElementById("watersBox");
+  const rigsBox = document.getElementById("rigsBox");
+  const actionsBox = document.getElementById("actionsBox");
+  const rawBox = document.getElementById("rawBox");
+
+  bestBetBox.textContent = "Loading...";
+  watersBox.textContent = "";
+  rigsBox.textContent = "";
+  actionsBox.innerHTML = "";
+  rawBox.textContent = "Loading...";
+
+  try {
+    const res = await fetch("/api/recommendations?" + params.toString());
+    const data = await res.json();
+
+    bestBetBox.innerHTML = `
+      <p><strong>${esc(data.summary)}</strong></p>
+      <p class="muted">Season: ${esc(data.season)} · Species: ${esc((data.selected_species_names || []).join(", "))}</p>
+    `;
+
+    watersBox.innerHTML = (data.waters || []).map(w => `
+      <div>
+        <h3>${esc(w.name)}</h3>
+        <p><span class="score">Score ${esc(w.recommendation_score)}</span> ${w.distance_miles !== null && w.distance_miles !== undefined ? esc(w.distance_miles) + " mi" : ""}</p>
+        <p class="muted">${esc(w.type || "")} · ${esc(w.city || "")} · ${esc(w.county || "")}</p>
+        <p>${esc((w.recommendation_reasons || []).join("; "))}</p>
+        <p><a href="/water/${encodeURIComponent(w.id)}">View water intel</a></p>
+      </div>
+      <hr>
+    `).join("") || "<p>No waters found. Try larger radius.</p>";
+
+    rigsBox.innerHTML = (data.rigs || []).map(r => `
+      <div>
+        <h3>${esc(r.name)}</h3>
+        <p><span class="score">Score ${esc(r.recommendation_score)}</span></p>
+        <p><strong>Line:</strong> ${esc(r.line || "")}</p>
+        <p><strong>Terminal:</strong> ${esc(r.terminal || "")}</p>
+        <p>${esc((r.recommendation_reasons || []).join("; "))}</p>
+      </div>
+      <hr>
+    `).join("") || "<p>No rig match found.</p>";
+
+    actionsBox.innerHTML = (data.next_actions || []).map(a => `<li>${esc(a)}</li>`).join("");
+    rawBox.textContent = JSON.stringify(data, null, 2);
+  } catch (err) {
+    bestBetBox.textContent = "Unable to load recommendations: " + err;
+    rawBox.textContent = String(err);
+  }
+}
+
+loadSpecies().then(loadRecommendations);
+</script>
+  <script src="/static/js/ui_polish_v442.js"></script>
+</body>
+</html>
