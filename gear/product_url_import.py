@@ -371,37 +371,49 @@ def _infer_product_fields(product: dict[str, Any], text: str, category_hint: str
     blob = _all_text(title, product.get("description"), text, product.get("specifications"), product.get("identifiers"))
     category = _infer_category(title, blob, category_hint)
     product["category"] = category
+    field_sources = product.get("field_sources") if isinstance(product.get("field_sources"), dict) else {}
 
     if category == "rod":
         length_ft, length_label = _parse_length_value(blob)
         if length_ft is not None:
             product.setdefault("length_ft", length_ft)
+            field_sources.setdefault("length_ft", "page_text")
         if length_label:
             product.setdefault("length_label", length_label)
+            field_sources.setdefault("length_label", "page_text")
         power = _first_match(blob, [r"\b(extra light|ultra light|ultralight|light medium|medium light|medium heavy|extra heavy|heavy|medium)\b"])
         action = _first_match(blob, [r"\b(extra fast|fast|moderate fast|moderate|slow)\b"])
         if power:
             product.setdefault("power", power.lower().replace(" ", "_"))
+            field_sources.setdefault("power", "page_text")
         if action:
             product.setdefault("action", action.lower().replace(" ", "_"))
+            field_sources.setdefault("action", "page_text")
         lure_min, lure_max = _parse_float_range(blob, "oz")
         if lure_min is not None:
             product.setdefault("lure_weight_min_oz", lure_min)
+            field_sources.setdefault("lure_weight_min_oz", "page_text")
         if lure_max is not None:
             product.setdefault("lure_weight_max_oz", lure_max)
+            field_sources.setdefault("lure_weight_max_oz", "page_text")
         line_min, line_max = _parse_int_range(blob, "lb")
         if line_min is not None:
             product.setdefault("line_rating_min_lb", line_min)
+            field_sources.setdefault("line_rating_min_lb", "page_text")
         if line_max is not None:
             product.setdefault("line_rating_max_lb", line_max)
+            field_sources.setdefault("line_rating_max_lb", "page_text")
         pieces = _first_match(blob, [r"\b(\d+)\s*(?:piece|pc|pcs|pce|sections?)\b"])
         if pieces:
             product.setdefault("pieces", int(pieces))
+            field_sources.setdefault("pieces", "page_text")
         techniques, species = _infer_text_tags(blob)
         if techniques:
             product.setdefault("technique_tags", techniques)
+            field_sources.setdefault("technique_tags", "page_text")
         if species:
             product.setdefault("species_tags", species)
+            field_sources.setdefault("species_tags", "page_text")
 
     elif category == "reel":
         reel_type = _first_match(blob, [r"\b(baitcasting|spinning|spincast|conventional|fly)\b"])
@@ -411,17 +423,23 @@ def _infer_product_fields(product: dict[str, Any], text: str, category_hint: str
         weight = _first_match(blob, [r"\b(\d+(?:\.\d+)?)\s*oz\b"])
         if reel_type:
             product.setdefault("reel_type", reel_type.replace(" ", "_"))
+            field_sources.setdefault("reel_type", "page_text")
         if gear_ratio:
             product.setdefault("gear_ratio", float(gear_ratio))
+            field_sources.setdefault("gear_ratio", "page_text")
         if max_drag:
             product.setdefault("max_drag_lb", float(max_drag))
+            field_sources.setdefault("max_drag_lb", "page_text")
         if handedness:
             product.setdefault("handedness", handedness)
+            field_sources.setdefault("handedness", "page_text")
         if weight:
             product.setdefault("weight_oz", float(weight))
+            field_sources.setdefault("weight_oz", "page_text")
         line_capacity = _first_match(blob, [r"\b\d+\s*lb\s*/\s*\d+\s*yd\b", r"\b\d+\s*yd\s*/\s*\d+\s*lb\b"])
         if line_capacity:
             product.setdefault("line_capacity", line_capacity)
+            field_sources.setdefault("line_capacity", "page_text")
 
     elif category == "line":
         line_type = _first_match(blob, [r"\b(braid|fluorocarbon|mono|monofilament|nylon|copolymer)\b"])
@@ -431,14 +449,19 @@ def _infer_product_fields(product: dict[str, Any], text: str, category_hint: str
         length_yd = _first_match(blob, [r"\b(\d+)\s*yd\b"])
         if line_type:
             product.setdefault("line_type", line_type.replace(" ", "_"))
+            field_sources.setdefault("line_type", "page_text")
         if strength:
             product.setdefault("strength_lb", int(strength))
+            field_sources.setdefault("strength_lb", "page_text")
         if diameter:
             product.setdefault("diameter_equivalent", diameter)
+            field_sources.setdefault("diameter_equivalent", "page_text")
         if color:
             product.setdefault("color", color.replace(" ", "_"))
+            field_sources.setdefault("color", "page_text")
         if length_yd:
             product.setdefault("length_yd", int(length_yd))
+            field_sources.setdefault("length_yd", "page_text")
 
     elif category == "lure":
         lure_type = _first_match(blob, [r"\b(spinnerbait|crankbait|swimbait|topwater popper|popper|frog|spoon|inline spinner|spinner|drop shot|dropshot|jig|worm|soft plastic|stick bait|senko|buzzbait|chatterbait)\b"])
@@ -449,37 +472,51 @@ def _infer_product_fields(product: dict[str, Any], text: str, category_hint: str
         techniques, species = _infer_text_tags(blob)
         if lure_type:
             product.setdefault("lure_type", lure_type.replace(" ", "_"))
+            field_sources.setdefault("lure_type", "page_text")
         if color:
             product.setdefault("color", color.replace(" ", "_"))
+            field_sources.setdefault("color", "page_text")
         if weight_min is not None:
             product.setdefault("weight_oz", weight_min)
+            field_sources.setdefault("weight_oz", "page_text")
         if hook:
             product.setdefault("hook_size", hook)
+            field_sources.setdefault("hook_size", "page_text")
         if depth_min is not None:
             product.setdefault("depth_min_ft", depth_min)
+            field_sources.setdefault("depth_min_ft", "page_text")
         if depth_max is not None:
             product.setdefault("depth_max_ft", depth_max)
+            field_sources.setdefault("depth_max_ft", "page_text")
         if techniques:
             product.setdefault("technique_tags", techniques)
+            field_sources.setdefault("technique_tags", "page_text")
         if species:
             product.setdefault("species_tags", species)
+            field_sources.setdefault("species_tags", "page_text")
 
     elif category == "terminal":
         subtype = _first_match(blob, [r"\b(hook|weight|swivel|snap|jig head|jighead|leader)\b"])
         if subtype:
             product.setdefault("subtype", subtype.replace(" ", "_"))
+            field_sources.setdefault("subtype", "page_text")
         size = _first_match(blob, [r"\b(\d+(?:/\d+)?(?:/\d+)?(?:/\d+)?)\b"])
         if size:
             product.setdefault("size", size)
+            field_sources.setdefault("size", "page_text")
         weight_min, _ = _parse_float_range(blob, "oz")
         if weight_min is not None:
             product.setdefault("weight_oz", weight_min)
+            field_sources.setdefault("weight_oz", "page_text")
         quantity = _first_match(blob, [r"\b(\d+)\s*(?:count|pack|pieces|pcs|qty)\b"])
         if quantity:
             product.setdefault("quantity", int(quantity))
+            field_sources.setdefault("quantity", "page_text")
 
     product["import_summary"] = "Imported product details were inferred from page metadata and page text."
     product["imported_from_text"] = blob[:1200]
+    if field_sources:
+        product["field_sources"] = field_sources
     return product
 
 
@@ -591,6 +628,7 @@ def normalize_structured_product(data: dict[str, Any], source_url: str = "", cat
         "description": _text(product.get("description"), ""),
         "import_summary": _text(product.get("import_summary"), ""),
         "product_summary": _text(product.get("product_summary"), ""),
+        "field_sources": product.get("field_sources") if isinstance(product.get("field_sources"), dict) else {},
     }
     for key in (
         "length_ft",
@@ -624,6 +662,7 @@ def normalize_structured_product(data: dict[str, Any], source_url: str = "", cat
         "species_tags",
         "imported_from_text",
         "product_summary",
+        "field_sources",
     ):
         if key in product and product.get(key) not in (None, "", [], {}):
             normalized[key] = product.get(key)
@@ -665,8 +704,19 @@ def import_product_from_url(url: str, category: str = "misc", allow_remote_image
             "confidence": "low",
             "raw_provider_data_cached": False,
             "retrieved_at": result.get("retrieved_at"),
+            "field_sources": {},
         }
     parsed["description"] = _text(parsed.get("description"), parser.content_text)
+    if not isinstance(parsed.get("field_sources"), dict):
+        parsed["field_sources"] = {}
+    if parsed.get("brand"):
+        parsed["field_sources"].setdefault("brand", "page_metadata")
+    if parsed.get("model"):
+        parsed["field_sources"].setdefault("model", "page_metadata")
+    if parsed.get("display_name"):
+        parsed["field_sources"].setdefault("display_name", "page_metadata")
+    if parsed.get("image_url"):
+        parsed["field_sources"].setdefault("image_url", "page_metadata")
     parsed = _infer_product_fields(parsed, parser.content_text, category)
 
     title_text = _text(parsed.get("display_name") or parsed.get("raw_product_name") or parser.title_text, "")
@@ -677,6 +727,8 @@ def import_product_from_url(url: str, category: str = "misc", allow_remote_image
             parsed["brand"] = " ".join(title_tokens[:2])
         elif title_tokens:
             parsed["brand"] = title_tokens[0]
+        parsed.setdefault("field_sources", {})
+        parsed["field_sources"].setdefault("brand", "page_title")
 
     summary_parts: list[str] = []
     if parsed.get("brand"):

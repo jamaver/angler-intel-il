@@ -106,6 +106,7 @@ def normalize_product(raw_product: dict[str, Any]) -> dict[str, Any]:
         "import_summary",
         "product_summary",
         "imported_from_text",
+        "field_sources",
         "length_ft",
         "length_label",
         "power",

@@ -280,6 +280,7 @@ def normalize_item(payload: dict[str, Any], existing: dict[str, Any] | None = No
         "raw_provider_data_cached": _as_bool(payload.get("raw_provider_data_cached") if "raw_provider_data_cached" in payload else existing.get("raw_provider_data_cached")),
         "identifiers": _as_dict(payload.get("identifiers")) or _as_dict(existing.get("identifiers")),
         "specifications": _as_dict(payload.get("specifications")) or _as_dict(existing.get("specifications")),
+        "field_sources": _as_dict(payload.get("field_sources")) or _as_dict(existing.get("field_sources")),
         "quantity": _as_int(payload.get("quantity"), _as_int(existing.get("quantity"), 1)) or 1,
         "created_at": _text(existing.get("created_at"), _now()),
         "updated_at": _now(),

@@ -55,6 +55,111 @@
     return map[key] || "/static/gear/providers/manual.svg";
   }
 
+  function fieldSourceLabel(value) {
+    const key = String(value || "").toLowerCase();
+    const labels = {
+      page_metadata: "Page metadata",
+      page_title: "Page title",
+      page_text: "Page text",
+      query_match: "Search hint match",
+      imported: "Imported",
+      manual: "Manual",
+      local_upload: "Local upload",
+      source_page: "Source page",
+    };
+    return labels[key] || value || "Imported";
+  }
+
+  function summarizeFieldSource(field, item) {
+    const sources = item && typeof item.field_sources === "object" && item.field_sources ? item.field_sources : {};
+    return fieldSourceLabel(sources[field] || "");
+  }
+
+  function renderImportReviewPanel(item) {
+    const panel = byId("gearImportReview");
+    if (!panel) return;
+    const draft = item && typeof item === "object" ? item : null;
+    if (!draft || (!draft.provider && !draft.source_url && !draft.query_match_applied && !draft.image_url)) {
+      panel.innerHTML = `
+        <div class="gear-import-review-empty">
+          Imported products will appear here with source details and key field provenance before you save them.
+        </div>
+      `;
+      return;
+    }
+
+    const fields = [
+      ["Brand", draft.brand, summarizeFieldSource("brand", draft)],
+      ["Model", draft.model, summarizeFieldSource("model", draft)],
+      ["Display name", draft.display_name, summarizeFieldSource("display_name", draft)],
+      ["Category", draft.category, summarizeFieldSource("category", draft)],
+      ["Image", draft.image_url || draft.image || "", summarizeFieldSource("image_url", draft)],
+      ["Length", draft.length_label || draft.length_ft || "", summarizeFieldSource("length_label", draft)],
+      ["Power", draft.power || "", summarizeFieldSource("power", draft)],
+      ["Action", draft.action || "", summarizeFieldSource("action", draft)],
+      ["Lure weight", [draft.lure_weight_min_oz, draft.lure_weight_max_oz].filter(v => v !== null && v !== undefined && v !== "").join(" to "), summarizeFieldSource("lure_weight_min_oz", draft)],
+      ["Line rating", [draft.line_rating_min_lb, draft.line_rating_max_lb].filter(v => v !== null && v !== undefined && v !== "").join(" to "), summarizeFieldSource("line_rating_min_lb", draft)],
+      ["Lure type", draft.lure_type || "", summarizeFieldSource("lure_type", draft)],
+      ["Reel type", draft.reel_type || "", summarizeFieldSource("reel_type", draft)],
+      ["Line type", draft.line_type || "", summarizeFieldSource("line_type", draft)],
+      ["Source URL", draft.source_url || draft.source_page_url || "", "Source page"],
+      ["Source", draft.source_name || draft.provider || "", fieldSourceLabel(draft.query_match_applied ? "query_match" : draft.provider ? "page_metadata" : "manual")],
+    ].filter(row => row[1]);
+
+    const badges = [
+      draft.provider ? `<span class="gear-badge">${escapeHtml(String(draft.provider).replaceAll("_", " "))}</span>` : "",
+      draft.confidence ? `<span class="gear-badge">${escapeHtml(String(draft.confidence).replaceAll("_", " "))}</span>` : "",
+      draft.query_match_applied ? `<span class="gear-badge gear-badge-favorite">Search hint match</span>` : "",
+      draft.raw_provider_data_cached ? `<span class="gear-badge">Cached source</span>` : "",
+      draft.image_source ? `<span class="gear-badge">${escapeHtml(String(draft.image_source).replaceAll("_", " "))}</span>` : "",
+    ].filter(Boolean).join("");
+
+    const summary = draft.product_summary || draft.import_summary || draft.description || "Imported gear is ready for review.";
+
+    panel.innerHTML = `
+      <section class="gear-import-review-card">
+        <div class="gear-import-review-head">
+          <div>
+            <p class="eyebrow section-eyebrow">Import review</p>
+            <h3>${escapeHtml(draft.display_name || [draft.brand, draft.model].filter(Boolean).join(" ") || "Imported product")}</h3>
+            <p class="gear-muted">${escapeHtml(summary)}</p>
+          </div>
+          <div class="gear-badge-row">${badges}</div>
+        </div>
+        <div class="gear-import-review-grid">
+          <div class="gear-import-review-media">
+            <img class="gear-image-preview" src="${escapeHtml(draft.image || draft.image_url || "/static/gear/fallback/generic.svg")}" alt="${escapeHtml(draft.display_name || "Imported gear")}" onerror="this.src='/static/gear/fallback/generic.svg'">
+            <div class="gear-import-review-meta">
+              <p><strong>Source:</strong> ${escapeHtml(draft.source_name || draft.provider || "Imported product")}</p>
+              ${draft.source_url ? `<p><strong>URL:</strong> <a href="${escapeHtml(draft.source_url)}" target="_blank" rel="noreferrer">${escapeHtml(draft.source_url)}</a></p>` : ""}
+              ${draft.query_match_label ? `<p><strong>Best match:</strong> ${escapeHtml(draft.query_match_label)}</p>` : ""}
+              ${draft.query_hint ? `<p><strong>Search hint:</strong> ${escapeHtml(draft.query_hint)}</p>` : ""}
+            </div>
+          </div>
+          <div class="gear-import-review-fields">
+            <div class="gear-import-review-note">
+              Review the imported values below, then edit the form fields above before saving. Manual changes in the form always win.
+            </div>
+            <div class="gear-import-review-table">
+              <div class="gear-import-review-row gear-import-review-row-head">
+                <span>Field</span>
+                <span>Value</span>
+                <span>Source</span>
+              </div>
+              ${fields.map(([label, value, source]) => `
+                <div class="gear-import-review-row">
+                  <span>${escapeHtml(label)}</span>
+                  <span>${escapeHtml(Array.isArray(value) ? value.join(", ") : value)}</span>
+                  <span>${escapeHtml(source)}</span>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+        </div>
+      </section>
+    `;
+  }
+
   function setSettings(settings) {
     PAGE.searchSettings = settings || {};
   }
@@ -154,6 +259,7 @@
     setImagePreview("/static/gear/fallback/generic.svg");
     const imageUpload = byId("gearImageUpload");
     if (imageUpload) imageUpload.value = "";
+    renderImportReviewPanel(null);
     syncCategoryFields();
   }
 
@@ -228,9 +334,14 @@
       payload.image_source = draft.image_source || "";
       payload.identifiers = draft.identifiers || {};
       payload.specifications = draft.specifications || {};
+      payload.field_sources = draft.field_sources || {};
       payload.price = draft.price ?? null;
       payload.availability = draft.availability || "";
       payload.raw_provider_data_cached = Boolean(draft.raw_provider_data_cached);
+      payload.query_match_applied = Boolean(draft.query_match_applied);
+      payload.query_match_source = draft.query_match_source || "";
+      payload.query_match_label = draft.query_match_label || "";
+      payload.query_hint = draft.query_hint || "";
       if (!payload.notes && (draft.product_summary || draft.import_summary || draft.description)) {
         payload.notes = draft.product_summary || draft.import_summary || draft.description;
       }
@@ -316,7 +427,7 @@
     const duplicate = resultDuplicateNote(item);
     const duplicateMatches = Array.isArray(item.duplicate_matches) ? item.duplicate_matches : [];
     const summary = item.product_summary || item.import_summary || item.description || "";
-    const importHint = item.query_match_applied ? `<p class="gear-import-summary">Suggested match from search hints${item.query_match_source ? ` · ${escapeHtml(item.query_match_source)}` : ""}</p>` : "";
+    const importHint = item.query_match_applied ? `<p class="gear-import-summary">Suggested match from search hints${item.query_match_source ? ` - ${escapeHtml(item.query_match_source)}` : ""}</p>` : "";
     const specs = item.specifications && typeof item.specifications === "object"
       ? Object.entries(item.specifications).slice(0, 4).map(([key, value]) => `<span>${escapeHtml(String(key).replaceAll("_", " "))}: ${escapeHtml(value)}</span>`).join("")
       : "";
@@ -478,6 +589,7 @@
         queryMatches: Array.isArray(data.query_matches) ? data.query_matches : [],
       };
       populateForm(product);
+      renderImportReviewPanel(product);
       box.innerHTML = `
         <section class="gear-results-group">
           <h3>Imported product</h3>
@@ -575,6 +687,7 @@
     setField("TerminalHookSize", item.hook_size);
     setField("TerminalQuantity", item.quantity);
 
+    renderImportReviewPanel(item);
     syncCategoryFields();
     getForm().scrollIntoView({ behavior: "smooth", block: "start" });
   }

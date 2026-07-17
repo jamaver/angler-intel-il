@@ -158,7 +158,7 @@ def main() -> int:
     if not (ROOT / "templates" / "tackle_locker.html").read_text(encoding="utf-8").find("gearSearchScope") >= 0:
         errors.append("tackle locker template is missing search scope control")
     template_text = (ROOT / "templates" / "tackle_locker.html").read_text(encoding="utf-8")
-    for needle in ("gearSearchScope", "gearProductUrl", "gearImportUrlButton", "gearOnlineLookup", "gearDefaultScope", "My Tackle Locker"):
+    for needle in ("gearSearchScope", "gearProductUrl", "gearImportUrlButton", "gearOnlineLookup", "gearDefaultScope", "gearImportReview", "gearImageUpload", "My Tackle Locker"):
         if needle not in template_text:
             errors.append(f"tackle locker template missing {needle}")
     for needle in ("gearImportQuery", "gearImageUpload", "gearImagePreview"):
@@ -171,7 +171,7 @@ def main() -> int:
         errors.append("Admin should not be present in tackle locker nav")
 
     js_text = (ROOT / "static" / "js" / "tackle_locker_v610.js").read_text(encoding="utf-8")
-    for needle in ("searchCatalog", "importFromUrl", "saveSettings", "gearSearchScope", "gearImportUrlButton", "providerIconFor", "gear-provider-grid"):
+    for needle in ("searchCatalog", "importFromUrl", "saveSettings", "gearSearchScope", "gearImportUrlButton", "providerIconFor", "gear-provider-grid", "renderImportReviewPanel", "uploadGearImage", "fieldSourceLabel"):
         if needle not in js_text:
             errors.append(f"tackle locker JS missing {needle}")
 
@@ -314,6 +314,10 @@ def main() -> int:
                 errors.append("URL import should infer rod lure and line ratings")
             if not product.get("import_summary"):
                 errors.append("URL import should provide a summary for review")
+            if "field_sources" not in product or not isinstance(product.get("field_sources"), dict):
+                errors.append("URL import should include field source provenance")
+            if data.get("query_matches") and not product.get("query_match_applied"):
+                errors.append("URL import should preserve query match provenance when matched")
 
         generic_html = """<!doctype html><html><head><title>Site Maintenance</title></head><body><p>Maintenance</p></body></html>"""
         query_match = {
@@ -354,6 +358,8 @@ def main() -> int:
                 errors.append("Query fallback should return suggested matches")
             if not product.get("query_match_applied"):
                 errors.append("Query fallback should mark the applied match")
+            if product.get("field_sources", {}).get("brand") != "query_match":
+                errors.append("Query fallback should tag overridden fields as query_match provenance")
 
         upload = client.post(
             "/api/gear/upload-image",
@@ -366,6 +372,15 @@ def main() -> int:
             data = upload.get_json(silent=True) or {}
             if not data.get("image_url", "").startswith("/api/gear/uploads/"):
                 errors.append("Image upload should return a local image URL")
+
+        review_page = client.get("/rigs")
+        if review_page.status_code != 200:
+            errors.append("Tackle locker page should load for review panel checks")
+        else:
+            html = review_page.get_data(as_text=True)
+            for needle in ("gearImportReview", "gearImageUpload", "gearImagePreview"):
+                if needle not in html:
+                    errors.append(f"Tackle locker page missing review UI {needle}")
 
         blocked = client.post("/api/gear/import/url", json={"url": "http://127.0.0.1/", "category": "rod"})
         if blocked.status_code == 200:

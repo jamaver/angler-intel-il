@@ -166,6 +166,7 @@ def _merge_query_match(base: dict[str, Any], match: dict[str, Any], force: bool 
     merged = dict(base or {})
     if not isinstance(match, dict):
         return merged
+    field_sources = merged.get("field_sources") if isinstance(merged.get("field_sources"), dict) else {}
     for key in (
         "provider",
         "provider_product_id",
@@ -218,10 +219,16 @@ def _merge_query_match(base: dict[str, Any], match: dict[str, Any], force: bool 
         if force and key in {"provider", "provider_product_id", "source_name", "source_url", "category", "brand", "model", "display_name", "image_url", "image_source", "identifiers", "specifications", "price", "availability", "confidence", "raw_provider_data_cached", "provider_icon"}:
             if value not in (None, "", [], {}):
                 merged[key] = value
+                if key in {"brand", "model", "display_name", "image_url", "source_name", "source_url", "provider", "provider_product_id", "category"}:
+                    field_sources[key] = "query_match"
             continue
         if key not in merged or merged.get(key) in (None, "", [], {}):
             if value not in (None, "", [], {}):
                 merged[key] = value
+                if key in {"brand", "model", "display_name", "image_url", "source_name", "source_url", "provider", "provider_product_id", "category"}:
+                    field_sources[key] = "query_match"
+    if field_sources:
+        merged["field_sources"] = field_sources
     merged["query_match_applied"] = True
     merged["query_match_source"] = match.get("source_name") or match.get("provider") or ""
     merged["query_match_label"] = match.get("display_name") or "Suggested match"
