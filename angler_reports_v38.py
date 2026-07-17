@@ -1148,8 +1148,13 @@ def register_report_routes_v38(app):
 <body>
   <nav class="ai-main-tabs" aria-label="Angler Intel navigation">
     <a class="ai-main-tab" href="/">Dashboard</a>
+    <a class="ai-main-tab" href="/map">Map</a>
+    <a class="ai-main-tab" href="/recommendations">Smart Picks</a>
     <a class="ai-main-tab" href="/waters">Local Waters</a>
+    <a class="ai-main-tab" href="/species">Species</a>
+    <a class="ai-main-tab" href="/rigs">My Tackle Locker</a>
     <a class="ai-main-tab active" href="/reports">Saved Reports</a>
+    <a class="ai-main-tab" href="/data-tools">Data Tools</a>
     <a class="ai-main-tab" href="/app-health">App Health</a>
   </nav>
 
@@ -1425,6 +1430,8 @@ document.getElementById("zipInput").addEventListener("blur", loadForecastDates);
 loadForecastDates();
 loadReports();
 </script>
+<script src="/static/js/global_nav_v433.js"></script>
+<script src="/static/js/ui_polish_v442.js"></script>
 </body>
 </html>
 """
