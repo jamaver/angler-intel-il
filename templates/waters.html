@@ -1,0 +1,272 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Angler Intel - Local Waters</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 2rem;
+      max-width: 1100px;
+      line-height: 1.45;
+      color: #172018;
+    }
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 1rem 0;
+      background: #fff;
+    }
+    input, button, select {
+      font-size: 1rem;
+      padding: 0.5rem;
+      margin: 0.2rem 0;
+    }
+    input {
+      width: 100%;
+      max-width: 420px;
+    }
+    button {
+      border-radius: 8px;
+      border: 1px solid #bbb;
+      cursor: pointer;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+    .water {
+      border: 1px solid #eee;
+      border-radius: 12px;
+      padding: 1rem;
+      background: #fafafa;
+    }
+    .muted { color: #666; }
+    .tag {
+      display: inline-block;
+      padding: 0.15rem 0.4rem;
+      margin: 0.12rem;
+      border-radius: 999px;
+      background: #e9f8ee;
+      border: 1px solid #b9ddc5;
+      font-size: 0.85rem;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+    a { color: #0b5d2a; }
+  </style>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="local-waters-page">
+  <nav class="ai-main-tabs" aria-label="Angler Intel navigation">
+  <a class="ai-main-tab" href="/">Dashboard</a>
+  <a class="ai-main-tab" href="/map">Map</a>
+  <a class="ai-main-tab" href="/recommendations">Smart Picks</a>
+  <a class="ai-main-tab active" href="/waters">Local Waters</a>
+  <a class="ai-main-tab" href="/species">Species</a>
+  <a class="ai-main-tab" href="/rigs">My Tackle Locker</a>
+  <a class="ai-main-tab" href="/reports">Saved Reports</a>
+  <a class="ai-main-tab" href="/data-tools">Data Tools</a>
+  <a class="ai-main-tab" href="/app-health">App Health</a>
+</nav>
+  <main class="app waters-shell">
+  <h1>Local Waters</h1>
+  <p class="muted release-line">Current release: {{ app_version }}</p>
+  <p class="muted">Local waters now uses the starter database plus any manually added waters, with broader ZIP-based detection available alongside it.</p>
+
+  <div class="card">
+    <h2>Search waters</h2>
+    <label>ZIP<br><input id="zipInput" value="60543" placeholder="60543"></label><br>
+    <label>Radius miles<br><input id="radiusInput" value="35" placeholder="35"></label><br>
+    <label>Species filter<br><input id="speciesInput" placeholder="bass, walleye, crappie, catfish"></label><br>
+    <label>Keyword<br><input id="queryInput" placeholder="river, lake, county, city, habitat"></label><br>
+    <button onclick="loadWaters()">Search local waters</button>
+    <button onclick="loadAllWaters()">Show all waters</button>
+  </div>
+
+  <div class="card">
+    <h2>Dataset Tools</h2>
+    <p class="muted">Export the editable manual waterbody dataset, or import a JSON file with manual waters.</p>
+    <div class="dataset-tools">
+      <button type="button" onclick="exportWaterDataset('manual')">Export manual waters</button>
+      <button type="button" class="secondary" onclick="exportWaterDataset('merged')">Export merged waters</button>
+      <input id="waterDatasetFile" type="file" accept="application/json,.json">
+      <button type="button" class="secondary" onclick="importWaterDataset()">Import manual waters</button>
+    </div>
+    <div id="waterDatasetStatus" class="muted">No dataset export or import has run yet.</div>
+  </div>
+
+  <div class="card waters-results-card">
+    <h2>Results</h2>
+    <div id="summary" class="muted">Search to load waters.</div>
+    <div id="results" class="grid"></div>
+  </div>
+
+  <details class="card">
+    <summary>Raw API output</summary>
+    <pre id="rawBox">No data loaded yet.</pre>
+  </details>
+
+  <p>
+    <a href="/">Dashboard</a> |
+    <a href="/map">Map</a> |
+    <a href="/app-health">App Health</a>
+  </p>
+  </main>
+
+<script>
+async function loadWaters() {
+  const zip = document.getElementById("zipInput").value.trim();
+  const radius = document.getElementById("radiusInput").value.trim() || "35";
+  const species = document.getElementById("speciesInput").value.trim();
+  const q = document.getElementById("queryInput").value.trim();
+
+  const params = new URLSearchParams({zip, radius});
+  if (species) params.set("species", species);
+  if (q) params.set("q", q);
+
+  await fetchAndRender("/api/waters?" + params.toString());
+}
+
+async function loadAllWaters() {
+  await fetchAndRender("/api/waters/all");
+}
+
+function setDatasetStatus(message, kind = "muted") {
+  const status = document.getElementById("waterDatasetStatus");
+  if (!status) return;
+  status.className = kind;
+  status.textContent = message;
+}
+
+async function exportWaterDataset(scope) {
+  try {
+    setDatasetStatus("Exporting waterbody dataset...");
+    const res = await fetch(`/api/waters/export?scope=${encodeURIComponent(scope || "manual")}`);
+    const data = await res.json();
+
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || "Unable to export waterbody dataset");
+    }
+
+    const filename = `angler-intel-waterbodies-${scope || "manual"}-${Date.now()}.json`;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    setDatasetStatus(`Exported ${data.manual_count ?? 0} manual water(s).`);
+  } catch (err) {
+    setDatasetStatus(`Export failed: ${err.message || err}`, "error-text");
+  }
+}
+
+async function importWaterDataset() {
+  const fileNode = document.getElementById("waterDatasetFile");
+  if (!fileNode || !fileNode.files || !fileNode.files.length) {
+    setDatasetStatus("Choose a JSON file before importing.", "error-text");
+    return;
+  }
+
+  try {
+    setDatasetStatus("Importing manual waters...");
+    const text = await fileNode.files[0].text();
+    const payload = JSON.parse(text);
+    const res = await fetch("/api/waters/import", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        mode: "replace",
+        ...payload
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || "Unable to import waterbody dataset");
+    }
+
+    setDatasetStatus(`Imported ${data.import?.imported_count ?? 0} manual water(s). Refreshing catalog...`);
+    await loadAllWaters();
+    await loadWaters();
+  } catch (err) {
+    setDatasetStatus(`Import failed: ${err.message || err}`, "error-text");
+  }
+}
+
+async function fetchAndRender(url) {
+  const summary = document.getElementById("summary");
+  const results = document.getElementById("results");
+  const raw = document.getElementById("rawBox");
+
+  summary.textContent = "Loading...";
+  results.innerHTML = "";
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    raw.textContent = JSON.stringify(data, null, 2);
+
+    const waters = data.waters || [];
+    summary.textContent = `${waters.length} shown · ${data.database?.total_waters ?? "?"} waters in local catalog`;
+
+    if (!waters.length) {
+      results.innerHTML = "<p class='muted'>No local waters matched. Try a larger radius or no species filter.</p>";
+      return;
+    }
+
+    results.innerHTML = waters.map(w => `
+      <div class="water">
+        <h3 class="water-title">${esc(w.name)}</h3>
+        <p class="muted">
+          ${esc(w.type || "")} · ${esc(w.city || "")} · ${esc(w.county || "")}
+          ${w.distance_miles !== null && w.distance_miles !== undefined ? " · " + esc(w.distance_miles) + " mi" : ""}
+        </p>
+        <p><strong>Score:</strong> ${esc(w.local_score ?? "")}</p>
+        ${(w.manual || String(w.source || "").toLowerCase() === "manual" || w.favorite || w.stocked_trout || w.catch_history_count)
+          ? `<p>${[
+              w.manual || String(w.source || "").toLowerCase() === "manual" ? "<span class='tag tag-manual'>Manual</span>" : "",
+              w.favorite ? "<span class='tag tag-favorite'>Favorite</span>" : "",
+              w.stocked_trout ? "<span class='tag tag-trout'>Stocked trout</span>" : "",
+              w.catch_history_count ? "<span class='tag tag-history'>Catch history</span>" : ""
+            ].join("")}</p>`
+          : ""}
+        <p>${(w.species || []).map(s => `<span class="tag">${esc(s)}</span>`).join("")}</p>
+        <p><strong>Habitat:</strong> ${(w.habitat || []).map(esc).join(", ")}</p>
+        <p>${esc(w.notes || "")}</p>
+        <p><a href="/water/${encodeURIComponent(w.id)}">View detail</a></p>
+      </div>
+    `).join("");
+  } catch (err) {
+    summary.textContent = "Unable to load local waters: " + err;
+  }
+}
+
+function esc(s) {
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+loadWaters();
+</script>
+  <script src="/static/js/global_nav_v433.js"></script>
+  <script src="/static/js/ui_polish_v442.js"></script>
+</body>
+</html>
