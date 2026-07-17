@@ -22,7 +22,12 @@
 
       <div>
         <strong>Waterbodies mirrored</strong><br>
-        <span>{{ sqlite_waterbodies_health.catalog.total_count }}</span>
+        <span>
+          {{ sqlite_waterbodies_health.catalog.total_count if sqlite_waterbodies_health.catalog is defined and sqlite_waterbodies_health.catalog.total_count is defined
+             else sqlite_waterbodies_health.counts.total if sqlite_waterbodies_health.counts is defined and sqlite_waterbodies_health.counts.total is defined
+             else sqlite_waterbodies_health.total_count if sqlite_waterbodies_health.total_count is defined
+             else "n/a" }}
+        </span>
       </div>
 
       <div>
@@ -34,7 +39,7 @@
     <details class="health-details" open>
       <summary>Preflight gates</summary>
       <ul>
-        {% for gate in sqlite_waterbodies_health.gates %}
+        {% for gate in sqlite_waterbodies_health.gates or [] %}
           <li>
             <strong>{{ gate.name }}:</strong>
             {{ "PASS" if gate.ok else "FAIL" }} - {{ gate.summary }}

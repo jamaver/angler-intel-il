@@ -1,0 +1,16 @@
+{
+  "version": "v7.0-sqlite-migration-foundation",
+  "previous_version": "v6.13-gear-intelligence-packing-catch-linking",
+  "installed_at": "2026-07-17T00:00:00",
+  "sqlite_migration_foundation": true,
+  "json_authority_preserved": true,
+  "schema_migrations": true,
+  "json_runtime_audit": true,
+  "json_to_sqlite_importers": true,
+  "canonical_drift_validation": true,
+  "sqlite_safe_backup": true,
+  "restore_rehearsal": true,
+  "app_health_v7_diagnostics": true,
+  "admin_not_in_normal_nav": true
+}
+

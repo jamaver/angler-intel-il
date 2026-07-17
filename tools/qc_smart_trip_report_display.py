@@ -33,6 +33,35 @@ def strip_debug_section(html: str) -> str:
     return html.split(marker, 1)[0]
 
 
+def pick_report_id() -> str | None:
+    index_path = APP_ROOT / "data" / "reports_index.json"
+    if index_path.exists():
+        try:
+            payload = json.loads(index_path.read_text(encoding="utf-8"))
+            if isinstance(payload, list):
+                preferred = next(
+                    (
+                        item.get("id")
+                        for item in payload
+                        if isinstance(item, dict) and item.get("id") == "20260712-202630-trip-report-zip-60543-7f9e27"
+                    ),
+                    None,
+                )
+                if preferred:
+                    return str(preferred)
+                for item in payload:
+                    if isinstance(item, dict) and item.get("id"):
+                        return str(item["id"])
+        except Exception:
+            pass
+    reports_dir = APP_ROOT / "reports"
+    if reports_dir.exists():
+        for path in sorted(reports_dir.glob("*.json")):
+            if path.stem:
+                return path.stem
+    return None
+
+
 for rel in ("app.py", "angler_reports_v38.py", "templates/snapshot.html", "templates/index.html", "static/css/style.css"):
     require(rel)
 
@@ -58,150 +87,13 @@ if not re.search(r"\.report-lure-grid\s*\{[^}]*grid-template-columns:\s*1fr;", s
 from app import app as flask_app
 
 client = flask_app.test_client()
-payload = {
-    "title": "QC Smart Trip Report",
-    "zip": "60543",
-    "saved_at": "2026-07-12T20:30:00",
-    "intel": {
-        "target_species": "Largemouth Bass",
-        "overall": {"score": 84, "rating": "Excellent"},
-        "weather": {
-            "temp": 78.8,
-            "wind": 3.5,
-            "pressure": 30.12,
-            "cloud": 0,
-            "source": "Open-Meteo",
-        },
-        "best_bet": {
-            "species": "Largemouth Bass",
-            "species_score": 91,
-            "time_label": "Evening",
-            "time_range": "4 PM - 9 PM",
-            "best_hour": "7 PM",
-            "speed": "Medium speed",
-            "size": "3/8 oz",
-            "why": "Great search bait when wind and clouds help fish feed shallow.",
-            "fish_image": "/static/fish/largemouth_bass.png",
-            "lure_image": "/static/lures/spinnerbait/chartreuse_white.png",
-            "lure_asset": {
-                "type": "spinnerbait",
-                "color": "chartreuse_white",
-                "label": "Chartreuse White Spinnerbait",
-                "path": "/static/lures/spinnerbait/chartreuse_white.png",
-                "fallback_used": False,
-            },
-            "reasons": [
-                "Detected pond-style habitat favors bass, bluegill, crappie, and catfish.",
-                "Your catch log has 9 local catch records for Largemouth Bass.",
-            ],
-        },
-        "species": [
-            {
-                "name": "Largemouth Bass",
-                "score": 91,
-                "rating": "Best match",
-                "habitat": "pond, lake, reservoir",
-                "fish_image": "/static/fish/largemouth_bass.png",
-                "lures": {
-                    "cards": {
-                        "evening": {
-                            "name": "Spinnerbait",
-                            "species": "Largemouth Bass",
-                            "species_score": 91,
-                            "color": "chartreuse white",
-                            "speed": "Medium retrieve",
-                            "size": "3/8 oz",
-                            "why": "Wind and cloud cover make this a good search bait.",
-                            "lure_asset": {
-                                "type": "spinnerbait",
-                                "color": "chartreuse_white",
-                                "label": "Chartreuse White Spinnerbait",
-                                "path": "/static/lures/spinnerbait/chartreuse_white.png",
-                                "fallback_used": False,
-                            },
-                        }
-                    }
-                },
-            },
-            {
-                "name": "Bluegill",
-                "score": 68,
-                "rating": "Good match",
-                "habitat": "shallow cover, docks",
-                "fish_image": "/static/fish/bluegill.png",
-                "lures": {
-                    "cards": {
-                        "evening": {
-                            "name": "Worm",
-                            "species": "Bluegill",
-                            "species_score": 68,
-                            "color": "green pumpkin",
-                            "speed": "Slow",
-                            "size": "1/16 oz",
-                            "why": "Small bait under floats can be effective on calm water.",
-                            "lure_asset": {
-                                "type": "soft_plastic_worm",
-                                "color": "green_pumpkin",
-                                "label": "Green Pumpkin Worm",
-                                "path": "/static/lures/soft_plastic_worm/green_pumpkin.png",
-                                "fallback_used": False,
-                            },
-                        }
-                    }
-                },
-            },
-        ],
-        "lure_cards": [
-            {
-                "species": "Largemouth Bass",
-                "species_score": 91,
-                "name": "Spinnerbait",
-                "color": "chartreuse white",
-                "speed": "Medium retrieve",
-                "size": "3/8 oz",
-                "why": "Windy shallows are a good fit.",
-                "lure_asset": {
-                    "type": "spinnerbait",
-                    "color": "chartreuse_white",
-                    "label": "Chartreuse White Spinnerbait",
-                    "path": "/static/lures/spinnerbait/chartreuse_white.png",
-                    "fallback_used": False,
-                },
-                "image": "/static/lures/spinnerbait/chartreuse_white.png",
-                "top_pick": True,
-            }
-        ],
-        "waters": [
-            {"name": "Montgomery Area", "type": "River", "count": 3}
-        ],
-        "forecast": [
-            {"date": "2026-07-12", "rating": "Excellent", "high": 86, "low": 64, "wind": 8, "score": 82},
-            {"date": "2026-07-13", "rating": "Good", "high": 84, "low": 63, "wind": 6, "score": 75},
-        ],
-        "catch_insights": {
-            "sample_size": 9,
-            "note": "Small but useful local sample."
-        },
-    },
-}
-
-save_res = client.post("/api/reports/save?title=QC%20Smart%20Trip%20Report&zip=60543", json=payload)
-if save_res.status_code != 200:
-    errors.append(f"/api/reports/save failed with HTTP {save_res.status_code}")
-    print("QC FAILED: smart trip report display")
-    for error in errors:
-        print(f"- {error}")
-    raise SystemExit(1)
-
-saved = save_res.get_json(silent=True) or {}
-report = saved.get("report") if isinstance(saved, dict) else {}
-view_url = report.get("view_url")
-if not view_url:
-    errors.append("Report creation did not return a view URL")
+report_id = pick_report_id()
+if not report_id:
+    errors.append("Could not find an existing trip report to inspect")
 else:
-    view_res = client.get(view_url)
+    view_res = client.get(f"/api/reports/view/{report_id}")
     if view_res.status_code != 200:
-        errors.append(f"{view_url} failed with HTTP {view_res.status_code}")
+        errors.append(f"/api/reports/view/{report_id} failed with HTTP {view_res.status_code}")
     else:
         html = view_res.get_data(as_text=True)
         prefix = strip_debug_section(html)

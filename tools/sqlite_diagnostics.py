@@ -60,8 +60,9 @@ def collect_diagnostics() -> dict:
         result["ok"] = False
         return result
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA query_only=ON;")
 
     integrity = conn.execute("PRAGMA integrity_check").fetchone()[0]
     journal_mode = conn.execute("PRAGMA journal_mode").fetchone()[0]

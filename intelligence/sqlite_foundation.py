@@ -25,7 +25,14 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
-def connect(db_path: Path = DB_PATH) -> sqlite3.Connection:
+def connect(db_path: Path = DB_PATH, *, read_only: bool = False) -> sqlite3.Connection:
+    if read_only:
+        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA query_only=ON;")
+        conn.execute("PRAGMA foreign_keys=ON;")
+        return conn
+
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
@@ -397,7 +404,7 @@ def discover_json_files() -> list[Path]:
 
 
 def initialize_and_mirror() -> dict[str, Any]:
-    with connect() as conn:
+    with connect(read_only=True) as conn:
         init_schema(conn)
         files = discover_json_files()
         results = [mirror_json_file(conn, path) for path in files]

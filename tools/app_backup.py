@@ -101,7 +101,8 @@ def sqlite_status(path: Path) -> dict:
         return info
 
     try:
-        conn = sqlite3.connect(path)
+        conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+        conn.execute("PRAGMA query_only=ON")
         integrity = conn.execute("PRAGMA integrity_check").fetchone()[0]
         info["integrity_check"] = integrity
         info["valid_sqlite"] = integrity == "ok"
@@ -109,6 +110,20 @@ def sqlite_status(path: Path) -> dict:
         info["valid_sqlite"] = False
         info["error"] = str(exc)
 
+    return info
+
+
+def directory_status(path: Path) -> dict:
+    info = {
+        "path": str(path.relative_to(APP_ROOT)),
+        "exists": path.exists(),
+    }
+    if not path.exists() or not path.is_dir():
+        return info
+    try:
+        info["file_count"] = sum(1 for item in path.rglob("*") if item.is_file())
+    except Exception:
+        info["file_count"] = None
     return info
 
 
@@ -175,10 +190,15 @@ def create_backup(label: str | None = None) -> dict:
         "sqlite_role": "mirror/read-only foundation",
         "file_count": len(files),
         "json_health": [
+            safe_json_status(APP_ROOT / "data" / "gear_inventory.json"),
+            safe_json_status(APP_ROOT / "data" / "manual_waters.json"),
+            safe_json_status(APP_ROOT / "data" / "target_profile.json"),
+            safe_json_status(APP_ROOT / "data" / "gear_settings.json"),
             safe_json_status(APP_ROOT / "data" / "favorites.json"),
             safe_json_status(APP_ROOT / "data" / "catches.json"),
             safe_json_status(APP_ROOT / "data" / "saved_reports.json"),
         ],
+        "gear_media": directory_status(APP_ROOT / "data" / "gear_uploads"),
         "sqlite_health": sqlite_status(APP_ROOT / "data" / "angler_intel.sqlite3"),
         "included_top_level": INCLUDE_TOP_LEVEL,
     }

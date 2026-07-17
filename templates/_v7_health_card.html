@@ -1,0 +1,105 @@
+<section class="card v7-health-card" id="v7-health-card">
+  <h2>V7 Data Foundation</h2>
+  <p class="muted">Read-only diagnostics for the upcoming SQLite schema and migration foundation. JSON remains authoritative.</p>
+
+  {% if v7_health %}
+    <div class="health-grid">
+      <div>
+        <strong>Status</strong><br>
+        {% if v7_health.ok %}
+          <span class="status-good">Ready</span>
+        {% else %}
+          <span class="status-warn">Attention needed</span>
+        {% endif %}
+      </div>
+      <div>
+        <strong>Database</strong><br>
+        <span>{{ v7_health.database or "Not available" }}</span>
+      </div>
+      <div>
+        <strong>Authority</strong><br>
+        <span>{{ v7_health.current_authority or "json" }}</span>
+      </div>
+      <div>
+        <strong>Schema version</strong><br>
+        <span>{{ v7_health.schema_version if v7_health.schema_version is not none else "Unknown" }}</span>
+      </div>
+      <div>
+        <strong>Latest migration</strong><br>
+        <span>{{ v7_health.last_migration_run.run_at if v7_health.last_migration_run else "None" }}</span>
+      </div>
+      <div>
+        <strong>Latest validation</strong><br>
+        <span>{{ v7_health.last_validation_run.run_at if v7_health.last_validation_run else "None" }}</span>
+      </div>
+      <div>
+        <strong>Integrity</strong><br>
+        <span>{{ v7_health.integrity_check or "Unknown" }}</span>
+      </div>
+      <div>
+        <strong>Foreign keys</strong><br>
+        <span>{{ "Clean" if not v7_health.foreign_key_check else "Violations" }}</span>
+      </div>
+    </div>
+
+    <details class="health-details">
+      <summary>Authority by domain</summary>
+      <ul>
+        {% for row in v7_health.authorities %}
+          <li>
+            <strong>{{ row.domain }}:</strong>
+            {{ row.authority }}
+            {% if row.source_path %} <code>{{ row.source_path }}</code>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </details>
+
+    <details class="health-details">
+      <summary>Validation drift</summary>
+      <ul>
+        {% for key, value in (v7_health.validation_drift or {}).items() %}
+          <li><strong>{{ key }}:</strong> {{ value }}</li>
+        {% endfor %}
+      </ul>
+    </details>
+
+    {% if v7_health.runtime_path_conflicts %}
+      <details class="health-details">
+        <summary>Runtime path conflicts</summary>
+        <ul>
+          {% for item in v7_health.runtime_path_conflicts %}
+            <li>
+              <strong>{{ item.domain }}:</strong>
+              <code>{{ item.resolved_path }}</code>
+              {% if item.conflict_paths %}
+                <div class="muted">Conflicts: {{ item.conflict_paths | join(", ") }}</div>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+
+    {% if v7_health.latest_verified_backup %}
+      <details class="health-details">
+        <summary>Latest verified backup</summary>
+        <pre>{{ v7_health.latest_verified_backup | tojson(indent=2) }}</pre>
+      </details>
+    {% endif %}
+
+    {% if v7_health.errors %}
+      <details class="health-details">
+        <summary>Errors</summary>
+        <ul>
+          {% for error in v7_health.errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endif %}
+  {% else %}
+    <p class="status-warn">V7 diagnostics unavailable.</p>
+  {% endif %}
+</section>
+
