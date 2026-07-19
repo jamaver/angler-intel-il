@@ -115,7 +115,7 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v5.9-modern-ui-refresh"
+APP_VERSION = "v6.13-gear-intelligence-packing-catch-linking"
 APP_RELEASE = "v6.13-gear-intelligence-packing-catch-linking"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
@@ -772,6 +772,33 @@ def _weather_summary_for_coords(lat, lon):
     return weather, weather_summary
 
 
+def _build_forecast_rows(weather, pressure_inhg, cloud):
+    """Build the dashboard's seven-day contract from an already-validated weather payload."""
+    daily = weather.get("daily", {}) if isinstance(weather, dict) else {}
+    dates = daily.get("time", []) if isinstance(daily, dict) else []
+    highs = daily.get("temperature_2m_max", []) if isinstance(daily, dict) else []
+    lows = daily.get("temperature_2m_min", []) if isinstance(daily, dict) else []
+    winds = daily.get("wind_speed_10m_max", []) if isinstance(daily, dict) else []
+
+    forecast = []
+    for date, high, low, wind in zip(dates[:7], highs[:7], lows[:7], winds[:7]):
+        max_f = f_temp(high)
+        min_f = f_temp(low)
+        avg_f = (max_f + min_f) / 2
+        max_wind = mph(wind)
+        day_score = overall_score(avg_f, max_wind, pressure_inhg, cloud)
+        forecast.append({
+            "date": date,
+            "score": day_score,
+            "rating": rating(day_score),
+            "high": round(max_f),
+            "low": round(min_f),
+            "wind": round(max_wind),
+        })
+
+    return forecast
+
+
 def build_water_intel(water, target_species="", zip_code=""):
     water = water if isinstance(water, dict) else {}
     profile = load_target_profile()
@@ -816,6 +843,7 @@ def build_water_intel(water, target_species="", zip_code=""):
         inhg,
     )
     best_hour = max(hourly, key=lambda x: x["score"]) if hourly else None
+    forecast = _build_forecast_rows(weather, pressure_inhg, cloud)
 
     water_species = [
         str(item).strip()
@@ -939,10 +967,15 @@ def build_water_intel(water, target_species="", zip_code=""):
     target_fit_score = target_fit.get("score", 0)
     target_fit_label = target_fit.get("label", "Auto")
 
+    enriched_water = dict(water)
+    # A focused waterbody does not pass through the Local Waters ranker. Keep
+    # the dashboard brief meaningful by exposing its target-fit score here.
+    enriched_water["local_score"] = target_fit_score
+
     return {
         "version": APP_VERSION,
         "generated_at": datetime.now().strftime("%b %d, %Y %I:%M %p"),
-        "water": water,
+        "water": enriched_water,
         "target_species": resolved_target_species or "",
         "target_species_source": target_species_source,
         "target_profile": profile,
@@ -965,11 +998,18 @@ def build_water_intel(water, target_species="", zip_code=""):
             "snapshot": f"/snapshot?zip={zip_code}" if zip_code else "/snapshot",
         },
         "selected_species": best_bet["species"],
+        "overall": {
+            "score": base,
+            "rating": rating(base),
+        },
         "best_bet": best_bet,
         "weather": weather_summary,
         "area_type": area_type,
+        "time_blocks": blocks,
+        "hourly": hourly,
         "best_time": best_block,
         "best_hour": best_hour,
+        "forecast": forecast,
         "lure_cards": top_lure_cards,
         "species": species_ranked,
         "smart_intelligence": smart_intelligence,
@@ -1059,25 +1099,7 @@ def build_intel(zip_code, target_species=""):
         zip_code
     )
 
-    daily = weather.get("daily", {}) if isinstance(weather, dict) else {}
-
-    forecast = []
-
-    for i, date in enumerate(daily.get("time", [])[:7]):
-        max_f = f_temp(daily["temperature_2m_max"][i])
-        min_f = f_temp(daily["temperature_2m_min"][i])
-        avg_f = (max_f + min_f) / 2
-        max_wind = mph(daily["wind_speed_10m_max"][i])
-        day_score = overall_score(avg_f, max_wind, pressure_inhg, cloud)
-
-        forecast.append({
-            "date": date,
-            "score": day_score,
-            "rating": rating(day_score),
-            "high": round(max_f),
-            "low": round(min_f),
-            "wind": round(max_wind)
-        })
+    forecast = _build_forecast_rows(weather, pressure_inhg, cloud)
 
     insights = catch_insights(zip_code)
     try:

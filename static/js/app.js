@@ -216,6 +216,15 @@ function renderMetric(label, value, small = "") {
   `;
 }
 
+function scoreText(value, suffix = "%") {
+  const score = Number(value);
+  return Number.isFinite(score) ? `${Math.round(score)}${suffix}` : "Not available";
+}
+
+function emptyDashboardPanel(message) {
+  return `<div class="dashboard-panel-empty small">${escapeHtml(message)}</div>`;
+}
+
 function renderDashboardSummary(data) {
   const waters = data.waters || [];
   const weather = data.weather || {};
@@ -226,11 +235,15 @@ function renderDashboardSummary(data) {
   const catchInsights = data.catch_insights || {};
   const learningLabel = catchInsights.total ? `${catchInsights.sample_quality || "active"} sample` : "no catches";
   const learningDetail = catchInsights.headline || catchInsights.summary || "Log catches to build your pattern.";
+  const overall = data.overall || {};
+  const focusFit = data.water_profile?.target_fit_score;
+  const score = overall.score ?? focusFit;
+  const scoreLabel = overall.rating || data.water_profile?.target_fit_label || "";
 
   return `
     <div class="dashboard-metric-grid">
       ${renderMetric("Target", target, data.target_species_source || "profile")}
-      ${renderMetric("Score", `${data.overall?.score ?? "?"}/100`, data.overall?.rating || "")}
+      ${renderMetric("Score", Number.isFinite(Number(score)) ? `${Math.round(Number(score))}/100` : "Not available", scoreLabel)}
       ${renderMetric("Wind", `${weather.wind ?? "?"} mph`, weather.fallback ? "fallback weather" : "live weather")}
       ${renderMetric("Focus", focusWaterLabel, focusWaterDetail)}
       ${renderMetric("Learning", learningLabel, learningDetail)}
@@ -258,6 +271,13 @@ function renderDashboardBrief(data) {
   const secondWaterLabel = secondWater ? `${secondWater.name}${secondWater.distance ? ` · ${secondWater.distance} mi` : ""}` : "";
   const catchInsights = data.catch_insights || {};
   const catchSignal = catchInsights.headline || catchInsights.summary || "";
+  const waterScore = topWater.local_score ?? data.water_profile?.target_fit_score ?? data.overall?.score;
+  const waterScoreLabel = Number.isFinite(Number(waterScore))
+    ? `${Math.round(Number(waterScore))} score`
+    : "Fit pending";
+  const waterIntelAction = topWater.id
+    ? `<a class="hero-action secondary-link" href="/water/${encodeURIComponent(topWater.id)}">Water Intel</a>`
+    : "";
 
   return `
     <div class="dashboard-brief-top">
@@ -270,7 +290,7 @@ function renderDashboardBrief(data) {
     </div>
     <div class="dashboard-brief-pills">
       <span class="mini">${target}</span>
-      <span class="mini">${topWater.local_score ?? "?"} score</span>
+      <span class="mini">${waterScoreLabel}</span>
       <span class="mini">${topWater.favorite ? "Favorite" : "Near you"}</span>
       ${secondWaterLabel ? `<span class="mini">Next: ${secondWaterLabel}</span>` : ""}
     </div>
@@ -283,7 +303,7 @@ function renderDashboardBrief(data) {
     <div class="dashboard-brief-actions">
       <a class="hero-action" href="/map">Open Map</a>
       <a class="hero-action secondary-link" href="/waters">Local Waters</a>
-      <a class="hero-action secondary-link" href="/water/${encodeURIComponent(topWater.id)}">Water Intel</a>
+      ${waterIntelAction}
     </div>
   `;
 }
@@ -1100,23 +1120,25 @@ function render(data) {
     </div>
   `).join(""));
 
-  setHTML("timeBlocks", (data.time_blocks || []).map(t => `
+  const timeBlocks = Array.isArray(data.time_blocks) ? data.time_blocks : [];
+  setHTML("timeBlocks", timeBlocks.length ? timeBlocks.map(t => `
     <div class="time-card">
       <b>${t.label}</b>
-      <div class="score">${t.score}%</div>
+      <div class="score">${scoreText(t.score)}</div>
       <div class="small">${t.time}</div>
     </div>
-  `).join(""));
+  `).join("") : emptyDashboardPanel("Hourly bite windows are unavailable for this weather update."));
 
-  setHTML("hourly", (data.hourly || []).map(h => `
+  const hourly = Array.isArray(data.hourly) ? data.hourly : [];
+  setHTML("hourly", hourly.length ? hourly.map(h => `
     <div class="hour-row">
       <span>${formatHour(h.hour)}</span>
       <div class="bar-wrap">
-        <div class="bar" style="width:${h.score}%"></div>
+        <div class="bar" style="width:${Number.isFinite(Number(h.score)) ? Math.max(0, Math.min(100, Number(h.score))) : 0}%"></div>
       </div>
-      <b>${h.score}%</b>
+      <b>${scoreText(h.score)}</b>
     </div>
-  `).join(""));
+  `).join("") : emptyDashboardPanel("Hourly bite forecast is unavailable for this weather update."));
 
   setHTML("species", (data.species || []).slice(0, 8).map(s => `
     <div class="species-card species-with-image">
@@ -1163,14 +1185,15 @@ function render(data) {
     `).join(""));
   }
 
-  setHTML("forecast", (data.forecast || []).map(f => `
+  const forecast = Array.isArray(data.forecast) ? data.forecast : [];
+  setHTML("forecast", forecast.length ? forecast.map(f => `
     <div class="forecast-day">
-      <b>${f.date.slice(5)}</b>
-      <div class="score">${f.score}</div>
-      <div class="small">${f.rating}</div>
-      <div class="small">${f.low}° / ${f.high}°</div>
+      <b>${escapeHtml(String(f.date || "Forecast").slice(5) || "Forecast")}</b>
+      <div class="score">${scoreText(f.score)}</div>
+      <div class="small">${escapeHtml(f.rating || "Rating unavailable")}</div>
+      <div class="small">${f.low ?? "?"}° / ${f.high ?? "?"}°</div>
     </div>
-  `).join(""));
+  `).join("") : emptyDashboardPanel("7-day forecast is unavailable for this weather update."));
 
   setHTML("catchInsights", renderInsights(data.catch_insights));
 }

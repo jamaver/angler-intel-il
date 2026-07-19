@@ -226,6 +226,7 @@
             <strong>${escapeHtml(item.display_name || item.label || label)}</strong>
             ${item.reasons && item.reasons.length ? `<p class="gear-muted">${escapeHtml(item.reasons[0])}</p>` : ""}
             ${item.warnings && item.warnings.length ? `<p class="gear-warning">${escapeHtml(item.warnings[0])}</p>` : ""}
+            ${item.specifications_used && item.specifications_used.length ? `<p class="gear-muted">Specs used: ${escapeHtml(item.specifications_used.slice(0, 3).join(" · "))}</p>` : ""}
           </div>
         </div>
       </article>
@@ -245,6 +246,7 @@
               <span>${escapeHtml(confidence)} confidence</span>
             </div>
           </div>
+          ${recommendation.confidence_notes && recommendation.confidence_notes.length ? `<ul class="gear-reason-list">${recommendation.confidence_notes.slice(0, 3).map(note => `<li>${escapeHtml(note)}</li>`).join("")}</ul>` : ""}
           ${recommendation.reasons && recommendation.reasons.length ? `<ul class="gear-reason-list">${recommendation.reasons.slice(0, 4).map(reason => `<li>${escapeHtml(reason)}</li>`).join("")}</ul>` : ""}
           ${recommendation.warnings && recommendation.warnings.length ? `<div class="gear-warning-list">${recommendation.warnings.slice(0, 4).map(reason => `<p class="gear-warning">${escapeHtml(reason)}</p>`).join("")}</div>` : ""}
           <div class="gear-trip-picked-grid">${selectedRows || ""}</div>
@@ -1002,8 +1004,9 @@
     let url = "";
     if (action === "favorite") url = `/api/gear/items/${encodeURIComponent(itemId)}/favorite`;
     else if (action === "archive" || action === "retire") url = `/api/gear/items/${encodeURIComponent(itemId)}/${action === "retire" ? "retire" : "archive"}`;
+    else if (action === "restore") url = `/api/gear/items/${encodeURIComponent(itemId)}/restore`;
     else if (action === "delete") {
-      const confirmed = window.confirm("Delete this gear item permanently? This cannot be undone.");
+      const confirmed = window.confirm("Delete this gear item permanently? This cannot be undone. If it is referenced by catches, deletion will be blocked.");
       if (!confirmed) return;
       url = `/api/gear/items/${encodeURIComponent(itemId)}/delete`;
     }

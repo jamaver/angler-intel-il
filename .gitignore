@@ -19,3 +19,6 @@ data/exports/
 data/gear_catalog_cache.json
 data/gear_uploads/
 data/gear_settings.json
+data/gear_inventory.json
+data/manual_waters.json
+data/target_profile.json

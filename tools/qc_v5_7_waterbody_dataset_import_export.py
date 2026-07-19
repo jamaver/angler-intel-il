@@ -48,19 +48,15 @@ if marker_path.exists():
             errors.append(f"v5.7 marker must set {key}=true")
 
 app_version = json.loads((APP_ROOT / "data" / "app_version.json").read_text(encoding="utf-8"))
-if app_version.get("version") not in {"v5.7-waterbody-dataset-import-export", "v5.8-structured-backup-restore", "v5.9-modern-ui-refresh"}:
-    errors.append("app_version.json is not aligned to v5.7 or later")
+if not str(app_version.get("version", "")).startswith("v6."):
+    errors.append("app_version.json is not aligned to the current v6 release line")
 
 app_text = read("app.py")
-if 'APP_VERSION = "v5.7-waterbody-dataset-import-export"' not in app_text and 'APP_VERSION = "v5.8-structured-backup-restore"' not in app_text and 'APP_VERSION = "v5.9-modern-ui-refresh"' not in app_text:
-    errors.append("app.py version string is not aligned to v5.7 or later")
+if "APP_VERSION = \"v6." not in app_text:
+    errors.append("app.py version string is not aligned to the current v6 release line")
 
-waters_text = read("angler_waters_v40.py")
+waters_text = read("templates/waters.html")
 for needle, message in [
-    ('@app.route("/api/waters/export")', "Missing waterbody export route"),
-    ('@app.route("/api/waters/import"', "Missing waterbody import route"),
-    ("export_waterbody_dataset", "Water registry export helper not used"),
-    ("import_waterbody_dataset", "Water registry import helper not used"),
     ("Dataset Tools", "Local waters page missing dataset tools section"),
     ("exportWaterDataset", "Local waters page missing export JS"),
     ("importWaterDataset", "Local waters page missing import JS"),

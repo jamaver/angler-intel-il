@@ -22,6 +22,11 @@ These are user-owned or session-owned files that should not be treated as source
 - `data/favorites.json`
 - `data/saved_reports.json`
 
+The repository ignores these files. A missing gear inventory initializes as an
+empty locker, a missing target profile uses the species defaults, and a missing
+manual-water file is treated as an empty personal-water collection. This keeps
+fresh installs functional without shipping another user's history.
+
 ## Generated cache and artifacts
 
 These are derived from app activity and should stay out of source control unless intentionally captured:

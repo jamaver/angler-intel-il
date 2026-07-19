@@ -465,6 +465,52 @@ def _choose_category(items: list[dict[str, Any]], score_fn, context: dict[str, A
 
 
 def _shape_item(item: dict[str, Any], *, score: int | None = None, notes: list[str] | None = None, warnings: list[str] | None = None) -> dict[str, Any]:
+    category = _gear_category(item)
+    specs_used: list[str] = []
+    if category == "rod":
+        pairs = [
+            ("Length", item.get("length_label") or item.get("length_ft")),
+            ("Power", item.get("power")),
+            ("Action", item.get("action")),
+            ("Lure weight", f"{item.get('lure_weight_min_oz')} - {item.get('lure_weight_max_oz')}" if item.get("lure_weight_min_oz") is not None or item.get("lure_weight_max_oz") is not None else ""),
+            ("Line rating", f"{item.get('line_rating_min_lb')} - {item.get('line_rating_max_lb')}" if item.get("line_rating_min_lb") is not None or item.get("line_rating_max_lb") is not None else ""),
+        ]
+    elif category == "reel":
+        pairs = [
+            ("Type", item.get("reel_type")),
+            ("Gear ratio", f"{item.get('gear_ratio')}:1" if item.get("gear_ratio") not in (None, "") else ""),
+            ("Drag", f"{item.get('max_drag_lb')} lb" if item.get("max_drag_lb") not in (None, "") else ""),
+            ("Capacity", item.get("line_capacity")),
+        ]
+    elif category == "line":
+        pairs = [
+            ("Type", item.get("line_type")),
+            ("Strength", f"{item.get('strength_lb')} lb" if item.get("strength_lb") not in (None, "") else ""),
+            ("Color", item.get("color")),
+            ("Length", f"{item.get('length_yd')} yd" if item.get("length_yd") not in (None, "") else ""),
+        ]
+    elif category == "lure":
+        pairs = [
+            ("Type", item.get("lure_type")),
+            ("Color", item.get("color")),
+            ("Weight", f"{item.get('weight_oz')} oz" if item.get("weight_oz") not in (None, "") else ""),
+            ("Hook size", item.get("hook_size")),
+        ]
+    elif category == "terminal":
+        pairs = [
+            ("Subtype", item.get("subtype")),
+            ("Size", item.get("size")),
+            ("Hook size", item.get("hook_size")),
+            ("Quantity", item.get("quantity")),
+        ]
+    else:
+        pairs = []
+
+    for label, value in pairs:
+        text = _text(value, "")
+        if text:
+            specs_used.append(f"{label}: {text}")
+
     return {
         "id": item.get("id"),
         "category": item.get("category"),
@@ -481,6 +527,7 @@ def _shape_item(item: dict[str, Any], *, score: int | None = None, notes: list[s
         "score": score,
         "reasons": notes or [],
         "warnings": warnings or [],
+        "specifications_used": specs_used,
         "specifications": item.get("specifications", {}),
         "quantity": item.get("quantity"),
     }
@@ -559,6 +606,18 @@ def recommend_owned_setup(
         reasons.append("Stronger line and hardware help manage harder pulls and teeth.")
 
     confidence = "high" if score >= 85 else "medium" if score >= 65 else "low"
+    missing_information = []
+    for warning in warnings:
+        warning_text = _text(warning, "")
+        if warning_text and ("missing" in warning_text.lower() or "not fully specified" in warning_text.lower()):
+            missing_information.append(warning_text)
+    confidence_notes = [
+        "The locker has a strong owned-gear match for this trip." if score >= 85 else
+        "The locker has a usable match, but one or more specs are partial." if score >= 65 else
+        "The locker does not yet have a tight match for this trip.",
+    ]
+    if warnings:
+        confidence_notes.append("Missing fields reduce confidence more than favorite status increases it.")
 
     best_lure_label = _gear_label(lure_choice["item"]) if lure_choice else ""
     selected_lure = lure_choice["item"] if lure_choice else {}
@@ -615,6 +674,8 @@ def recommend_owned_setup(
         "terminal": _shape_item(selected_terminal, score=terminal_choice["score"] if terminal_choice else None, notes=terminal_reasons, warnings=terminal_warnings) if selected_terminal else None,
         "reasons": reasons[:8],
         "warnings": warnings[:8],
+        "missing_information": missing_information[:8],
+        "confidence_notes": confidence_notes,
         "alternatives": alternatives[:5],
         "packing_list": build_trip_packing_list(
             {

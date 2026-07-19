@@ -51,12 +51,12 @@ if marker_path.exists():
             errors.append(f"v5.8 marker must set {key}=true")
 
 app_version = json.loads((APP_ROOT / "data" / "app_version.json").read_text(encoding="utf-8"))
-if app_version.get("version") not in {"v5.8-structured-backup-restore", "v5.9-modern-ui-refresh"}:
-    errors.append("app_version.json is not aligned to v5.8 or later")
+if not str(app_version.get("version", "")).startswith("v6."):
+    errors.append("app_version.json is not aligned to the current v6 release line")
 
 app_text = read("app.py")
-if 'APP_VERSION = "v5.8-structured-backup-restore"' not in app_text and 'APP_VERSION = "v5.9-modern-ui-refresh"' not in app_text:
-    errors.append("app.py version string is not aligned to v5.8 or later")
+if "APP_VERSION = \"v6." not in app_text:
+    errors.append("app.py version string is not aligned to the current v6 release line")
 if "structured_backup_restore" not in app_text and "modern_ui_refresh" not in app_text:
     errors.append("app.py should record the structured backup restore or modern UI refresh module")
 

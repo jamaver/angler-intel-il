@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 import ast
-import subprocess
 import sys
 from pathlib import Path
 
 APP_ROOT = Path(__file__).resolve().parents[1]
+if str(APP_ROOT) not in sys.path:
+    sys.path.insert(0, str(APP_ROOT))
 TEMPLATES = [
     APP_ROOT / 'templates' / 'waters.html',
     APP_ROOT / 'templates' / 'reports.html',
@@ -47,12 +48,15 @@ for path in MODULES:
     except SyntaxError as exc:
         errors.append(f'{path.relative_to(APP_ROOT)} syntax error: {exc}')
 
+from app import app as flask_app
+
+client = flask_app.test_client()
 for route in ROUTES:
-    res = subprocess.run(['curl', '-s', f'http://127.0.0.1:5000{route}'], capture_output=True, text=True)
-    if res.returncode != 0:
-        errors.append(f'{route} curl failed')
+    res = client.get(route)
+    if res.status_code != 200:
+        errors.append(f'{route} failed with HTTP {res.status_code}')
         continue
-    text = res.stdout
+    text = res.get_data(as_text=True)
     for needle in NAV_NEEDLES:
         if needle not in text:
             errors.append(f'{route} missing nav label: {needle}')

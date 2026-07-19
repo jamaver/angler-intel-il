@@ -14,12 +14,14 @@ from gear.settings import load_settings
 from gear.inventory import (
     category_label,
     category_sections,
+    gear_item_reference_summary,
     find_duplicate_items,
     fallback_image_for,
     inventory_summary,
     delete_item,
     list_items,
     provider_icon_for,
+    restore_item,
     set_status,
     toggle_favorite,
     upsert_item,
@@ -39,6 +41,7 @@ GEAR_UPLOAD_DIR = DATA_DIR / "gear_uploads"
 SPECIES_PATH = DATA_DIR / "species_profiles_v43.json"
 RIGS_PATH = DATA_DIR / "lure_rig_setups_v43.json"
 ALLOWED_GEAR_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"}
+MAX_GEAR_IMAGE_BYTES = 8 * 1024 * 1024
 
 
 def _read_json(path: Path, default: Any) -> Any:
@@ -627,10 +630,25 @@ def register_species_rig_routes_v43(app):
 
     @app.route("/api/gear/items/<item_id>/delete", methods=["POST", "DELETE"])
     def gear_item_delete_api_v612(item_id: str):
+        refs = gear_item_reference_summary(item_id)
+        if refs.get("count", 0):
+            return jsonify({
+                "ok": False,
+                "error": "This gear item is referenced by catch records and cannot be deleted yet. Retire it instead.",
+                "reference_count": refs.get("count", 0),
+                "references": refs.get("examples", []),
+            }), 409
         deleted = delete_item(item_id)
         if not deleted:
             return jsonify({"ok": False, "error": "Gear item not found"}), 404
         return jsonify({"ok": True, "deleted": True, "summary": inventory_summary()})
+
+    @app.route("/api/gear/items/<item_id>/restore", methods=["POST"])
+    def gear_item_restore_api_v612(item_id: str):
+        item = restore_item(item_id)
+        if not item:
+            return jsonify({"ok": False, "error": "Gear item not found"}), 404
+        return jsonify({"ok": True, "item": _enrich_gear_item(item), "summary": inventory_summary()})
 
     @app.route("/api/gear/uploads/<path:filename>")
     def gear_uploads_api_v612(filename: str):
@@ -641,6 +659,11 @@ def register_species_rig_routes_v43(app):
         upload = request.files.get("image") or request.files.get("file")
         if upload is None or not getattr(upload, "filename", ""):
             return jsonify({"ok": False, "error": "Choose an image file first."}), 400
+        if request.content_length and request.content_length > MAX_GEAR_IMAGE_BYTES:
+            return jsonify({"ok": False, "error": "Image is too large. Please use a smaller file."}), 413
+        mimetype = str(getattr(upload, "mimetype", "") or "").lower()
+        if mimetype and not mimetype.startswith("image/"):
+            return jsonify({"ok": False, "error": "Only image files are allowed."}), 400
         original = secure_filename(upload.filename or "")
         suffix = Path(original).suffix.lower()
         if suffix not in ALLOWED_GEAR_IMAGE_EXTENSIONS:

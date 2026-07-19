@@ -28,7 +28,7 @@ def require(rel: str) -> None:
 for rel in (
     "app.py",
     "angler_reports_v38.py",
-    "templates/snapshot.html",
+    "templates/reports.html",
     "data/version_v6_8_report_planning_polish.json",
 ):
     require(rel)
@@ -46,15 +46,18 @@ for key in ("report_planning_polish", "report_learning_summary", "compact_report
     if not marker.get(key):
         errors.append(f"Version marker missing {key}")
 
-reports_text = read("angler_reports_v38.py")
+reports_backend = read("angler_reports_v38.py")
 for needle, message in (
     ("learning_summary", "Report overview should include a learning summary"),
     ("learning_takeaway", "Report overview should include a learning takeaway"),
     ("catch_quality", "Report overview should include catch quality"),
-    ("report-learning-line", "Report list should render learning lines"),
 ):
-    if needle not in reports_text:
+    if needle not in reports_backend:
         errors.append(message)
+
+reports_page = read("templates/reports.html")
+if "report-learning-line" not in reports_page:
+    errors.append("Report list should render learning lines")
 
 from app import app as flask_app
 client = flask_app.test_client()
@@ -113,7 +116,7 @@ else:
             errors.append(f"/reports failed with HTTP {reports_res.status_code}")
         else:
             html = reports_res.get_data(as_text=True)
-            for needle in ("report-learning-line", "report-list-card", "Saved trip plans"):
+            for needle in ("report-learning-line", "report-list-card", "Saved trip plans", "forecastDateInput"):
                 if needle not in html:
                     errors.append(f"/reports HTML missing {needle}")
             if "/admin" in html:

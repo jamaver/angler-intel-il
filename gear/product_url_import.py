@@ -19,6 +19,16 @@ from .inventory import fallback_image_for, _slug, _text
 MAX_BYTES = 1_500_000
 ALLOWED_SCHEMES = {"http", "https"}
 BLOCKED_HOSTNAMES = {"localhost", "127.0.0.1", "::1"}
+GENERIC_PAGE_MARKERS = (
+    "site maintenance",
+    "maintenance",
+    "page not found",
+    "not found",
+    "temporarily unavailable",
+    "access denied",
+    "coming soon",
+    "home page",
+)
 
 
 def _now() -> str:
@@ -593,6 +603,7 @@ def extract_jsonld_product(html: str) -> dict[str, Any]:
 
 def normalize_structured_product(data: dict[str, Any], source_url: str = "", category: str = "misc", allow_remote_images: bool = True) -> dict[str, Any]:
     product = dict(data or {})
+    generic_page = bool(product.get("page_is_generic"))
     image_url = _text(product.get("image_url"), "")
     if not allow_remote_images:
         image_url = ""
@@ -600,6 +611,10 @@ def normalize_structured_product(data: dict[str, Any], source_url: str = "", cat
     brand = _text(product.get("brand"), "")
     model = _text(product.get("model"), "")
     display_name = _text(product.get("display_name"), "")
+    if generic_page:
+        brand = ""
+        model = ""
+        display_name = ""
     if not display_name:
         display_name = " ".join(part for part in [brand, model] if _text(part)) or "Imported product"
 
@@ -707,6 +722,24 @@ def import_product_from_url(url: str, category: str = "misc", allow_remote_image
             "field_sources": {},
         }
     parsed["description"] = _text(parsed.get("description"), parser.content_text)
+    page_blob = " ".join(part for part in [
+        _first_text(parsed.get("raw_product_name")),
+        parser.title_text,
+        parser.content_text,
+        parsed.get("description"),
+    ] if _text(part)).lower()
+    if any(marker in page_blob for marker in GENERIC_PAGE_MARKERS):
+        parsed["brand"] = ""
+        parsed["model"] = ""
+        parsed["display_name"] = ""
+        parsed["product_summary"] = ""
+        parsed["import_summary"] = ""
+        parsed["confidence"] = "low"
+        parsed["page_is_generic"] = True
+        parsed.setdefault("field_sources", {})
+        parsed["field_sources"].setdefault("brand", "generic_page_detected")
+        parsed["field_sources"].setdefault("model", "generic_page_detected")
+        parsed["field_sources"].setdefault("display_name", "generic_page_detected")
     if not isinstance(parsed.get("field_sources"), dict):
         parsed["field_sources"] = {}
     if parsed.get("brand"):
@@ -721,7 +754,7 @@ def import_product_from_url(url: str, category: str = "misc", allow_remote_image
 
     title_text = _text(parsed.get("display_name") or parsed.get("raw_product_name") or parser.title_text, "")
     brand_text = _text(parsed.get("brand"), "")
-    if not brand_text and title_text:
+    if not brand_text and title_text and not parsed.get("page_is_generic"):
         title_tokens = [token.strip() for token in title_text.split() if token.strip()]
         if len(title_tokens) >= 2 and not title_tokens[0].isdigit() and not title_tokens[1].isdigit():
             parsed["brand"] = " ".join(title_tokens[:2])

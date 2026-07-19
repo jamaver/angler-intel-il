@@ -9,6 +9,7 @@ from typing import Any
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "data"
+CATCHES_PATH = DATA_DIR / "catches.json"
 
 DEFAULT_VERSION = "v6.13-gear-intelligence-packing-catch-linking"
 CATEGORY_ORDER = ["rod", "reel", "line", "lure", "terminal", "misc"]
@@ -166,6 +167,11 @@ def _read_json(path: Path, default: Any) -> Any:
         return json.loads(text)
     except Exception:
         return default
+
+
+def _load_catches() -> list[dict[str, Any]]:
+    data = _read_json(CATCHES_PATH, [])
+    return data if isinstance(data, list) else []
 
 
 def load_inventory() -> dict[str, Any]:
@@ -536,6 +542,8 @@ def upsert_item(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def delete_item(item_id: str) -> bool:
+    if gear_item_reference_summary(item_id).get("count", 0):
+        return False
     data = load_inventory()
     items = [item for item in data.get("items", []) if isinstance(item, dict)]
     before = len(items)
@@ -545,6 +553,17 @@ def delete_item(item_id: str) -> bool:
     data["items"] = items
     save_inventory(data)
     return True
+
+
+def restore_item(item_id: str) -> dict[str, Any] | None:
+    item = get_item(item_id)
+    if not item:
+        return None
+    payload = dict(item)
+    payload["status"] = "owned"
+    payload["retired_at"] = ""
+    payload["retired_reason"] = ""
+    return upsert_item(payload)
 
 
 def set_status(item_id: str, status: str) -> dict[str, Any] | None:
@@ -565,6 +584,31 @@ def toggle_favorite(item_id: str, favorite: bool | None = None) -> dict[str, Any
     payload = dict(item)
     payload["favorite"] = (not bool(item.get("favorite"))) if favorite is None else bool(favorite)
     return upsert_item(payload)
+
+
+def gear_item_reference_summary(item_id: str, limit: int = 5) -> dict[str, Any]:
+    item_id = _text(item_id, "")
+    if not item_id:
+        return {"count": 0, "examples": []}
+
+    examples: list[dict[str, Any]] = []
+    count = 0
+    for record in _load_catches():
+        if not isinstance(record, dict):
+            continue
+        gear_refs = record.get("gear_refs") if isinstance(record.get("gear_refs"), dict) else {}
+        if item_id not in {str(ref).strip() for ref in gear_refs.values() if str(ref).strip()}:
+            continue
+        count += 1
+        if len(examples) < limit:
+            examples.append({
+                "id": record.get("id"),
+                "species": record.get("species"),
+                "waterbody": record.get("waterbody"),
+                "timestamp": record.get("timestamp"),
+            })
+
+    return {"count": count, "examples": examples}
 
 
 def record_item_usage(

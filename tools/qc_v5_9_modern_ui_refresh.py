@@ -49,12 +49,12 @@ if marker_path.exists():
             errors.append(f"v5.9 marker must set {key}=true")
 
 app_version = json.loads((APP_ROOT / "data" / "app_version.json").read_text(encoding="utf-8"))
-if app_version.get("version") != "v5.9-modern-ui-refresh":
-    errors.append("app_version.json is not aligned to v5.9")
+if not str(app_version.get("version", "")).startswith("v6."):
+    errors.append("app_version.json is not aligned to the current v6 release line")
 
 app_text = read("app.py")
 for needle, message in [
-    ('APP_VERSION = "v5.9-modern-ui-refresh"', "app.py version string is not aligned to v5.9"),
+    ('APP_VERSION = "v6.13-gear-intelligence-packing-catch-linking"', "app.py version string is not aligned to the current v6 release line"),
     ("modern_ui_refresh", "app.py should record the modern UI refresh module"),
 ]:
     if needle not in app_text:
@@ -89,7 +89,7 @@ for needle, message in [
     if needle not in css_text:
         errors.append(message)
 
-waters_text = read("angler_waters_v40.py")
+waters_text = read("templates/waters.html")
 if 'href="/map"' not in waters_text:
     errors.append("Local waters page should expose Map in the shell")
 

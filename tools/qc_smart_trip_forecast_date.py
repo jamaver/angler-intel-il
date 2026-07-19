@@ -43,7 +43,7 @@ if "forecast-day-selected" not in snapshot_text:
 if "Trip date:" not in snapshot_text:
     errors.append("snapshot.html should surface the trip date in the header")
 
-reports_page = read("angler_reports_v38.py")
+reports_page = read("templates/reports.html")
 if "forecastDateInput" not in reports_page or "loadForecastDates()" not in reports_page:
     errors.append("Saved reports page should expose a forecast date selector")
 

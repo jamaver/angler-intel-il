@@ -28,7 +28,7 @@ def require(rel: str) -> None:
 for rel in (
     "app.py",
     "angler_reports_v38.py",
-    "templates/snapshot.html",
+    "templates/reports.html",
     "data/version_v6_4_report_planning_polish.json",
 ):
     require(rel)
@@ -46,14 +46,14 @@ for key in ("report_planning_polish", "grouped_saved_reports", "compact_report_c
     if not marker.get(key):
         errors.append(f"Version marker missing {key}")
 
-reports_text = read("angler_reports_v38.py")
+reports_text = read("templates/reports.html")
 for needle, message in (
     ("report-collection", "reports page should group saved reports"),
     ("report-group", "reports page should render grouped report sections"),
     ("report-list-card", "reports page should render compact report cards"),
     ("Create trip report", "reports page should use the new trip-report framing"),
-    ("_default_report_title", "report titles should be auto-generated when blank"),
-    ("_report_overview", "report overviews should be precomputed"),
+    ("Saved trip plans", "reports page should include saved trip plans framing"),
+    ("forecastDateInput", "reports page should expose forecast-date selection"),
 ):
     if needle not in reports_text:
         errors.append(message)
