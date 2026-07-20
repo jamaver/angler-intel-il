@@ -64,6 +64,21 @@
       </ul>
     </details>
 
+    <details class="health-details">
+      <summary>Mirror write status{% if v7_health.mirror_summary %} ({{ v7_health.mirror_summary.healthy or 0 }} healthy, {{ v7_health.mirror_summary.degraded or 0 }} degraded){% endif %}</summary>
+      <p class="muted">Diagnostics only. JSON remains authoritative; no mirror writes are enabled by this screen.</p>
+      <ul>
+        {% for row in v7_health.mirror_status %}
+          <li>
+            <strong>{{ row.domain }}:</strong> {{ row.status }}
+            {% if row.last_success_at %}<span class="muted"> Last success {{ row.last_success_at }}.</span>{% endif %}
+            {% if row.last_failure_at %}<span class="status-warn"> Last failure {{ row.last_failure_at }}.</span>{% endif %}
+            {% if row.last_error %}<div class="muted">{{ row.last_error }}</div>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </details>
+
     {% if v7_health.runtime_path_conflicts %}
       <details class="health-details">
         <summary>Runtime path conflicts</summary>
@@ -102,4 +117,3 @@
     <p class="status-warn">V7 diagnostics unavailable.</p>
   {% endif %}
 </section>
-

@@ -7,6 +7,7 @@ from typing import Any
 
 from persistence.connection import connect
 from persistence.authority import default_authority_map
+from persistence.mirror import get_mirror_status
 from persistence.runtime_paths import resolve_runtime_path
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -66,6 +67,14 @@ def _runtime_conflicts() -> list[dict[str, Any]]:
     return conflicts
 
 
+def _mirror_summary(rows: list[dict[str, Any]]) -> dict[str, int]:
+    summary: dict[str, int] = {}
+    for row in rows:
+        status = str(row.get("status") or "unknown")
+        summary[status] = summary.get(status, 0) + 1
+    return summary
+
+
 def get_v7_health_for_app() -> dict[str, Any]:
     db_path = DATA_DIR / "angler_intel.sqlite3"
     payload: dict[str, Any] = {
@@ -82,6 +91,8 @@ def get_v7_health_for_app() -> dict[str, Any]:
         "foreign_key_check": [],
         "latest_verified_backup": None,
         "runtime_path_conflicts": _runtime_conflicts(),
+        "mirror_status": [],
+        "mirror_summary": {},
         "warnings": [],
         "errors": [],
     }
@@ -122,6 +133,8 @@ def get_v7_health_for_app() -> dict[str, Any]:
                 payload["validation_drift"] = summary.get("totals", {}) if isinstance(summary, dict) else {}
             except Exception:
                 payload["validation_drift"] = {}
+            payload["mirror_status"] = get_mirror_status(conn)
+            payload["mirror_summary"] = _mirror_summary(payload["mirror_status"])
     except Exception as exc:
         payload["errors"].append(str(exc))
 

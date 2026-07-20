@@ -1,0 +1,9 @@
+{
+  "version": "v7.1.0-mirror-write-framework",
+  "previous_version": "v7.0-sqlite-migration-foundation",
+  "json_authoritative": true,
+  "sqlite_authority_enabled": false,
+  "mirror_framework": true,
+  "domain_mirror_writes_enabled": false,
+  "installed_at": "2026-07-20"
+}
