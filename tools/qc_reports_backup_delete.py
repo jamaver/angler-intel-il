@@ -34,10 +34,15 @@ def build_report_fixture(base: Path) -> dict[str, Path]:
     reports_dir.mkdir(parents=True, exist_ok=True)
     data_dir.mkdir(parents=True, exist_ok=True)
     report_id = "qc-delete-report-20260713"
+    second_report_id = "qc-delete-report-20260714"
     json_name = f"{report_id}.json"
     html_name = f"{report_id}.html"
+    second_json_name = f"{second_report_id}.json"
+    second_html_name = f"{second_report_id}.html"
     (reports_dir / json_name).write_text(json.dumps({"payload": {"title": "QC report"}}), encoding="utf-8")
     (reports_dir / html_name).write_text("<html><body>qc report</body></html>", encoding="utf-8")
+    (reports_dir / second_json_name).write_text(json.dumps({"payload": {"title": "QC report two"}}), encoding="utf-8")
+    (reports_dir / second_html_name).write_text("<html><body>qc report two</body></html>", encoding="utf-8")
     (data_dir / "reports_index.json").write_text(json.dumps([{
         "id": report_id,
         "title": "QC report",
@@ -48,6 +53,16 @@ def build_report_fixture(base: Path) -> dict[str, Path]:
         "view_url": f"/api/reports/view/{report_id}",
         "html_url": f"/api/reports/download/{html_name}",
         "json_url": f"/api/reports/download/{json_name}",
+    }, {
+        "id": second_report_id,
+        "title": "QC report two",
+        "created": "2026-07-14T08:00:00",
+        "zip": "60543",
+        "json_file": second_json_name,
+        "html_file": second_html_name,
+        "view_url": f"/api/reports/view/{second_report_id}",
+        "html_url": f"/api/reports/download/{second_html_name}",
+        "json_url": f"/api/reports/download/{second_json_name}",
     }], indent=2), encoding="utf-8")
     return {
         "report_id": report_id,
@@ -55,6 +70,8 @@ def build_report_fixture(base: Path) -> dict[str, Path]:
         "data_dir": data_dir,
         "json_path": reports_dir / json_name,
         "html_path": reports_dir / html_name,
+        "second_json_path": reports_dir / second_json_name,
+        "second_html_path": reports_dir / second_html_name,
         "index_path": data_dir / "reports_index.json",
     }
 
@@ -81,7 +98,10 @@ def main() -> int:
             except SyntaxError as exc:
                 errors.append(f"{rel} syntax error: {exc}")
 
-    assert_contains(APP_ROOT / "templates/reports.html" if (APP_ROOT / "templates/reports.html").exists() else APP_ROOT / "angler_reports_v38.py", "data-delete-report", "Reports page should expose delete controls")
+    reports_template = APP_ROOT / "templates/reports.html" if (APP_ROOT / "templates/reports.html").exists() else APP_ROOT / "angler_reports_v38.py"
+    assert_contains(reports_template, "data-delete-report", "Reports page should expose delete controls")
+    assert_contains(reports_template, "deleteAllReports", "Reports page should expose bulk delete control")
+    assert_contains(reports_template, "Permanently delete all", "Reports bulk delete must warn about permanent deletion")
     assert_contains(APP_ROOT / "static/js/app_health_backups_v443.js", "data-delete-backup", "App Health backups UI should expose delete controls")
 
     original_reports_dir = reports_mod.REPORTS_DIR
@@ -121,6 +141,27 @@ def main() -> int:
                 index_payload = json.loads(report_fixture["index_path"].read_text(encoding="utf-8"))
                 if any(item.get("id") == report_fixture["report_id"] for item in index_payload):
                     errors.append("Report delete did not update reports index")
+
+            unconfirmed = client.post("/api/reports/delete-all", json={})
+            if unconfirmed.status_code != 400:
+                errors.append("Bulk report delete should require explicit confirmation")
+
+            malformed_confirmation = client.post("/api/reports/delete-all", json=[])
+            if malformed_confirmation.status_code != 400:
+                errors.append("Bulk report delete should reject malformed confirmation payloads")
+
+            deleted_all = client.post("/api/reports/delete-all", json={"confirm": True})
+            if deleted_all.status_code != 200:
+                errors.append(f"Bulk report delete failed with HTTP {deleted_all.status_code}")
+            else:
+                payload = deleted_all.get_json(silent=True) or {}
+                if payload.get("ok") is not True or payload.get("remaining_count") != 0:
+                    errors.append("Bulk report delete did not return an empty reports state")
+                if report_fixture["second_json_path"].exists() or report_fixture["second_html_path"].exists():
+                    errors.append("Bulk report delete did not remove remaining report files")
+                index_payload = json.loads(report_fixture["index_path"].read_text(encoding="utf-8"))
+                if index_payload:
+                    errors.append("Bulk report delete did not clear reports index")
 
             bad_backup = client.post("/api/app-health/backups/delete", json={"filename": "../escape.zip"})
             if bad_backup.status_code != 400:

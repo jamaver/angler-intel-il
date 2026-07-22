@@ -44,6 +44,18 @@
       color: #102417;
       font-weight: 700;
     }
+    button.danger {
+      border-color: #c95f5f;
+      background: #fff1f1;
+      color: #8f2f2f;
+    }
+    button.danger:hover:not(:disabled) {
+      background: #ffdcdc;
+    }
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.58;
+    }
     pre {
       background: #102417;
       color: #f4fff6;
@@ -344,6 +356,7 @@
     <div class="card">
     <h2>Saved trip plans</h2>
     <button onclick="loadReports()">Refresh reports</button>
+    <button id="deleteAllReports" type="button" class="danger" onclick="deleteAllReports()" disabled>Delete all reports</button>
     <div id="reportsList">Loading...</div>
   </div>
 
@@ -433,7 +446,9 @@ async function loadForecastDates() {
 
 async function loadReports() {
   const box = document.getElementById("reportsList");
+  const deleteAllButton = document.getElementById("deleteAllReports");
   box.textContent = "Loading...";
+  if (deleteAllButton) deleteAllButton.disabled = true;
 
   try {
     const res = await fetch("/api/reports");
@@ -443,6 +458,8 @@ async function loadReports() {
       box.innerHTML = "<p class='muted'>No saved reports yet.</p>";
       return;
     }
+
+    if (deleteAllButton) deleteAllButton.disabled = false;
 
     const groups = new Map();
     data.reports.forEach(r => {
@@ -565,6 +582,44 @@ async function deleteReport(reportId) {
     loadReports();
   } catch (err) {
     box.textContent = "Delete failed: " + err;
+  }
+}
+
+async function deleteAllReports() {
+  const box = document.getElementById("createResult");
+  const deleteAllButton = document.getElementById("deleteAllReports");
+  const cards = document.querySelectorAll("[data-delete-report]");
+  const count = cards.length;
+
+  if (!count) {
+    box.textContent = "There are no saved reports to delete.";
+    return;
+  }
+
+  const message = `Permanently delete all ${count} saved report record${count === 1 ? "" : "s"} and their local HTML/JSON files? This cannot be undone.`;
+  if (!confirm(message)) {
+    return;
+  }
+
+  if (deleteAllButton) deleteAllButton.disabled = true;
+  box.textContent = "Permanently deleting all saved reports...";
+
+  try {
+    const res = await fetch("/api/reports/delete-all", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({confirm: true})
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      box.textContent = "Delete all failed: " + (data.error || "unknown error");
+      return;
+    }
+
+    box.textContent = `Permanently deleted ${data.deleted_report_count || 0} saved report record${data.deleted_report_count === 1 ? "" : "s"}.`;
+    loadReports();
+  } catch (err) {
+    box.textContent = "Delete all failed: " + err;
   }
 }
 

@@ -103,6 +103,44 @@ def _delete_report_assets(report_id: str) -> dict[str, Any]:
     }
 
 
+def _delete_all_report_assets() -> dict[str, Any]:
+    """Delete saved report artifacts and reset the local report index.
+
+    Report artifacts are limited to JSON and HTML files directly under the
+    app-owned reports directory. No caller-supplied path is accepted.
+    """
+    items = _index()
+    report_files: set[Path] = set()
+
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        for key in ("html_file", "json_file"):
+            filename = str(item.get(key) or "").strip()
+            path = _safe_report_file(filename)
+            if path is not None:
+                report_files.add(path)
+
+    # Include orphaned app report artifacts so a bulk delete actually leaves
+    # the reports store empty, while remaining constrained to this directory.
+    if REPORTS_DIR.exists():
+        for path in REPORTS_DIR.iterdir():
+            if path.is_file() and path.suffix.lower() in {".json", ".html"}:
+                report_files.add(path)
+
+    deleted_files: list[str] = []
+    for path in sorted(report_files, key=lambda item: item.name):
+        path.unlink()
+        deleted_files.append(path.name)
+
+    _save_index([])
+    return {
+        "deleted_report_count": len(items),
+        "deleted_files": deleted_files,
+        "remaining_count": 0,
+    }
+
+
 def _first_present(data: dict[str, Any], keys: list[str], default: Any = None) -> Any:
     for key in keys:
         if key in data and data[key] not in (None, "", [], {}):
@@ -1087,6 +1125,26 @@ def register_report_routes_v38(app):
         except Exception as exc:
             return jsonify({"ok": False, "error": str(exc)}), 500
 
+    @app.route("/api/reports/delete-all", methods=["POST"])
+    def delete_all_reports_v38():
+        payload = request.get_json(silent=True) or {}
+        if not isinstance(payload, dict):
+            payload = {}
+        if payload.get("confirm") is not True:
+            return jsonify({"ok": False, "error": "Permanent deletion confirmation is required."}), 400
+
+        try:
+            result = _delete_all_report_assets()
+            return jsonify({
+                "ok": True,
+                "version": "v3.8",
+                "deleted_report_count": result["deleted_report_count"],
+                "deleted_files": result["deleted_files"],
+                "remaining_count": result["remaining_count"],
+            })
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 500
+
     @app.route("/api/reports/view/<report_id>")
     def view_report_v38(report_id: str):
         if "/" in report_id or "\\" in report_id or ".." in report_id:
@@ -1149,6 +1207,7 @@ def register_report_routes_v38(app):
                 "/api/reports/save",
                 "/api/reports/download/<filename>",
                 "/api/reports/delete",
+                "/api/reports/delete-all",
                 "/api/reports/view/<report_id>",
             ],
         })
