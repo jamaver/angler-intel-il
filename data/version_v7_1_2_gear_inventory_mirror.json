@@ -1,0 +1,10 @@
+{
+  "version": "v7.1.2-gear-inventory-mirror",
+  "previous_version": "v7.1.1-target-profile-mirror",
+  "json_authoritative": true,
+  "sqlite_authority_enabled": false,
+  "gear_inventory_mirror_writes": true,
+  "sqlite_reads_enabled": false,
+  "provider_cache_authoritative": false,
+  "installed_at": "2026-07-22"
+}

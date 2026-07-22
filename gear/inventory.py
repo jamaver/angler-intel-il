@@ -7,6 +7,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from persistence.gear_inventory_mirror import mirror_gear_inventory
+
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "data"
 CATCHES_PATH = DATA_DIR / "catches.json"
@@ -188,7 +190,7 @@ def load_inventory() -> dict[str, Any]:
     return data
 
 
-def save_inventory(data: dict[str, Any]) -> None:
+def save_inventory(data: dict[str, Any], *, usage_event: dict[str, Any] | None = None) -> None:
     payload = dict(data or {})
     payload.setdefault("version", DEFAULT_VERSION)
     payload["updated_at"] = _now()
@@ -198,6 +200,9 @@ def save_inventory(data: dict[str, Any]) -> None:
     path = inventory_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    # JSON remains authoritative. SQLite mirror failures are non-fatal and are
+    # surfaced through V7 mirror diagnostics for later reconciliation.
+    mirror_gear_inventory(payload, path, usage_event=usage_event)
 
 
 def category_label(category: Any) -> str:
@@ -523,7 +528,7 @@ def get_item(item_id: str) -> dict[str, Any] | None:
     return None
 
 
-def upsert_item(payload: dict[str, Any]) -> dict[str, Any]:
+def upsert_item(payload: dict[str, Any], *, usage_event: dict[str, Any] | None = None) -> dict[str, Any]:
     data = load_inventory()
     items = [item for item in data.get("items", []) if isinstance(item, dict)]
     existing = None
@@ -537,7 +542,7 @@ def upsert_item(payload: dict[str, Any]) -> dict[str, Any]:
     if existing is None:
         items.append(normalize_item(payload))
     data["items"] = items
-    save_inventory(data)
+    save_inventory(data, usage_event=usage_event)
     return get_item(item_id) if item_id else items[-1]
 
 
@@ -625,7 +630,16 @@ def record_item_usage(
     payload["last_used"] = _text(used_at, _now())
     payload["trips_used"] = max(0, _as_int(payload.get("trips_used"), 0) or 0) + max(0, int(trips or 0))
     payload["catches_logged"] = max(0, _as_int(payload.get("catches_logged"), 0) or 0) + max(0, int(catches or 0))
-    return upsert_item(payload)
+    return upsert_item(
+        payload,
+        usage_event={
+            "gear_item_id": item_id,
+            "used_at": payload["last_used"],
+            "trips": max(0, int(trips or 0)),
+            "catches": max(0, int(catches or 0)),
+            "source": "record_item_usage",
+        },
+    )
 
 
 def mark_item_cleaned(item_id: str, cleaned_at: str | None = None) -> dict[str, Any] | None:
