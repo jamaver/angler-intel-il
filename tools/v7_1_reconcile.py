@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+"""Operator-triggered V7.1 reconciliation for supported JSON mirror domains."""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from intelligence.target_profile import TARGET_PROFILE_PATH, load_target_profile
+from persistence.target_profile_mirror import compare_target_profile, mirror_target_profile
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Reconcile a supported JSON domain into its SQLite mirror")
+    parser.add_argument("--domain", required=True, choices=("target_profile",))
+    parser.add_argument("--db", help="Override SQLite database path")
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args()
+
+    if args.domain != "target_profile":
+        raise SystemExit("Unsupported domain")
+
+    profile = load_target_profile()
+    result = mirror_target_profile(profile, TARGET_PROFILE_PATH, db_path=args.db) if args.db else mirror_target_profile(profile, TARGET_PROFILE_PATH)
+    comparison = compare_target_profile(profile, db_path=args.db) if args.db else compare_target_profile(profile)
+    payload = {"result": result.as_dict(), "comparison": comparison, "json_authoritative": True}
+    print(json.dumps(payload, indent=2, sort_keys=True))
+    return 0 if result.mirror_write_succeeded and comparison["status"] == "exact" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

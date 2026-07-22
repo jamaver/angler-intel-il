@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from intelligence.species import SPECIES
+from persistence.target_profile_mirror import mirror_target_profile
 
 APP_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = APP_ROOT / "data"
@@ -112,6 +113,9 @@ def save_target_profile(payload: dict[str, Any]) -> dict[str, Any]:
 
     profile["updated_at"] = datetime.now().astimezone().isoformat(timespec="seconds")
     _write_json(TARGET_PROFILE_PATH, profile)
+    # JSON is authoritative. Mirror failure is intentionally non-fatal and is
+    # recorded by the V7.1 diagnostics framework for later reconciliation.
+    mirror_target_profile(profile, TARGET_PROFILE_PATH)
     return profile
 
 

@@ -1,0 +1,9 @@
+{
+  "version": "v7.1.1-target-profile-mirror",
+  "previous_version": "v7.1.0-mirror-write-framework",
+  "json_authoritative": true,
+  "sqlite_authority_enabled": false,
+  "target_profile_mirror_writes": true,
+  "sqlite_reads_enabled": false,
+  "installed_at": "2026-07-21"
+}
