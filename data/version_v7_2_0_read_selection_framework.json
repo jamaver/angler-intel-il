@@ -1,0 +1,9 @@
+{
+  "version": "v7.2.0-read-selection-framework",
+  "previous_version": "v7.1.6-reconciliation-soak",
+  "json_authoritative": true,
+  "sqlite_authority_enabled": false,
+  "production_sqlite_reads_enabled": false,
+  "repository_read_selection_framework": true,
+  "installed_at": "2026-07-23"
+}
