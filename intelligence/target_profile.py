@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from datetime import datetime
 from pathlib import Path
@@ -8,10 +9,22 @@ from typing import Any
 
 from intelligence.species import SPECIES
 from persistence.target_profile_mirror import mirror_target_profile
+from persistence.repositories import (
+    JsonTargetProfileRepository,
+    SQLiteTargetProfileRepository,
+    read_domain,
+)
 
 APP_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = APP_ROOT / "data"
 TARGET_PROFILE_PATH = DATA_DIR / "target_profile.json"
+_READ_DIAGNOSTICS: dict[str, Any] = {
+    "selected_source": "compare_json",
+    "effective_source": "json",
+    "comparison_status": "not_run",
+    "fallback_used": False,
+    "error": None,
+}
 
 
 def _read_json(path: Path, default: Any) -> Any:
@@ -22,6 +35,47 @@ def _read_json(path: Path, default: Any) -> Any:
         return json.loads(text) if text else default
     except Exception:
         return default
+
+
+def _read_source_mode() -> str:
+    """Resolve a guarded V7.2 target-profile read mode.
+
+    Comparison mode returns JSON and is the safe default. A real SQLite read
+    requires an explicit operator environment flag; no web UI can enable it.
+    """
+    requested = str(os.environ.get("AI_TARGET_PROFILE_READ_SOURCE", "compare_json")).strip().lower()
+    if requested not in {"json", "sqlite", "sqlite_with_json_fallback", "compare_json"}:
+        requested = "compare_json"
+    if requested in {"sqlite", "sqlite_with_json_fallback"} and os.environ.get("AI_ENABLE_V7_STAGED_READS") != "1":
+        return "compare_json"
+    return requested
+
+
+def get_target_profile_read_diagnostics() -> dict[str, Any]:
+    """Read-only diagnostics for App Health and V7.2 comparison monitoring."""
+    return dict(_READ_DIAGNOSTICS)
+
+
+def _read_profile_document() -> dict[str, Any]:
+    global _READ_DIAGNOSTICS
+    source = _read_source_mode()
+    db_path = Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))
+    result = read_domain(
+        "target_profile",
+        json_repository=JsonTargetProfileRepository(TARGET_PROFILE_PATH),
+        sqlite_repository=SQLiteTargetProfileRepository(db_path),
+        source=source,  # type: ignore[arg-type]
+    )
+    _READ_DIAGNOSTICS = {
+        "selected_source": result.selected_source,
+        "effective_source": result.effective_source,
+        "comparison_status": result.comparison_status,
+        "comparison_differences": list(result.comparison_differences),
+        "fallback_used": result.fallback_used,
+        "timing_ms": dict(result.timing_ms),
+        "error": result.error,
+    }
+    return dict(result.value) if isinstance(result.value, dict) else {}
 
 
 def _write_json(path: Path, data: Any) -> None:
@@ -83,7 +137,7 @@ def default_target_profile() -> dict[str, Any]:
 
 def load_target_profile() -> dict[str, Any]:
     profile = default_target_profile()
-    stored = _read_json(TARGET_PROFILE_PATH, {})
+    stored = _read_profile_document()
     if isinstance(stored, dict):
         profile["default_target_species"] = _canonical_species_name(stored.get("default_target_species") or profile["default_target_species"])
         profile["current_trip_target"] = _canonical_species_name(stored.get("current_trip_target") or profile["current_trip_target"])

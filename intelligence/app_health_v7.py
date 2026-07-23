@@ -9,6 +9,7 @@ from persistence.connection import connect
 from persistence.authority import default_authority_map
 from persistence.mirror import get_mirror_status, get_reconciliation_summary
 from persistence.runtime_paths import resolve_runtime_path
+from intelligence.target_profile import get_target_profile_read_diagnostics
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "data"
@@ -94,6 +95,7 @@ def get_v7_health_for_app() -> dict[str, Any]:
         "mirror_status": [],
         "mirror_summary": {},
         "reconciliation_summary": {"pending": [], "pending_total": 0, "stale": [], "stale_total": 0},
+        "target_profile_read": get_target_profile_read_diagnostics(),
         "warnings": [],
         "errors": [],
     }
@@ -147,4 +149,5 @@ def get_v7_health_for_app() -> dict[str, Any]:
         payload["latest_verified_backup"] = _read_json(BACKUP_DIR / "latest_backup_manifest.json")
 
     payload["ok"] = bool(payload["available"]) and not payload["errors"]
+    payload["target_profile_read"] = get_target_profile_read_diagnostics()
     return payload

@@ -90,6 +90,14 @@
       {% endif %}
     </details>
 
+    <details class="health-details">
+      <summary>Target-profile read comparison</summary>
+      <p class="muted">Selected: {{ v7_health.target_profile_read.selected_source }}. Effective: {{ v7_health.target_profile_read.effective_source }}.</p>
+      <p class="muted">Comparison: {{ v7_health.target_profile_read.comparison_status or "not run" }}{% if v7_health.target_profile_read.fallback_used %}; JSON fallback used{% endif %}.</p>
+      {% if v7_health.target_profile_read.comparison_differences %}<div class="status-warn">{{ v7_health.target_profile_read.comparison_differences | join("; ") }}</div>{% endif %}
+      {% if v7_health.target_profile_read.error %}<div class="muted">{{ v7_health.target_profile_read.error }}</div>{% endif %}
+    </details>
+
     {% if v7_health.runtime_path_conflicts %}
       <details class="health-details">
         <summary>Runtime path conflicts</summary>
