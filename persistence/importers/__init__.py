@@ -590,6 +590,10 @@ def import_gear_inventory(conn, source_path: Path, settings_path: Path | None = 
 
     _write_source_file(conn, domain="gear_inventory", path=source_path, record_count=len(rows))
     _write_authority(conn, "gear_inventory", source_path, file_sha256(source_path))
+    conn.execute(
+        "INSERT OR REPLACE INTO app_settings(key, value_json, updated_at) VALUES(?, ?, ?)",
+        ("v7.gear_inventory.envelope", canonical_dumps(payload if isinstance(payload, dict) else {"items": records}), utc_now()),
+    )
 
     if settings_path and settings_path.exists():
         settings = _read_json(settings_path, {})

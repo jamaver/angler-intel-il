@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from persistence.gear_inventory_mirror import mirror_gear_inventory
+from persistence.repositories import JsonGearInventoryRepository, SQLiteGearInventoryRepository, read_domain
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "data"
@@ -40,6 +41,7 @@ TERMINAL_SUBTYPE_LABELS = {
     "jig_head": "Jig Head",
     "leader": "Leader",
 }
+_READ_DIAGNOSTICS: dict[str, Any] = {"selected_source": "compare_json", "effective_source": "json", "comparison_status": "not_run", "fallback_used": False, "error": None}
 
 
 def _path_from_env(name: str, default: Path) -> Path:
@@ -171,6 +173,35 @@ def _read_json(path: Path, default: Any) -> Any:
         return default
 
 
+def _read_source_mode() -> str:
+    requested = _text(os.environ.get("AI_GEAR_INVENTORY_READ_SOURCE", "compare_json")).lower()
+    if requested not in {"json", "sqlite", "sqlite_with_json_fallback", "compare_json"}:
+        requested = "compare_json"
+    if requested in {"sqlite", "sqlite_with_json_fallback"} and os.environ.get("AI_ENABLE_V7_STAGED_READS") != "1":
+        return "compare_json"
+    return requested
+
+
+def get_inventory_read_diagnostics() -> dict[str, Any]:
+    return dict(_READ_DIAGNOSTICS)
+
+
+def _read_inventory_document(path: Path) -> dict[str, Any]:
+    global _READ_DIAGNOSTICS
+    result = read_domain(
+        "gear_inventory",
+        json_repository=JsonGearInventoryRepository(path),
+        sqlite_repository=SQLiteGearInventoryRepository(Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))),
+        source=_read_source_mode(),  # type: ignore[arg-type]
+    )
+    _READ_DIAGNOSTICS = {
+        "selected_source": result.selected_source, "effective_source": result.effective_source,
+        "comparison_status": result.comparison_status, "comparison_differences": list(result.comparison_differences),
+        "fallback_used": result.fallback_used, "timing_ms": dict(result.timing_ms), "error": result.error,
+    }
+    return dict(result.value) if isinstance(result.value, dict) else {}
+
+
 def _load_catches() -> list[dict[str, Any]]:
     data = _read_json(CATCHES_PATH, [])
     return data if isinstance(data, list) else []
@@ -178,7 +209,7 @@ def _load_catches() -> list[dict[str, Any]]:
 
 def load_inventory() -> dict[str, Any]:
     ensure_inventory_file()
-    data = _read_json(inventory_path(), _default_inventory())
+    data = _read_inventory_document(inventory_path())
     if not isinstance(data, dict):
         data = _default_inventory()
     data.setdefault("version", DEFAULT_VERSION)

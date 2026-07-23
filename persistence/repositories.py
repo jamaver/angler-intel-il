@@ -168,3 +168,36 @@ class SQLiteTargetProfileRepository:
         if not isinstance(payload, dict):
             raise ValueError("SQLite target profile payload must be an object")
         return canonicalize(payload)
+
+
+class JsonGearInventoryRepository:
+    domain = "gear_inventory"
+
+    def __init__(self, path: str | Path):
+        self.path = Path(path)
+
+    def read(self) -> dict[str, Any]:
+        if not self.path.exists():
+            raise FileNotFoundError(self.path)
+        payload = json.loads(self.path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError("Gear inventory JSON must be an object")
+        return canonicalize(payload)
+
+
+class SQLiteGearInventoryRepository:
+    domain = "gear_inventory"
+    SETTING_KEY = "v7.gear_inventory.envelope"
+
+    def __init__(self, db_path: str | Path = DEFAULT_DB):
+        self.db_path = Path(db_path)
+
+    def read(self) -> dict[str, Any]:
+        with connect(self.db_path, read_only=True) as conn:
+            row = conn.execute("SELECT value_json FROM app_settings WHERE key = ?", (self.SETTING_KEY,)).fetchone()
+        if row is None:
+            raise LookupError("SQLite gear inventory envelope not found")
+        payload = json.loads(row["value_json"] or "{}")
+        if not isinstance(payload, dict):
+            raise ValueError("SQLite gear inventory envelope must be an object")
+        return canonicalize(payload)

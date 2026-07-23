@@ -1,0 +1,10 @@
+{
+  "version": "v7.2.2-gear-inventory-reads",
+  "previous_version": "v7.2.1-target-profile-reads",
+  "json_authoritative": true,
+  "sqlite_authority_enabled": false,
+  "gear_inventory_compare_mode": true,
+  "production_return_source": "json",
+  "sqlite_fallback_operator_gated": true,
+  "installed_at": "2026-07-23"
+}

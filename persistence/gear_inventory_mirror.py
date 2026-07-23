@@ -16,6 +16,7 @@ from .provenance import file_sha256
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 SPEC_TABLES = ("rod_specs", "reel_specs", "line_specs", "lure_specs", "terminal_tackle_specs")
+INVENTORY_ENVELOPE_KEY = "v7.gear_inventory.envelope"
 
 
 def _utc_now() -> str:
@@ -233,6 +234,10 @@ def _write_inventory(conn: sqlite3.Connection, inventory: dict[str, Any], source
             note=excluded.note, updated_at=excluded.updated_at
         """,
         (source_label, source_hash, now),
+    )
+    conn.execute(
+        "INSERT OR REPLACE INTO app_settings(key, value_json, updated_at) VALUES(?, ?, ?)",
+        (INVENTORY_ENVELOPE_KEY, canonical_dumps(inventory), now),
     )
 
 
