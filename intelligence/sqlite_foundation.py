@@ -404,7 +404,9 @@ def discover_json_files() -> list[Path]:
 
 
 def initialize_and_mirror() -> dict[str, Any]:
-    with connect(read_only=True) as conn:
+    # This command intentionally refreshes the legacy JSON mirror; it is never
+    # used by production read paths.
+    with connect() as conn:
         init_schema(conn)
         files = discover_json_files()
         results = [mirror_json_file(conn, path) for path in files]

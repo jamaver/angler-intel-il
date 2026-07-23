@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import ast
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -63,21 +64,10 @@ if version_path.exists():
 app_version_path = APP_ROOT / "data" / "app_version.json"
 if app_version_path.exists():
     app_version = json.loads(app_version_path.read_text(encoding="utf-8"))
-    if app_version.get("version") not in {
-        "v4.9.2-map-context-custom-waterbodies",
-        "v4.9.3-map-water-intel",
-        "v4.9.4-map-filters-water-list",
-        "v5.0-sqlite-authority-migration",
-        "v5.1-sqlite-waterbody-migration-prep",
-        "v5.2-catch-learning",
-        "v5.3-target-species-profile",
-        "v5.4-map-ranking-prep",
-        "v5.5-realistic-icon-system",
-        "v5.6-waterbody-detail-panels",
-        "v5.7-waterbody-dataset-import-export",
-        "v5.8-structured-backup-restore",
-        "v5.9-modern-ui-refresh",
-    }:
+    version = str(app_version.get("version") or "")
+    match = re.match(r"^v(\d+)\.(\d+)", version)
+    release = (int(match.group(1)), int(match.group(2))) if match else (0, 0)
+    if release < (4, 9):
         errors.append("app_version.json is not aligned to v4.9.2 or later")
 
 app_text = read("app.py")
@@ -124,6 +114,7 @@ if "manual waterbody" not in registry_text.lower() or "append_custom_water_recor
 from app import app as flask_app
 from intelligence.map_data import get_map_data_readiness
 from intelligence.water_registry import CUSTOM_WATERS_PATH
+from persistence.manual_waters_mirror import mirror_manual_waters
 
 readiness = get_map_data_readiness()
 if readiness.get("record_count", 0) < 1:
@@ -166,6 +157,9 @@ try:
                 errors.append("Map data did not report any custom waters after POST")
 finally:
     manual_path.write_text(original_manual, encoding="utf-8")
+    # The route mirrors its temporary JSON write; reconcile after restoring the
+    # fixture so this legacy QC does not intentionally leave V7.1 drift behind.
+    mirror_manual_waters(manual_path, force=True)
 
 if errors:
     print("QC FAILED: v4.9.2 Map Context + Custom Waters")

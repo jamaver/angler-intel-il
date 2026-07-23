@@ -4,6 +4,7 @@ from __future__ import annotations
 import re
 import json
 import sqlite3
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -241,15 +242,17 @@ def mirror_gear_inventory(
     *,
     usage_event: dict[str, Any] | None = None,
     db_path: str | Path = DEFAULT_DB,
+    force: bool = False,
 ) -> MirrorResult:
     """Mirror an already-saved JSON inventory without changing its authority."""
     path = Path(source_path)
     inventory_copy = dict(inventory)
     event_copy = dict(usage_event) if isinstance(usage_event, dict) else None
+    base_operation_id = gear_inventory_operation_id(inventory_copy, event_copy)
     return mirror_after_json_write(
         "gear_inventory",
         lambda conn: _write_inventory(conn, inventory_copy, path, event_copy),
-        operation_id=gear_inventory_operation_id(inventory_copy, event_copy),
+        operation_id=f"{base_operation_id}-reconcile-{uuid.uuid4().hex}" if force else base_operation_id,
         db_path=db_path,
         details={
             "source_path": _source_label(path),

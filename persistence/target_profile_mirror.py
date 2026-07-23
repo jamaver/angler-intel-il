@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import re
 import sqlite3
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -147,14 +148,16 @@ def mirror_target_profile(
     source_path: str | Path,
     *,
     db_path: str | Path = DEFAULT_DB,
+    force: bool = False,
 ) -> MirrorResult:
     """Mirror an already-saved JSON target profile into normalized SQLite."""
     path = Path(source_path)
     profile_copy = dict(profile)
+    base_operation_id = target_profile_operation_id(profile_copy)
     return mirror_after_json_write(
         "target_profile",
         lambda conn: _write_target_profile(conn, profile_copy, path),
-        operation_id=target_profile_operation_id(profile_copy),
+        operation_id=f"{base_operation_id}-reconcile-{uuid.uuid4().hex}" if force else base_operation_id,
         db_path=db_path,
         details={
             "profile_id": PROFILE_ID,

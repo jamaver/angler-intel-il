@@ -7,6 +7,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from persistence.manual_waters_mirror import mirror_manual_waters
+
 APP_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = APP_ROOT / "data"
 BASE_WATERS_PATH = DATA_DIR / "illinois_waters.json"
@@ -376,6 +378,8 @@ def append_custom_water_record(payload: dict[str, Any]) -> dict[str, Any]:
     records.append(record)
     records.sort(key=lambda item: (str(item.get("county") or ""), str(item.get("name") or "")))
     _write_json(CUSTOM_WATERS_PATH, records)
+    # JSON is authoritative. A SQLite failure is deliberately non-fatal here.
+    mirror_manual_waters(CUSTOM_WATERS_PATH)
 
     return record
 
@@ -450,6 +454,8 @@ def import_waterbody_dataset(payload: dict[str, Any], mode: str = "replace") -> 
 
     merged.sort(key=lambda item: (str(item.get("county") or ""), str(item.get("name") or "")))
     _write_json(CUSTOM_WATERS_PATH, merged)
+    # Import writes the same authoritative source and mirrors the complete result.
+    mirror_manual_waters(CUSTOM_WATERS_PATH)
 
     return {
         "ok": True,

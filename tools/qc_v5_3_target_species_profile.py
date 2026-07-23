@@ -61,11 +61,11 @@ if app_version_path.exists():
         "v5.7-waterbody-dataset-import-export",
         "v5.8-structured-backup-restore",
         "v5.9-modern-ui-refresh",
-    }:
+    } and not str(app_version.get("version") or "").startswith(("v6.", "v7.")):
         errors.append("app_version.json is not aligned to v5.3")
 
 app_text = read("app.py")
-if 'APP_VERSION = "v5.3-target-species-profile"' not in app_text and 'APP_VERSION = "v5.4-map-ranking-prep"' not in app_text and 'APP_VERSION = "v5.5-realistic-icon-system"' not in app_text and 'APP_VERSION = "v5.6-waterbody-detail-panels"' not in app_text and 'APP_VERSION = "v5.7-waterbody-dataset-import-export"' not in app_text and 'APP_VERSION = "v5.8-structured-backup-restore"' not in app_text and 'APP_VERSION = "v5.9-modern-ui-refresh"' not in app_text:
+if 'APP_VERSION = "v5.3-target-species-profile"' not in app_text and 'APP_VERSION = "v5.4-map-ranking-prep"' not in app_text and 'APP_VERSION = "v5.5-realistic-icon-system"' not in app_text and 'APP_VERSION = "v5.6-waterbody-detail-panels"' not in app_text and 'APP_VERSION = "v5.7-waterbody-dataset-import-export"' not in app_text and 'APP_VERSION = "v5.8-structured-backup-restore"' not in app_text and 'APP_VERSION = "v5.9-modern-ui-refresh"' not in app_text and 'APP_VERSION = "v6.' not in app_text and 'APP_VERSION = "v7.' not in app_text:
     errors.append("app.py version string is not aligned to v5.3")
 for needle, message in [
     ('@app.route("/api/target-profile"', "app.py missing target profile API"),

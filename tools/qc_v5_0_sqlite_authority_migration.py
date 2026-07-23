@@ -76,7 +76,7 @@ if app_version_path.exists():
         "v5.7-waterbody-dataset-import-export",
         "v5.8-structured-backup-restore",
         "v5.9-modern-ui-refresh",
-    }:
+    } and not str(app_version.get("version") or "").startswith(("v6.", "v7.")):
         errors.append("app_version.json is not aligned to the v5.0/v5.1 migration line")
 
 preflight = collect_preflight()

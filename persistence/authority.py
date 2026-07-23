@@ -8,6 +8,7 @@ V7_AUTHORITY = "json"
 V7_DOMAINS = (
     "species",
     "waters",
+    "manual_waters",
     "target_profile",
     "saved_locations",
     "gear_inventory",
@@ -37,4 +38,3 @@ def default_authority_map() -> dict[str, dict[str, Any]]:
         }
         for domain in V7_DOMAINS
     }
-

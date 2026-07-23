@@ -48,11 +48,11 @@ if marker_path.exists():
             errors.append(f"v5.7 marker must set {key}=true")
 
 app_version = json.loads((APP_ROOT / "data" / "app_version.json").read_text(encoding="utf-8"))
-if not str(app_version.get("version", "")).startswith("v6."):
+if not str(app_version.get("version", "")).startswith(("v6.", "v7.")):
     errors.append("app_version.json is not aligned to the current v6 release line")
 
 app_text = read("app.py")
-if "APP_VERSION = \"v6." not in app_text:
+if "APP_VERSION = \"v6." not in app_text and "APP_VERSION = \"v7." not in app_text:
     errors.append("app.py version string is not aligned to the current v6 release line")
 
 waters_text = read("templates/waters.html")
