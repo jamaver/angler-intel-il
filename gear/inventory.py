@@ -622,6 +622,7 @@ def record_item_usage(
     used_at: str | None = None,
     trips: int = 1,
     catches: int = 0,
+    mirror_usage: bool = True,
 ) -> dict[str, Any] | None:
     item = get_item(item_id)
     if not item:
@@ -638,7 +639,7 @@ def record_item_usage(
             "trips": max(0, int(trips or 0)),
             "catches": max(0, int(catches or 0)),
             "source": "record_item_usage",
-        },
+        } if mirror_usage else None,
     )
 
 

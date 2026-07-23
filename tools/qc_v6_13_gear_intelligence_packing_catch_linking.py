@@ -141,7 +141,13 @@ with tempfile.TemporaryDirectory() as tmpdir:
     os.environ["AI_GEAR_SETTINGS_PATH"] = str(settings_path)
     os.environ["AI_GEAR_CATALOG_CACHE_PATH"] = str(cache_path)
 
+    import app as app_module
     from app import app as flask_app
+
+    # Keep this integration fixture out of the user's JSON-authoritative catch
+    # log. The route retains its production behavior; only this QC path moves.
+    app_module.CATCHES_FILE = tmp / "catches.json"
+    _write_json(app_module.CATCHES_FILE, [])
 
     client = flask_app.test_client()
 
@@ -274,10 +280,12 @@ with tempfile.TemporaryDirectory() as tmpdir:
         "terminal_id": created.get("terminal", {}).get("id", ""),
     }
     catch_res = client.post("/api/catches", json=catch_payload)
+    saved_catch_id = ""
     if catch_res.status_code != 200:
         errors.append(f"Catch save with gear links failed with HTTP {catch_res.status_code}")
     else:
         catch = catch_res.get_json(silent=True) or {}
+        saved_catch_id = str(catch.get("id") or "")
         if not catch.get("gear_summary"):
             errors.append("Catch response should include a gear summary")
         if not catch.get("gear_labels", {}).get("lure"):
@@ -288,7 +296,8 @@ with tempfile.TemporaryDirectory() as tmpdir:
         errors.append(f"/api/catches failed with HTTP {catches_res.status_code}")
     else:
         catches = catches_res.get_json(silent=True) or []
-        if not catches or not catches[0].get("gear_summary"):
+        saved = next((item for item in catches if str(item.get("id") or "") == saved_catch_id), {})
+        if not saved.get("gear_summary"):
             errors.append("Catch log should include enriched gear summary text")
 
     inventory_res = client.get("/api/gear/items")

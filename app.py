@@ -31,6 +31,7 @@ from intelligence.app_health_map_data import get_map_data_health_for_app
 from intelligence.map_data import get_map_data_readiness
 from intelligence.water_registry import append_custom_water_record, load_water_catalog, get_water_record_by_id
 from gear.inventory import get_item as get_gear_item, record_item_usage as record_gear_item_usage
+from persistence.catches_mirror import mirror_catches
 
 app = Flask(__name__)
 
@@ -177,8 +178,10 @@ def load_catches():
     return read_json(CATCHES_FILE, [])
 
 
-def save_catches(catches):
+def save_catches(catches, *, usage_events=None):
     write_json(CATCHES_FILE, catches)
+    # JSON remains authoritative; SQLite failures are non-fatal mirror diagnostics.
+    mirror_catches(CATCHES_FILE, usage_events=usage_events)
 
 
 def _catch_gear_fields(payload):
@@ -1328,12 +1331,16 @@ def api_add_catch():
 
     catches = load_catches()
     catches.append(catch)
-    save_catches(catches)
+    usage_events = [
+        {"catch_id": catch["id"], "gear_item_id": ref, "used_at": catch["timestamp"], "source": "catch_log"}
+        for ref in set(gear_refs.values()) if ref
+    ]
+    save_catches(catches, usage_events=usage_events)
 
     try:
         used_at = catch.get("timestamp")
         for ref in set(gear_refs.values()):
-            record_gear_item_usage(ref, used_at=used_at, trips=1, catches=1)
+            record_gear_item_usage(ref, used_at=used_at, trips=1, catches=1, mirror_usage=False)
     except Exception:
         pass
 

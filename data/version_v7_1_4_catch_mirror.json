@@ -1,0 +1,9 @@
+{
+  "version": "v7.1.4-catch-mirror",
+  "previous_version": "v7.1.3-manual-water-mirror",
+  "json_authoritative": true,
+  "sqlite_authority_enabled": false,
+  "catch_mirror_writes": true,
+  "sqlite_reads_enabled": false,
+  "installed_at": "2026-07-22"
+}
