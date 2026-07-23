@@ -79,6 +79,17 @@
       </ul>
     </details>
 
+    <details class="health-details">
+      <summary>Mirror recovery queue ({{ v7_health.reconciliation_summary.pending_total or 0 }} pending, {{ v7_health.reconciliation_summary.stale_total or 0 }} stale)</summary>
+      <p class="muted">Operator-only reconciliation: <code>./venv/bin/python tools/v7_1_reconcile.py --all --json</code>. JSON remains authoritative.</p>
+      {% if v7_health.reconciliation_summary.pending %}
+        <ul>{% for row in v7_health.reconciliation_summary.pending %}<li><strong>{{ row.domain }}:</strong> {{ row.count }} pending{% if row.oldest_requested_at %}, oldest {{ row.oldest_requested_at }}{% endif %}</li>{% endfor %}</ul>
+      {% else %}<p class="status-good">No pending reconciliation requests.</p>{% endif %}
+      {% if v7_health.reconciliation_summary.stale %}
+        <ul>{% for row in v7_health.reconciliation_summary.stale %}<li class="status-warn"><strong>{{ row.domain }}:</strong> {{ row.count }} stale operation(s)</li>{% endfor %}</ul>
+      {% endif %}
+    </details>
+
     {% if v7_health.runtime_path_conflicts %}
       <details class="health-details">
         <summary>Runtime path conflicts</summary>

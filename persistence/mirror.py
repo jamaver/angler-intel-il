@@ -250,3 +250,43 @@ def get_mirror_status(conn: sqlite3.Connection) -> list[dict[str, Any]]:
     except sqlite3.DatabaseError:
         return []
     return [rows.get(domain, {"domain": domain, "status": "unknown"}) for domain in V7_DOMAINS]
+
+
+def resolve_reconciliation_requests(conn: sqlite3.Connection, domain: str) -> int:
+    """Mark pending recovery work resolved after an exact domain reconcile."""
+    now = utc_now()
+    cursor = conn.execute(
+        """
+        UPDATE mirror_reconciliation_requests
+        SET status = 'resolved', resolved_at = ?
+        WHERE domain = ? AND status = 'pending'
+        """,
+        (now, domain),
+    )
+    return max(0, cursor.rowcount)
+
+
+def get_reconciliation_summary(conn: sqlite3.Connection) -> dict[str, Any]:
+    """Return read-only recovery queue and stale-operation counts for App Health."""
+    try:
+        pending = [dict(row) for row in conn.execute(
+            """SELECT domain, COUNT(*) AS count, MIN(requested_at) AS oldest_requested_at
+               FROM mirror_reconciliation_requests
+               WHERE status = 'pending'
+               GROUP BY domain ORDER BY domain"""
+        )]
+        stale = [dict(row) for row in conn.execute(
+            """SELECT domain, COUNT(*) AS count
+               FROM mirror_operations
+               WHERE status = 'running'
+                 AND started_at < datetime('now', '-15 minutes')
+               GROUP BY domain ORDER BY domain"""
+        )]
+        return {
+            "pending": pending,
+            "pending_total": sum(int(row["count"]) for row in pending),
+            "stale": stale,
+            "stale_total": sum(int(row["count"]) for row in stale),
+        }
+    except sqlite3.DatabaseError:
+        return {"pending": [], "pending_total": 0, "stale": [], "stale_total": 0}

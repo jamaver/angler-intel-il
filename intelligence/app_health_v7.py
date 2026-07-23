@@ -7,7 +7,7 @@ from typing import Any
 
 from persistence.connection import connect
 from persistence.authority import default_authority_map
-from persistence.mirror import get_mirror_status
+from persistence.mirror import get_mirror_status, get_reconciliation_summary
 from persistence.runtime_paths import resolve_runtime_path
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -93,6 +93,7 @@ def get_v7_health_for_app() -> dict[str, Any]:
         "runtime_path_conflicts": _runtime_conflicts(),
         "mirror_status": [],
         "mirror_summary": {},
+        "reconciliation_summary": {"pending": [], "pending_total": 0, "stale": [], "stale_total": 0},
         "warnings": [],
         "errors": [],
     }
@@ -135,6 +136,7 @@ def get_v7_health_for_app() -> dict[str, Any]:
                 payload["validation_drift"] = {}
             payload["mirror_status"] = get_mirror_status(conn)
             payload["mirror_summary"] = _mirror_summary(payload["mirror_status"])
+            payload["reconciliation_summary"] = get_reconciliation_summary(conn)
     except Exception as exc:
         payload["errors"].append(str(exc))
 

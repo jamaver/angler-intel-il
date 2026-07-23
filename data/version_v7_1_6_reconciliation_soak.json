@@ -1,0 +1,10 @@
+{
+  "version": "v7.1.6-reconciliation-soak",
+  "previous_version": "v7.1.5-report-mirror",
+  "json_authoritative": true,
+  "sqlite_authority_enabled": false,
+  "all_domain_reconciliation": true,
+  "app_health_recovery_diagnostics": true,
+  "sqlite_reads_enabled": false,
+  "installed_at": "2026-07-23"
+}
