@@ -232,3 +232,36 @@ class SQLiteWaterCatalogRepository:
         if not isinstance(payload, dict):
             raise ValueError("SQLite water catalog envelope must be an object")
         return canonicalize(payload)
+
+
+class JsonCatchesRepository:
+    domain = "catches"
+
+    def __init__(self, path: str | Path):
+        self.path = Path(path)
+
+    def read(self) -> list[Any]:
+        if not self.path.exists():
+            raise FileNotFoundError(self.path)
+        payload = json.loads(self.path.read_text(encoding="utf-8"))
+        if not isinstance(payload, list):
+            raise ValueError("Catches JSON must be a list")
+        return canonicalize(payload)
+
+
+class SQLiteCatchesRepository:
+    domain = "catches"
+    SETTING_KEY = "v7.catches.envelope"
+
+    def __init__(self, db_path: str | Path = DEFAULT_DB):
+        self.db_path = Path(db_path)
+
+    def read(self) -> list[Any]:
+        with connect(self.db_path, read_only=True) as conn:
+            row = conn.execute("SELECT value_json FROM app_settings WHERE key = ?", (self.SETTING_KEY,)).fetchone()
+        if row is None:
+            raise LookupError("SQLite catches envelope not found")
+        payload = json.loads(row["value_json"] or "[]")
+        if not isinstance(payload, list):
+            raise ValueError("SQLite catches envelope must be a list")
+        return canonicalize(payload)

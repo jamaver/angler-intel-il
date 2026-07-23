@@ -14,6 +14,7 @@ from .provenance import file_sha256
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DOMAIN = "catches"
+CATCHEs_ENVELOPE_KEY = "v7.catches.envelope"
 
 
 def _utc_now() -> str:
@@ -163,6 +164,8 @@ def _write_catches(conn, source_payload: Any, source_path: Path, usage_events: l
                  VALUES('catches', 'json', ?, ?, 'JSON remains authoritative during V7.1 catch mirroring.', ?)
                  ON CONFLICT(domain) DO UPDATE SET authority='json', source_path=excluded.source_path, source_hash=excluded.source_hash,
                  note=excluded.note, updated_at=excluded.updated_at""", (source_label, source_hash, now))
+    conn.execute("INSERT OR REPLACE INTO app_settings(key, value_json, updated_at) VALUES(?, ?, ?)",
+                 (CATCHEs_ENVELOPE_KEY, canonical_dumps(source_payload), now))
 
 
 def mirror_catches(source_path: str | Path, *, usage_events: list[dict[str, Any]] | None = None, db_path: str | Path = DEFAULT_DB, force: bool = False) -> MirrorResult:

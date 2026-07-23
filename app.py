@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, render_template, redirect
 import json
+import os
 from pathlib import Path
 from datetime import datetime, timedelta
 import uuid
@@ -30,6 +31,7 @@ from intelligence.app_health_sqlite_transition import get_sqlite_transition_heal
 from intelligence.app_health_map_data import get_map_data_health_for_app
 from intelligence.map_data import get_map_data_readiness
 from intelligence.water_registry import append_custom_water_record, load_water_catalog, get_water_record_by_id
+from persistence.repositories import JsonCatchesRepository, SQLiteCatchesRepository, read_domain
 from gear.inventory import get_item as get_gear_item, record_item_usage as record_gear_item_usage
 from persistence.catches_mirror import mirror_catches
 
@@ -175,7 +177,19 @@ def save_favorites(favorites):
 
 
 def load_catches():
-    return read_json(CATCHES_FILE, [])
+    ensure_data()
+    source = str(os.environ.get("AI_CATCHES_READ_SOURCE", "compare_json")).strip().lower()
+    if source not in {"json", "sqlite", "sqlite_with_json_fallback", "compare_json"}:
+        source = "compare_json"
+    if source in {"sqlite", "sqlite_with_json_fallback"} and os.environ.get("AI_ENABLE_V7_STAGED_READS") != "1":
+        source = "compare_json"
+    result = read_domain(
+        "catches",
+        json_repository=JsonCatchesRepository(CATCHES_FILE),
+        sqlite_repository=SQLiteCatchesRepository(Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))),
+        source=source,  # type: ignore[arg-type]
+    )
+    return result.value if isinstance(result.value, list) else []
 
 
 def save_catches(catches, *, usage_events=None):

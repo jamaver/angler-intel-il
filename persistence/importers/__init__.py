@@ -660,6 +660,8 @@ def import_catches(conn, source_path: Path) -> list[dict[str, Any]]:
         )
     _write_source_file(conn, domain="catches", path=source_path, record_count=len(rows))
     _write_authority(conn, "catches", source_path, file_sha256(source_path))
+    conn.execute("INSERT OR REPLACE INTO app_settings(key, value_json, updated_at) VALUES(?, ?, ?)",
+                 ("v7.catches.envelope", canonical_dumps(payload), utc_now()))
     conn.commit()
     return rows
 

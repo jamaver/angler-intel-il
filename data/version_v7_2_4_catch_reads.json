@@ -1,0 +1,9 @@
+{
+  "version": "v7.2.4-catch-reads",
+  "previous_version": "v7.2.3-water-catalog-reads",
+  "json_authoritative": true,
+  "sqlite_authority_enabled": false,
+  "catch_compare_mode": true,
+  "production_return_source": "json",
+  "installed_at": "2026-07-23"
+}
