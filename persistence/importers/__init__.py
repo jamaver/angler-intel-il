@@ -660,7 +660,7 @@ def import_catches(conn, source_path: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def import_reports(conn, reports_index_path: Path, reports_dir: Path | None = None) -> list[dict[str, Any]]:
+def import_reports(conn, reports_index_path: Path, reports_dir: Path | None = None, *, commit: bool = True) -> list[dict[str, Any]]:
     payload = _read_json(reports_index_path, [])
     records = _source_items(payload)
     rows: list[dict[str, Any]] = []
@@ -837,7 +837,8 @@ def import_reports(conn, reports_index_path: Path, reports_dir: Path | None = No
         _write_authority(conn, "reports", reports_index_path, file_sha256(reports_index_path))
         for path in sorted(reports_dir.glob("*.html")):
             _write_source_file(conn, domain="reports_html", path=path, record_count=1, generated_only=True, source_of_truth="generated")
-    conn.commit()
+    if commit:
+        conn.commit()
     return rows
 
 

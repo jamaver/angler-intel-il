@@ -10,6 +10,7 @@ from typing import Any
 from urllib.parse import urlencode
 
 from flask import jsonify, render_template, request, send_file
+from persistence.reports_mirror import mirror_reports
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -63,6 +64,8 @@ def _index() -> list[dict[str, Any]]:
 def _save_index(items: list[dict[str, Any]]) -> None:
     items = sorted(items, key=lambda x: x.get("created", ""), reverse=True)
     _write_json(INDEX_PATH, items)
+    # JSON report files/index remain authoritative; mirror errors are non-fatal.
+    mirror_reports(INDEX_PATH, REPORTS_DIR)
 
 
 def _delete_report_assets(report_id: str) -> dict[str, Any]:
