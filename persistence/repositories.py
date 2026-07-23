@@ -201,3 +201,34 @@ class SQLiteGearInventoryRepository:
         if not isinstance(payload, dict):
             raise ValueError("SQLite gear inventory envelope must be an object")
         return canonicalize(payload)
+
+
+class JsonWaterCatalogRepository:
+    domain = "waters"
+
+    def __init__(self, loader: Callable[[], dict[str, Any]]):
+        self.loader = loader
+
+    def read(self) -> dict[str, Any]:
+        payload = self.loader()
+        if not isinstance(payload, dict):
+            raise ValueError("Water catalog loader must return an object")
+        return canonicalize(payload)
+
+
+class SQLiteWaterCatalogRepository:
+    domain = "waters"
+    SETTING_KEY = "v7.water_catalog.envelope"
+
+    def __init__(self, db_path: str | Path = DEFAULT_DB):
+        self.db_path = Path(db_path)
+
+    def read(self) -> dict[str, Any]:
+        with connect(self.db_path, read_only=True) as conn:
+            row = conn.execute("SELECT value_json FROM app_settings WHERE key = ?", (self.SETTING_KEY,)).fetchone()
+        if row is None:
+            raise LookupError("SQLite water catalog envelope not found")
+        payload = json.loads(row["value_json"] or "{}")
+        if not isinstance(payload, dict):
+            raise ValueError("SQLite water catalog envelope must be an object")
+        return canonicalize(payload)

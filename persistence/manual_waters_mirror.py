@@ -15,6 +15,7 @@ from .provenance import file_sha256
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DOMAIN = "manual_waters"
+CATALOG_ENVELOPE_KEY = "v7.water_catalog.envelope"
 
 
 def _utc_now() -> str:
@@ -240,6 +241,14 @@ def _write_manual_waters(conn: sqlite3.Connection, source_payload: Any, source_p
             note=excluded.note, updated_at=excluded.updated_at
         """,
         (DOMAIN, source_label, source_hash, now),
+    )
+    # Keep the exact JSON-derived map projection for V7.2 comparison reads.
+    # This is a mirror snapshot only; the registry remains JSON-authoritative.
+    from intelligence.water_registry import _load_water_catalog_json
+    catalog = _load_water_catalog_json(include_custom=True)
+    conn.execute(
+        "INSERT OR REPLACE INTO app_settings(key, value_json, updated_at) VALUES(?, ?, ?)",
+        (CATALOG_ENVELOPE_KEY, canonical_dumps(catalog), now),
     )
 
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import uuid
 from datetime import datetime
@@ -8,12 +9,14 @@ from pathlib import Path
 from typing import Any
 
 from persistence.manual_waters_mirror import mirror_manual_waters
+from persistence.repositories import JsonWaterCatalogRepository, SQLiteWaterCatalogRepository, read_domain
 
 APP_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = APP_ROOT / "data"
 BASE_WATERS_PATH = DATA_DIR / "illinois_waters.json"
 CUSTOM_WATERS_PATH = DATA_DIR / "manual_waters.json"
 SPECIES_PATH = DATA_DIR / "species_profiles_v43.json"
+_READ_DIAGNOSTICS: dict[str, Any] = {"selected_source": "compare_json", "effective_source": "json", "comparison_status": "not_run", "fallback_used": False, "error": None}
 
 
 def _read_json(path: Path, default: Any) -> Any:
@@ -241,7 +244,7 @@ def _merge_water_records(
     return records, missing_coords, missing_species_ids, unknown_species_ids
 
 
-def load_water_catalog(include_custom: bool = True) -> dict[str, Any]:
+def _load_water_catalog_json(include_custom: bool = True) -> dict[str, Any]:
     warnings: list[str] = []
 
     base_raw = _raw_water_list(BASE_WATERS_PATH)
@@ -293,6 +296,39 @@ def load_water_catalog(include_custom: bool = True) -> dict[str, Any]:
         "unknown_species_ids": unknown_species_ids[:25],
         "warnings": warnings,
     }
+
+
+def _read_source_mode() -> str:
+    requested = str(os.environ.get("AI_WATER_CATALOG_READ_SOURCE", "compare_json")).strip().lower()
+    if requested not in {"json", "sqlite", "sqlite_with_json_fallback", "compare_json"}:
+        requested = "compare_json"
+    if requested in {"sqlite", "sqlite_with_json_fallback"} and os.environ.get("AI_ENABLE_V7_STAGED_READS") != "1":
+        return "compare_json"
+    return requested
+
+
+def get_water_catalog_read_diagnostics() -> dict[str, Any]:
+    return dict(_READ_DIAGNOSTICS)
+
+
+def load_water_catalog(include_custom: bool = True) -> dict[str, Any]:
+    global _READ_DIAGNOSTICS
+    # A base-only view is not yet a staged read domain. The combined map
+    # catalog is the production surface and remains JSON-returning here.
+    if not include_custom:
+        return _load_water_catalog_json(include_custom=False)
+    result = read_domain(
+        "waters",
+        json_repository=JsonWaterCatalogRepository(lambda: _load_water_catalog_json(include_custom=True)),
+        sqlite_repository=SQLiteWaterCatalogRepository(Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))),
+        source=_read_source_mode(),  # type: ignore[arg-type]
+    )
+    _READ_DIAGNOSTICS = {
+        "selected_source": result.selected_source, "effective_source": result.effective_source,
+        "comparison_status": result.comparison_status, "comparison_differences": list(result.comparison_differences),
+        "fallback_used": result.fallback_used, "timing_ms": dict(result.timing_ms), "error": result.error,
+    }
+    return dict(result.value) if isinstance(result.value, dict) else _load_water_catalog_json(include_custom=True)
 
 
 def load_water_records(include_custom: bool = True) -> list[dict[str, Any]]:
