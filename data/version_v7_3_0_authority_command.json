@@ -1,0 +1,9 @@
+{
+  "version": "v7.3.0-authority-command",
+  "previous_version": "v7.2.5-report-reads",
+  "json_authoritative": true,
+  "sqlite_authority_enabled": false,
+  "operator_only_transition_preflight": true,
+  "authority_change_implemented": false,
+  "installed_at": "2026-07-27"
+}
