@@ -1,0 +1,9 @@
+{
+  "version": "v7.2.6-recommendation-history-reads",
+  "previous_version": "v7.3.0-authority-command",
+  "json_authoritative": true,
+  "sqlite_authority_enabled": false,
+  "recommendation_history_compare": true,
+  "live_intelligence_unchanged": true,
+  "installed_at": "2026-07-27"
+}
