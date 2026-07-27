@@ -265,3 +265,40 @@ class SQLiteCatchesRepository:
         if not isinstance(payload, list):
             raise ValueError("SQLite catches envelope must be a list")
         return canonicalize(payload)
+
+
+class JsonReportsIndexRepository:
+    domain = "reports"
+
+    def __init__(self, path: str | Path):
+        self.path = Path(path)
+
+    def read(self) -> list[Any]:
+        if not self.path.exists():
+            return []
+        payload = json.loads(self.path.read_text(encoding="utf-8"))
+        if isinstance(payload, dict):
+            payload = payload.get("reports", [])
+        if not isinstance(payload, list):
+            raise ValueError("Reports index must be a list or object with reports list")
+        return canonicalize(payload)
+
+
+class SQLiteReportsIndexRepository:
+    domain = "reports"
+    SETTING_KEY = "v7.reports_index.envelope"
+
+    def __init__(self, db_path: str | Path = DEFAULT_DB):
+        self.db_path = Path(db_path)
+
+    def read(self) -> list[Any]:
+        with connect(self.db_path, read_only=True) as conn:
+            row = conn.execute("SELECT value_json FROM app_settings WHERE key = ?", (self.SETTING_KEY,)).fetchone()
+        if row is None:
+            raise LookupError("SQLite reports index envelope not found")
+        payload = json.loads(row["value_json"] or "[]")
+        if isinstance(payload, dict):
+            payload = payload.get("reports", [])
+        if not isinstance(payload, list):
+            raise ValueError("SQLite reports index envelope must be a list or object with reports list")
+        return canonicalize(payload)

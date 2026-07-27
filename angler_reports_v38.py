@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html
 import json
+import os
 import re
 import uuid
 from datetime import datetime
@@ -11,6 +12,7 @@ from urllib.parse import urlencode
 
 from flask import jsonify, render_template, request, send_file
 from persistence.reports_mirror import mirror_reports
+from persistence.repositories import JsonReportsIndexRepository, SQLiteReportsIndexRepository, read_domain
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -53,12 +55,18 @@ def _write_json(path: Path, data: Any) -> None:
 
 
 def _index() -> list[dict[str, Any]]:
-    data = _read_json(INDEX_PATH, [])
-    if isinstance(data, list):
-        return data
-    if isinstance(data, dict) and isinstance(data.get("reports"), list):
-        return data["reports"]
-    return []
+    source = str(os.environ.get("AI_REPORTS_READ_SOURCE", "compare_json")).strip().lower()
+    if source not in {"json", "sqlite", "sqlite_with_json_fallback", "compare_json"}:
+        source = "compare_json"
+    if source in {"sqlite", "sqlite_with_json_fallback"} and os.environ.get("AI_ENABLE_V7_STAGED_READS") != "1":
+        source = "compare_json"
+    result = read_domain(
+        "reports",
+        json_repository=JsonReportsIndexRepository(INDEX_PATH),
+        sqlite_repository=SQLiteReportsIndexRepository(Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))),
+        source=source,  # type: ignore[arg-type]
+    )
+    return [item for item in (result.value or []) if isinstance(item, dict)]
 
 
 def _save_index(items: list[dict[str, Any]]) -> None:

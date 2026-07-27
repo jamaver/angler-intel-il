@@ -838,6 +838,8 @@ def import_reports(conn, reports_index_path: Path, reports_dir: Path | None = No
     _upsert_many(conn, "trip_reports", rows, ("id",))
     _write_source_file(conn, domain="reports_index", path=reports_index_path, record_count=len(rows))
     _write_authority(conn, "reports_index", reports_index_path, file_sha256(reports_index_path))
+    conn.execute("INSERT OR REPLACE INTO app_settings(key, value_json, updated_at) VALUES(?, ?, ?)",
+                 ("v7.reports_index.envelope", canonical_dumps(payload), utc_now()))
     if reports_dir and reports_dir.exists():
         _write_source_file(conn, domain="reports", path=reports_dir, record_count=len(list(reports_dir.glob("*.json"))), generated_only=True, source_of_truth="generated")
         _write_authority(conn, "reports", reports_index_path, file_sha256(reports_index_path))
