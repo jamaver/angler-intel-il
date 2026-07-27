@@ -51,6 +51,16 @@ def preflight(domain: str, backup_manifest: Path, db: Path, source_root: Path, r
     validation = validate_database(db, source_root=source_root, reports_root=reports_root) if db.exists() else {"ok": False, "totals": {}}
     if not validation.get("ok"):
         errors.append("Canonical JSON/SQLite drift validation did not pass.")
+    # `ok` covers record parity and SQLite integrity.  A warning status still
+    # represents unresolved/invalid/orphan references that need an explicit
+    # operator decision before a future authority transition.  Never present
+    # that state as transition-ready merely because all source rows mirrored.
+    if validation.get("status") != "ok":
+        errors.append("Validation contains unresolved warning entries; remediate or explicitly classify them before transition.")
+    legacy_reference_warnings = [
+        diff for diff in validation.get("diffs", [])
+        if isinstance(diff, dict) and diff.get("status") in {"unmapped_reference", "orphan_reference", "invalid_source"}
+    ]
     return {
         "domain": domain,
         "backup_manifest": str(backup_manifest),
@@ -59,7 +69,10 @@ def preflight(domain: str, backup_manifest: Path, db: Path, source_root: Path, r
         "integrity_check": integrity,
         "foreign_key_check": foreign_keys,
         "validation_ok": bool(validation.get("ok")),
+        "validation_status": validation.get("status"),
         "validation_totals": validation.get("totals", {}),
+        "legacy_reference_warning_count": len(legacy_reference_warnings),
+        "legacy_reference_warning_domains": sorted({str(item.get("domain")) for item in legacy_reference_warnings}),
         "ready": not errors,
         "errors": errors,
         "sqlite_authority_enabled": False,

@@ -87,7 +87,10 @@ def _write_catches(conn, source_payload: Any, source_path: Path, usage_events: l
         mappings.append((key, catch_id, raw, "mapped", None))
 
     catch_ids = [str(item["id"]) for item in valid]
-    existing = [row[0] for row in conn.execute("SELECT id FROM catches WHERE source_path = ?", (source_label,))]
+    # The catch log is one complete authoritative JSON document.  A prior
+    # fixture/import may have used a temporary source path, but those rows are
+    # still stale mirror data and must not survive a real reconciliation.
+    existing = [row[0] for row in conn.execute("SELECT id FROM catches")]
     cleanup_ids = sorted(set(existing).union(catch_ids))
     if cleanup_ids:
         placeholders = ", ".join("?" for _ in cleanup_ids)
@@ -95,9 +98,9 @@ def _write_catches(conn, source_payload: Any, source_path: Path, usage_events: l
     if existing:
         if catch_ids:
             placeholders = ", ".join("?" for _ in catch_ids)
-            conn.execute(f"DELETE FROM catches WHERE source_path = ? AND id NOT IN ({placeholders})", (source_label, *catch_ids))
+            conn.execute(f"DELETE FROM catches WHERE id NOT IN ({placeholders})", tuple(catch_ids))
         else:
-            conn.execute("DELETE FROM catches WHERE source_path = ?", (source_label,))
+            conn.execute("DELETE FROM catches")
     if catch_ids:
         placeholders = ", ".join("?" for _ in catch_ids)
         conn.execute(f"DELETE FROM gear_usage WHERE catch_id IS NOT NULL AND catch_id NOT IN ({placeholders})", tuple(catch_ids))

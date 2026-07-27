@@ -147,6 +147,12 @@ def _compare_records(domain: str, source_rows: list[dict[str, Any]], sqlite_rows
     source_keys: dict[str, int] = {}
     for item in source_rows:
         key = _text(item.get("id"), "")
+        # Legacy favorites are intentionally small location records and predate
+        # stable IDs.  Their normalized SQLite ID is derived from name/ZIP, so
+        # validate them using the same deterministic key without altering the
+        # authoritative JSON payload.
+        if not key and domain == "favorites":
+            key = _slug(item.get("name") or item.get("zip"), "location")
         if not key:
             counts["invalid_source"] += 1
             diffs.append({"domain": domain, "status": "invalid_source", "record_key": "", "detail": "missing id"})
