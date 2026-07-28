@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -52,6 +53,19 @@ def main() -> int:
             _validate_links(conn, diffs, totals, reports_root=Path(temp_dir) / "reports", source_root=Path(temp_dir) / "data")
             check(totals["unmapped_reference"] == 0, "reviewed decisions must suppress only their exact unresolved references")
             check(conn.execute("SELECT authority FROM data_authority WHERE domain = 'catches'").fetchone()[0] == "json", "QC must retain JSON authority")
+    with tempfile.TemporaryDirectory(prefix="angler-v7-legacy-cli-qc-") as temp_dir:
+        root = Path(temp_dir); db = root / "cli.sqlite3"
+        with connect(db) as conn:
+            migrate(conn, db_path=str(db))
+            payload = {"id": "catch-cli", "waterbody": "Old Pond", "gear_refs": {}}
+            conn.execute("INSERT INTO catches(id, waterbody, gear_refs_json, gear_labels_json, legacy_payload_json) VALUES(?, ?, '{}', '{}', ?)", ("catch-cli", "Old Pond", json.dumps(payload)))
+        tool = ROOT / "tools" / "v7_3_legacy_references.py"
+        blocked = subprocess.run([sys.executable, str(tool), "accept-all", "--db", str(db), "--note", "QC", "--operator", "qc"], capture_output=True, text=True)
+        check(blocked.returncode != 0, "bulk preserve must require explicit confirmation")
+        accepted = subprocess.run([sys.executable, str(tool), "accept-all", "--db", str(db), "--confirm-preserve-historical", "--note", "QC preserve", "--operator", "qc", "--json"], capture_output=True, text=True)
+        check(accepted.returncode == 0, accepted.stderr)
+        result = json.loads(accepted.stdout)
+        check(result["accepted_count"] == 1 and result["remaining"] == 0, "bulk preserve did not clear only reviewed fixture references")
     print("PASS: V7.3 legacy reference decisions QC")
     return 0
 
