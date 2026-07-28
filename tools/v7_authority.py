@@ -122,7 +122,7 @@ def main() -> int:
                 result["sqlite_authority_enabled"] = True
                 result["exported_record"] = exported
             except Exception as exc:
-                result["errors"].append(f"Target profile transition failed: {exc}")
+                result["errors"].append(f"{args.domain} transition failed: {exc}")
         result["ready"] = not result["errors"]
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0 if result.get("ready") and args.action == "preflight" else 2

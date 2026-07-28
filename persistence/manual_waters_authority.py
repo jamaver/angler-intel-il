@@ -71,7 +71,15 @@ def _write_sqlite_first(payload: Any, db_path: str | Path, json_path: Path) -> A
 
 
 def activate_manual_waters_authority(db_path: str | Path, json_path: str | Path) -> Any:
-    return _write_sqlite_first(_payload_from_database(db_path), db_path, Path(json_path))
+    path = Path(json_path)
+    try:
+        payload = _payload_from_database(db_path)
+    except ValueError:
+        # Older V7.1 mirrors did not retain a standalone custom-water envelope.
+        # At activation time JSON is still authoritative, so it is the only
+        # safe compatibility source for seeding that envelope.
+        payload = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+    return _write_sqlite_first(payload, db_path, path)
 
 
 def save_manual_waters_sqlite_authoritative(payload: Any, db_path: str | Path, json_path: str | Path) -> Any:
