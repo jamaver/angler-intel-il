@@ -9,6 +9,7 @@ from typing import Any
 
 from intelligence.species import SPECIES
 from persistence.target_profile_mirror import mirror_target_profile
+from persistence.target_profile_authority import is_target_profile_sqlite_authoritative, save_target_profile_sqlite_authoritative
 from persistence.repositories import (
     JsonTargetProfileRepository,
     SQLiteTargetProfileRepository,
@@ -43,6 +44,8 @@ def _read_source_mode() -> str:
     Comparison mode returns JSON and is the safe default. A real SQLite read
     requires an explicit operator environment flag; no web UI can enable it.
     """
+    if is_target_profile_sqlite_authoritative(DATA_DIR / "angler_intel.sqlite3"):
+        return "sqlite"
     requested = str(os.environ.get("AI_TARGET_PROFILE_READ_SOURCE", "compare_json")).strip().lower()
     if requested not in {"json", "sqlite", "sqlite_with_json_fallback", "compare_json"}:
         requested = "compare_json"
@@ -166,6 +169,8 @@ def save_target_profile(payload: dict[str, Any]) -> dict[str, Any]:
         profile["favorite_species"] = [item for item in profile["favorite_species"] if item != name]
 
     profile["updated_at"] = datetime.now().astimezone().isoformat(timespec="seconds")
+    if is_target_profile_sqlite_authoritative(DATA_DIR / "angler_intel.sqlite3"):
+        return save_target_profile_sqlite_authoritative(profile, DATA_DIR / "angler_intel.sqlite3", TARGET_PROFILE_PATH)
     _write_json(TARGET_PROFILE_PATH, profile)
     # JSON is authoritative. Mirror failure is intentionally non-fatal and is
     # recorded by the V7.1 diagnostics framework for later reconciliation.

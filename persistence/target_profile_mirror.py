@@ -46,6 +46,13 @@ def _favorite_species(profile: dict[str, Any]) -> list[str]:
 
 def _write_target_profile(conn: sqlite3.Connection, profile: dict[str, Any], source_path: Path) -> None:
     """Reconcile one complete profile without writing its JSON source."""
+    authority_row = conn.execute(
+        "SELECT authority FROM data_authority WHERE domain = 'target_profile'"
+    ).fetchone()
+    if authority_row and authority_row["authority"] == "sqlite":
+        raise RuntimeError(
+            "target_profile is SQLite-authoritative; JSON-to-SQLite mirroring is disabled."
+        )
     source_hash = file_sha256(source_path)
     source_label = _source_label(source_path)
     updated_at = str(profile.get("updated_at") or _utc_now())

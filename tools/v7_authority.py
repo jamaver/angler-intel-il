@@ -18,8 +18,11 @@ if str(ROOT) not in sys.path:
 
 from persistence.connection import connect
 from persistence.validation import validate_database
+from persistence.migrations import migrate
+from persistence.target_profile_authority import activate_target_profile_authority
 
 DOMAINS = ("target_profile", "gear_inventory", "manual_waters", "catches", "reports", "recommendations")
+REGISTERED_TRANSITIONS = {"target_profile"}
 
 
 def preflight(domain: str, backup_manifest: Path, db: Path, source_root: Path, reports_root: Path) -> dict[str, object]:
@@ -96,9 +99,19 @@ def main() -> int:
             result["errors"].append("--confirm-domain must exactly match --domain.")
         if not args.execute:
             result["errors"].append("Transition is dry-run only until --execute is supplied.")
-        # No V7.3.x domain writer contract is registered by V7.3.0.
-        result["errors"].append("No authority-changing domain is registered in V7.3.0; authority remains JSON.")
-        result["ready"] = False
+        if args.domain not in REGISTERED_TRANSITIONS:
+            result["errors"].append("No authority-changing contract is registered for this domain; authority remains JSON.")
+        elif result["ready"] and args.confirm_domain == args.domain and args.execute:
+            try:
+                with connect(Path(args.db)) as conn:
+                    migrate(conn, db_path=str(args.db))
+                profile = activate_target_profile_authority(Path(args.db), Path(args.source_root) / "target_profile.json")
+                result["transitioned"] = True
+                result["authority_after"] = "sqlite"
+                result["exported_profile"] = profile
+            except Exception as exc:
+                result["errors"].append(f"Target profile transition failed: {exc}")
+        result["ready"] = not result["errors"]
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0 if result.get("ready") and args.action == "preflight" else 2
 

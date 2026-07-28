@@ -17,7 +17,10 @@ def main() -> int:
         assert result.returncode in (0, 2)
         transition_cmd = [sys.executable, str(ROOT / "tools" / "v7_authority.py"), "transition", "--domain", "target_profile", "--backup-manifest", str(manifest), "--db", str(db), "--source-root", str(source), "--reports-root", str(reports), "--confirm-domain", "target_profile", "--execute"]
         transition = subprocess.run(transition_cmd, capture_output=True, text=True)
-        assert transition.returncode == 2 and "authority remains JSON" in transition.stdout
+        payload = json.loads(transition.stdout)
+        assert transition.returncode == 2 and not payload.get("transitioned")
+        with connect(db, read_only=True) as conn:
+            assert conn.execute("SELECT authority FROM data_authority WHERE domain='target_profile'").fetchone()[0] == "json"
     print("PASS: V7.3.0 authority command QC")
     return 0
 if __name__ == "__main__": raise SystemExit(main())
