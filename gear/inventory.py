@@ -12,6 +12,7 @@ from persistence.gear_inventory_authority import (
     is_gear_inventory_sqlite_authoritative,
     save_gear_inventory_sqlite_authoritative,
 )
+from persistence.authority_resolution import require_write_authority, resolve_authority
 from persistence.repositories import JsonGearInventoryRepository, SQLiteGearInventoryRepository, read_domain
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -182,8 +183,11 @@ def _read_json(path: Path, default: Any) -> Any:
 
 
 def _read_source_mode() -> str:
-    if is_gear_inventory_sqlite_authoritative(_database_path()):
+    resolution = resolve_authority("gear_inventory", _database_path())
+    if resolution.effective_authority == "sqlite":
         return "sqlite"
+    if resolution.effective_authority in {"sqlite_unavailable", "conflict"}:
+        return "sqlite_with_json_fallback"
     requested = _text(os.environ.get("AI_GEAR_INVENTORY_READ_SOURCE", "compare_json")).lower()
     if requested not in {"json", "sqlite", "sqlite_with_json_fallback", "compare_json"}:
         requested = "compare_json"
@@ -240,7 +244,8 @@ def save_inventory(data: dict[str, Any], *, usage_event: dict[str, Any] | None =
     payload["catalog_cache"] = payload.get("catalog_cache") if isinstance(payload.get("catalog_cache"), list) else []
     path = inventory_path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    if is_gear_inventory_sqlite_authoritative(_database_path()):
+    authority = require_write_authority("gear_inventory", _database_path())
+    if authority == "sqlite":
         save_gear_inventory_sqlite_authoritative(payload, _database_path(), path, usage_event=usage_event)
         return
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")

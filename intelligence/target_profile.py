@@ -10,6 +10,7 @@ from typing import Any
 from intelligence.species import SPECIES
 from persistence.target_profile_mirror import mirror_target_profile
 from persistence.target_profile_authority import is_target_profile_sqlite_authoritative, save_target_profile_sqlite_authoritative
+from persistence.authority_resolution import require_write_authority, resolve_authority
 from persistence.repositories import (
     JsonTargetProfileRepository,
     SQLiteTargetProfileRepository,
@@ -49,8 +50,11 @@ def _read_source_mode() -> str:
     Comparison mode returns JSON and is the safe default. A real SQLite read
     requires an explicit operator environment flag; no web UI can enable it.
     """
-    if is_target_profile_sqlite_authoritative(_database_path()):
+    resolution = resolve_authority("target_profile", _database_path())
+    if resolution.effective_authority == "sqlite":
         return "sqlite"
+    if resolution.effective_authority in {"sqlite_unavailable", "conflict"}:
+        return "sqlite_with_json_fallback"
     requested = str(os.environ.get("AI_TARGET_PROFILE_READ_SOURCE", "compare_json")).strip().lower()
     if requested not in {"json", "sqlite", "sqlite_with_json_fallback", "compare_json"}:
         requested = "compare_json"
@@ -174,7 +178,8 @@ def save_target_profile(payload: dict[str, Any]) -> dict[str, Any]:
         profile["favorite_species"] = [item for item in profile["favorite_species"] if item != name]
 
     profile["updated_at"] = datetime.now().astimezone().isoformat(timespec="seconds")
-    if is_target_profile_sqlite_authoritative(_database_path()):
+    authority = require_write_authority("target_profile", _database_path())
+    if authority == "sqlite":
         return save_target_profile_sqlite_authoritative(profile, _database_path(), TARGET_PROFILE_PATH)
     _write_json(TARGET_PROFILE_PATH, profile)
     # JSON is authoritative. Mirror failure is intentionally non-fatal and is

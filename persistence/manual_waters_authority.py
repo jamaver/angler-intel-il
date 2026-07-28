@@ -63,7 +63,7 @@ def _write_sqlite_first(payload: Any, db_path: str | Path, json_path: Path) -> A
         with connect(db_path) as conn:
             with conn:
                 _set_export_status(conn, "failed", error=str(exc))
-        raise
+        return payload
     with connect(db_path) as conn:
         with conn:
             _set_export_status(conn, "ok")

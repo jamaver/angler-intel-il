@@ -77,7 +77,7 @@ def _write_sqlite_first(
         with connect(db_path) as conn:
             with conn:
                 _set_export_status(conn, "failed", error=str(exc))
-        raise
+        return payload
     with connect(db_path) as conn:
         with conn:
             _set_export_status(conn, "ok")

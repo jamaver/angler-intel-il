@@ -157,7 +157,10 @@ def save_target_profile_sqlite_authoritative(profile: dict[str, Any], db_path: s
         with connect(db_path) as conn:
             with conn:
                 _set_export_status(conn, "failed", error=str(exc))
-        raise
+        # The authoritative SQLite transaction already committed.  Keep the
+        # compatibility-export failure visible for repair without reporting
+        # the profile save itself as failed.
+        return profile
     with connect(db_path) as conn:
         with conn:
             _set_export_status(conn, "ok")

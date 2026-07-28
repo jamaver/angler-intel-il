@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import json
+from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from persistence.connection import connect
 from persistence.authority import default_authority_map
+from persistence.authority import V7_DOMAINS
+from persistence.authority_manifest import manifest_path, read_manifest
+from persistence.authority_resolution import resolve_authority
 from persistence.mirror import get_mirror_status, get_reconciliation_summary
 from persistence.runtime_paths import resolve_runtime_path
 from persistence.legacy_references import decision_summary, unresolved_references
@@ -112,7 +116,14 @@ def get_v7_health_for_app() -> dict[str, Any]:
         "target_profile_read": get_target_profile_read_diagnostics(),
         "warnings": [],
         "errors": [],
+        "authority_manifest": {"path": str(manifest_path()), "error": None, "domains": {}},
+        "authority_resolutions": [],
+        "compatibility_exports": {},
     }
+
+    manifest, manifest_error = read_manifest()
+    payload["authority_manifest"] = {"path": str(manifest_path()), "error": manifest_error, "domains": (manifest or {}).get("domains", {})}
+    payload["authority_resolutions"] = [asdict(resolve_authority(domain, db_path)) for domain in V7_DOMAINS]
 
     if not db_path.exists():
         payload["warnings"].append("SQLite database not available yet.")
@@ -155,6 +166,13 @@ def get_v7_health_for_app() -> dict[str, Any]:
             payload["mirror_summary"] = _mirror_summary(payload["mirror_status"])
             payload["reconciliation_summary"] = get_reconciliation_summary(conn)
             payload["legacy_reference_summary"] = _legacy_reference_summary(conn)
+            for domain in ("target_profile", "gear_inventory", "manual_waters", "catches"):
+                row = conn.execute("SELECT value_json FROM app_settings WHERE key = ?", (f"v7.{domain}.compatibility_export",)).fetchone()
+                if row:
+                    try:
+                        payload["compatibility_exports"][domain] = json.loads(row["value_json"] or "{}")
+                    except Exception:
+                        payload["compatibility_exports"][domain] = {"status": "invalid"}
     except Exception as exc:
         payload["errors"].append(str(exc))
 

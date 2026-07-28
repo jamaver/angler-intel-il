@@ -13,6 +13,7 @@ from persistence.manual_waters_authority import (
     is_manual_waters_sqlite_authoritative,
     save_manual_waters_sqlite_authoritative,
 )
+from persistence.authority_resolution import require_write_authority, resolve_authority
 from persistence.repositories import JsonWaterCatalogRepository, SQLiteWaterCatalogRepository, read_domain
 
 APP_ROOT = Path(__file__).resolve().parents[1]
@@ -307,6 +308,9 @@ def _load_water_catalog_json(include_custom: bool = True) -> dict[str, Any]:
 
 
 def _read_source_mode() -> str:
+    resolution = resolve_authority("manual_waters", _database_path())
+    if resolution.effective_authority in {"sqlite", "sqlite_unavailable", "conflict"}:
+        return "sqlite_with_json_fallback"
     requested = str(os.environ.get("AI_WATER_CATALOG_READ_SOURCE", "compare_json")).strip().lower()
     if requested not in {"json", "sqlite", "sqlite_with_json_fallback", "compare_json"}:
         requested = "compare_json"
@@ -428,7 +432,8 @@ def append_custom_water_record(payload: dict[str, Any]) -> dict[str, Any]:
     records = [item for item in records if str(item.get("id") or "").strip() != record["id"]]
     records.append(record)
     records.sort(key=lambda item: (str(item.get("county") or ""), str(item.get("name") or "")))
-    if is_manual_waters_sqlite_authoritative(_database_path()):
+    authority = require_write_authority("manual_waters", _database_path())
+    if authority == "sqlite":
         save_manual_waters_sqlite_authoritative(records, _database_path(), CUSTOM_WATERS_PATH)
     else:
         _write_json(CUSTOM_WATERS_PATH, records)
@@ -507,7 +512,8 @@ def import_waterbody_dataset(payload: dict[str, Any], mode: str = "replace") -> 
         merged = list(merged_by_id.values())
 
     merged.sort(key=lambda item: (str(item.get("county") or ""), str(item.get("name") or "")))
-    if is_manual_waters_sqlite_authoritative(_database_path()):
+    authority = require_write_authority("manual_waters", _database_path())
+    if authority == "sqlite":
         save_manual_waters_sqlite_authoritative(merged, _database_path(), CUSTOM_WATERS_PATH)
     else:
         _write_json(CUSTOM_WATERS_PATH, merged)

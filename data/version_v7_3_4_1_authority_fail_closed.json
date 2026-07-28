@@ -1,0 +1,9 @@
+{
+  "version": "v7.3.4.1-authority-fail-closed",
+  "previous_version": "v7.3.4-catches-authority",
+  "authority_manifest": true,
+  "fail_closed_writes": true,
+  "sqlite_authoritative_domains": ["target_profile", "gear_inventory", "manual_waters", "catches"],
+  "reports_authority": "json",
+  "recommendations_authority": "json"
+}

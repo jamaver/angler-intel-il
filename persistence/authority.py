@@ -18,6 +18,7 @@ V7_DOMAINS = (
     "favorites",
     "reports",
     "reports_index",
+    "recommendations",
     "forecast",
     "intelligence",
 )

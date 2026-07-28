@@ -56,6 +56,15 @@
     </details>
 
     <details class="health-details">
+      <summary>Fail-closed authority status</summary>
+      <p class="muted">External manifest: <code>{{ v7_health.authority_manifest.path }}</code>{% if v7_health.authority_manifest.error %}; {{ v7_health.authority_manifest.error }}{% endif %}.</p>
+      <ul>{% for row in v7_health.authority_resolutions %}
+        <li><strong>{{ row.domain }}:</strong> effective {{ row.effective_authority }}; manifest {{ row.manifest_authority or "missing" }}; database {{ row.database_authority or "unavailable" }}; writes {{ "allowed" if row.writable else "blocked" }}{% if row.error %}<div class="status-warn">{{ row.error }}</div>{% endif %}</li>
+      {% endfor %}</ul>
+      {% if v7_health.compatibility_exports %}<ul>{% for domain, export in v7_health.compatibility_exports.items() %}<li><strong>{{ domain }} export:</strong> {{ export.status or "unknown" }}{% if export.error %}<span class="status-warn"> {{ export.error }}</span>{% endif %}</li>{% endfor %}</ul>{% endif %}
+    </details>
+
+    <details class="health-details">
       <summary>Validation drift</summary>
       <ul>
         {% for key, value in (v7_health.validation_drift or {}).items() %}

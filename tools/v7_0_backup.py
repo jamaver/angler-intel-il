@@ -52,6 +52,13 @@ def _app_release() -> str:
         return ""
 
 
+def _read_json(path: Path, default: Any) -> Any:
+    try:
+        return json.loads(path.read_text(encoding="utf-8")) if path.exists() else default
+    except Exception:
+        return default
+
+
 def _sqlite_metrics(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {"exists": False}
@@ -154,6 +161,7 @@ def _build_manifest(staging_root: Path, *, label: str | None = None) -> dict[str
         DATA / "manual_waters.json",
         DATA / "target_profile.json",
         DATA / "reports_index.json",
+        DATA / "authority.json",
         DATA / "gear_catalog_cache.json",
     ]
     for path in json_targets:
@@ -181,6 +189,7 @@ def _build_manifest(staging_root: Path, *, label: str | None = None) -> dict[str
         "sqlite_authority": authority_values[0] if len(authority_values) == 1 else "mixed",
         "database": sqlite_record,
         "authority": authority_map,
+        "external_authority_manifest": _read_json(DATA / "authority.json", {}),
         "files": files,
         "source_manifest_hash": text_sha256(canonical_dumps(files)),
         "source_file_summaries": source_file_summaries(),

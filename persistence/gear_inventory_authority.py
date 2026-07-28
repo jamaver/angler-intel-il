@@ -67,7 +67,7 @@ def export_gear_inventory(db_path: str | Path, json_path: str | Path) -> dict[st
         with connect(db_path) as conn:
             with conn:
                 _set_export_status(conn, "failed", error=str(exc))
-        raise
+        return inventory
     with connect(db_path) as conn:
         with conn:
             _set_export_status(conn, "ok")
@@ -96,7 +96,7 @@ def _write_sqlite_first(
         with connect(db_path) as conn:
             with conn:
                 _set_export_status(conn, "failed", error=str(exc))
-        raise
+        return inventory
     with connect(db_path) as conn:
         with conn:
             _set_export_status(conn, "ok")

@@ -38,8 +38,22 @@ from persistence.catches_authority import (
     is_catches_sqlite_authoritative,
     save_catches_sqlite_authoritative,
 )
+from persistence.authority_resolution import AuthorityWriteError, require_write_authority, resolve_authority
 
 app = Flask(__name__)
+
+
+@app.errorhandler(AuthorityWriteError)
+def authority_write_error(exc):
+    """Return a deliberate fail-closed response for transitioned domains."""
+    resolution = exc.resolution
+    return jsonify({
+        "ok": False,
+        "error": str(exc),
+        "domain": resolution.domain,
+        "authority": resolution.effective_authority,
+        "writable": False,
+    }), exc.http_status
 
 # --- Angler Intel IL v4.4.3 App Health backup routes ---
 try:
@@ -122,8 +136,8 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v7.3.4-catches-authority"
-APP_RELEASE = "v7.3.4-catches-authority"
+APP_VERSION = "v7.3.4.1-authority-fail-closed"
+APP_RELEASE = "v7.3.4.1-authority-fail-closed"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the
@@ -131,7 +145,7 @@ app.config["APP_RELEASE"] = APP_RELEASE
 # modern_ui_refresh compatibility marker
 # v6.10-tackle-locker compatibility marker
 # v6.11-gear-catalog-flexible-search compatibility marker
-# v7.3.4-catches-authority compatibility marker
+# v7.3.4.1-authority-fail-closed compatibility marker
 
 
 @app.context_processor
@@ -183,7 +197,8 @@ def save_favorites(favorites):
 def load_catches():
     ensure_data()
     database = Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))
-    if is_catches_sqlite_authoritative(database):
+    resolution = resolve_authority("catches", database)
+    if resolution.effective_authority in {"sqlite", "sqlite_unavailable", "conflict"}:
         source = "sqlite_with_json_fallback"
     else:
         source = str(os.environ.get("AI_CATCHES_READ_SOURCE", "compare_json")).strip().lower()
@@ -191,7 +206,7 @@ def load_catches():
         source = "compare_json"
     if (
         source in {"sqlite", "sqlite_with_json_fallback"}
-        and not is_catches_sqlite_authoritative(database)
+        and resolution.effective_authority not in {"sqlite", "sqlite_unavailable", "conflict"}
         and os.environ.get("AI_ENABLE_V7_STAGED_READS") != "1"
     ):
         source = "compare_json"
@@ -206,7 +221,8 @@ def load_catches():
 
 def save_catches(catches, *, usage_events=None):
     database = Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))
-    if is_catches_sqlite_authoritative(database):
+    authority = require_write_authority("catches", database)
+    if authority == "sqlite":
         return save_catches_sqlite_authoritative(
             catches,
             database,
@@ -1280,6 +1296,8 @@ def api_target_profile():
     payload = request.get_json(silent=True) or {}
     try:
         profile = save_target_profile(payload)
+    except AuthorityWriteError:
+        raise
     except Exception as exc:
         return jsonify({"ok": False, "error": f"Could not save target profile: {exc}"}), 500
 
@@ -1369,7 +1387,10 @@ def api_add_catch():
         {"catch_id": catch["id"], "gear_item_id": ref, "used_at": catch["timestamp"], "source": "catch_log"}
         for ref in set(gear_refs.values()) if ref
     ]
-    save_catches(catches, usage_events=usage_events)
+    try:
+        save_catches(catches, usage_events=usage_events)
+    except AuthorityWriteError:
+        raise
 
     try:
         used_at = catch.get("timestamp")
@@ -1385,7 +1406,10 @@ def api_add_catch():
 def api_delete_catch(catch_id):
     catches = load_catches()
     catches = [c for c in catches if c.get("id") != catch_id]
-    save_catches(catches)
+    try:
+        save_catches(catches)
+    except AuthorityWriteError:
+        raise
     return jsonify(catches)
 
 
@@ -1395,6 +1419,8 @@ def api_add_custom_water():
 
     try:
         water = append_custom_water_record(payload)
+    except AuthorityWriteError:
+        raise
     except ValueError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 400
     except Exception as exc:
