@@ -1,0 +1,9 @@
+{
+  "version": "v7.3.5b-sqlite-report-creation",
+  "previous_version": "v7.3.5a-report-authority-contract",
+  "reports_authority": "json",
+  "sqlite_first_save_service": true,
+  "production_report_routes_switched": false,
+  "compatibility_artifact_status": true,
+  "installed_at": "2026-07-28"
+}
