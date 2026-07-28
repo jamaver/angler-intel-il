@@ -16,6 +16,7 @@ from .provenance import file_sha256
 BASE_DIR = Path(__file__).resolve().parents[1]
 DOMAIN = "manual_waters"
 CATALOG_ENVELOPE_KEY = "v7.water_catalog.envelope"
+MANUAL_WATERS_ENVELOPE_KEY = "v7.manual_waters.envelope"
 
 
 def _utc_now() -> str:
@@ -157,7 +158,19 @@ def _write_waterbody(conn: sqlite3.Connection, item: dict[str, Any], *, source_l
             )
 
 
-def _write_manual_waters(conn: sqlite3.Connection, source_payload: Any, source_path: Path) -> None:
+def _write_manual_waters(
+    conn: sqlite3.Connection,
+    source_payload: Any,
+    source_path: Path,
+    *,
+    authority: str = "json",
+    update_catalog_snapshot: bool = True,
+) -> None:
+    authority_row = conn.execute(
+        "SELECT authority FROM data_authority WHERE domain = ?", (DOMAIN,)
+    ).fetchone()
+    if authority_row and authority_row["authority"] == "sqlite" and authority != "sqlite":
+        raise RuntimeError("manual_waters is SQLite-authoritative; JSON-to-SQLite mirroring is disabled.")
     records = _source_items(source_payload)
     source_label = _source_label(source_path)
     source_hash = file_sha256(source_path)
@@ -225,31 +238,45 @@ def _write_manual_waters(conn: sqlite3.Connection, source_payload: Any, source_p
     conn.execute(
         """
         INSERT INTO source_files(domain, logical_name, path, file_hash, record_count, source_of_truth, generated_only, last_seen_at, last_imported_at)
-        VALUES(?, 'manual_waters', ?, ?, ?, 'json', 0, ?, ?)
+        VALUES(?, 'manual_waters', ?, ?, ?, ?, 0, ?, ?)
         ON CONFLICT(domain, path) DO UPDATE SET
-            file_hash=excluded.file_hash, record_count=excluded.record_count, source_of_truth='json',
+            file_hash=excluded.file_hash, record_count=excluded.record_count, source_of_truth=excluded.source_of_truth,
             generated_only=0, last_seen_at=excluded.last_seen_at, last_imported_at=excluded.last_imported_at
         """,
-        (DOMAIN, source_label, source_hash, len(records), now, now),
+        (DOMAIN, source_label, source_hash, len(records), "sqlite" if authority == "sqlite" else "json", now, now),
     )
     conn.execute(
         """
         INSERT INTO data_authority(domain, authority, source_path, source_hash, note, updated_at)
-        VALUES(?, 'json', ?, ?, 'JSON remains authoritative during V7.1 manual-water mirroring.', ?)
+        VALUES(?, ?, ?, ?, ?, ?)
         ON CONFLICT(domain) DO UPDATE SET
-            authority='json', source_path=excluded.source_path, source_hash=excluded.source_hash,
+            authority=excluded.authority, source_path=excluded.source_path, source_hash=excluded.source_hash,
             note=excluded.note, updated_at=excluded.updated_at
         """,
-        (DOMAIN, source_label, source_hash, now),
+        (
+            DOMAIN,
+            authority,
+            source_label,
+            source_hash,
+            "SQLite is authoritative; JSON is a compatibility export."
+            if authority == "sqlite"
+            else "JSON remains authoritative during V7.1 manual-water mirroring.",
+            now,
+        ),
+    )
+    conn.execute(
+        "INSERT OR REPLACE INTO app_settings(key, value_json, updated_at) VALUES(?, ?, ?)",
+        (MANUAL_WATERS_ENVELOPE_KEY, canonical_dumps(source_payload), now),
     )
     # Keep the exact JSON-derived map projection for V7.2 comparison reads.
     # This is a mirror snapshot only; the registry remains JSON-authoritative.
-    from intelligence.water_registry import _load_water_catalog_json
-    catalog = _load_water_catalog_json(include_custom=True)
-    conn.execute(
-        "INSERT OR REPLACE INTO app_settings(key, value_json, updated_at) VALUES(?, ?, ?)",
-        (CATALOG_ENVELOPE_KEY, canonical_dumps(catalog), now),
-    )
+    if update_catalog_snapshot:
+        from intelligence.water_registry import _load_water_catalog_json
+        catalog = _load_water_catalog_json(include_custom=True)
+        conn.execute(
+            "INSERT OR REPLACE INTO app_settings(key, value_json, updated_at) VALUES(?, ?, ?)",
+            (CATALOG_ENVELOPE_KEY, canonical_dumps(catalog), now),
+        )
 
 
 def mirror_manual_waters(

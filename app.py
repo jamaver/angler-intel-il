@@ -118,8 +118,8 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v7.3.2-gear-inventory-authority"
-APP_RELEASE = "v7.3.2-gear-inventory-authority"
+APP_VERSION = "v7.3.3-manual-waters-authority"
+APP_RELEASE = "v7.3.3-manual-waters-authority"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the
@@ -127,7 +127,7 @@ app.config["APP_RELEASE"] = APP_RELEASE
 # modern_ui_refresh compatibility marker
 # v6.10-tackle-locker compatibility marker
 # v6.11-gear-catalog-flexible-search compatibility marker
-# v7.3.2-gear-inventory-authority compatibility marker
+# v7.3.3-manual-waters-authority compatibility marker
 
 
 @app.context_processor

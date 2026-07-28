@@ -9,6 +9,10 @@ from pathlib import Path
 from typing import Any
 
 from persistence.manual_waters_mirror import mirror_manual_waters
+from persistence.manual_waters_authority import (
+    is_manual_waters_sqlite_authoritative,
+    save_manual_waters_sqlite_authoritative,
+)
 from persistence.repositories import JsonWaterCatalogRepository, SQLiteWaterCatalogRepository, read_domain
 
 APP_ROOT = Path(__file__).resolve().parents[1]
@@ -35,6 +39,10 @@ def _read_json(path: Path, default: Any) -> Any:
 def _write_json(path: Path, data: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def _database_path() -> Path:
+    return Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))
 
 
 def _safe_float(value: Any) -> float | None:
@@ -254,7 +262,7 @@ def _load_water_catalog_json(include_custom: bool = True) -> dict[str, Any]:
         warnings=warnings,
     )
 
-    custom_raw = _raw_water_list(CUSTOM_WATERS_PATH) if include_custom else []
+    custom_raw = load_custom_water_records() if include_custom else []
     custom_records, custom_missing_coords, custom_missing_species_ids, custom_unknown_species_ids = _merge_water_records(
         custom_raw,
         source="manual",
@@ -336,7 +344,14 @@ def load_water_records(include_custom: bool = True) -> list[dict[str, Any]]:
 
 
 def load_custom_water_records() -> list[dict[str, Any]]:
-    payload = _read_json(CUSTOM_WATERS_PATH, [])
+    if is_manual_waters_sqlite_authoritative(_database_path()):
+        try:
+            from persistence.manual_waters_authority import _payload_from_database
+            payload = _payload_from_database(_database_path())
+        except Exception:
+            payload = []
+    else:
+        payload = _read_json(CUSTOM_WATERS_PATH, [])
     if isinstance(payload, list):
         return [item for item in payload if isinstance(item, dict)]
     if isinstance(payload, dict) and isinstance(payload.get("waters"), list):
@@ -413,9 +428,12 @@ def append_custom_water_record(payload: dict[str, Any]) -> dict[str, Any]:
     records = [item for item in records if str(item.get("id") or "").strip() != record["id"]]
     records.append(record)
     records.sort(key=lambda item: (str(item.get("county") or ""), str(item.get("name") or "")))
-    _write_json(CUSTOM_WATERS_PATH, records)
-    # JSON is authoritative. A SQLite failure is deliberately non-fatal here.
-    mirror_manual_waters(CUSTOM_WATERS_PATH)
+    if is_manual_waters_sqlite_authoritative(_database_path()):
+        save_manual_waters_sqlite_authoritative(records, _database_path(), CUSTOM_WATERS_PATH)
+    else:
+        _write_json(CUSTOM_WATERS_PATH, records)
+        # JSON is authoritative. A SQLite failure is deliberately non-fatal here.
+        mirror_manual_waters(CUSTOM_WATERS_PATH)
 
     return record
 
@@ -430,7 +448,7 @@ def export_waterbody_dataset(scope: str = "manual") -> dict[str, Any]:
         "dataset": "waterbodies",
         "export_scope": "merged" if scope == "merged" else "manual",
         "exported_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-        "source_of_truth": "json",
+        "source_of_truth": "sqlite" if is_manual_waters_sqlite_authoritative(_database_path()) else "json",
         "starter_count": catalog.get("base_count", 0),
         "manual_count": catalog.get("custom_count", 0),
         "total_count": catalog.get("total_count", 0),
@@ -489,9 +507,12 @@ def import_waterbody_dataset(payload: dict[str, Any], mode: str = "replace") -> 
         merged = list(merged_by_id.values())
 
     merged.sort(key=lambda item: (str(item.get("county") or ""), str(item.get("name") or "")))
-    _write_json(CUSTOM_WATERS_PATH, merged)
-    # Import writes the same authoritative source and mirrors the complete result.
-    mirror_manual_waters(CUSTOM_WATERS_PATH)
+    if is_manual_waters_sqlite_authoritative(_database_path()):
+        save_manual_waters_sqlite_authoritative(merged, _database_path(), CUSTOM_WATERS_PATH)
+    else:
+        _write_json(CUSTOM_WATERS_PATH, merged)
+        # Import writes the same authoritative source and mirrors the complete result.
+        mirror_manual_waters(CUSTOM_WATERS_PATH)
 
     return {
         "ok": True,

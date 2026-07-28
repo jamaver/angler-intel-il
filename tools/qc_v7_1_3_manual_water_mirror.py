@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -135,10 +136,20 @@ def main() -> int:
         # The actual registry writer saves JSON before a non-fatal mirror failure.
         original_path = water_registry.CUSTOM_WATERS_PATH
         original_mirror = water_registry.mirror_manual_waters
+        original_authority_check = water_registry.is_manual_waters_sqlite_authoritative
+        original_sqlite_save = water_registry.save_manual_waters_sqlite_authoritative
+        original_db = os.environ.get("AI_SQLITE_DB_PATH")
         try:
             writer_source = temp / "writer_manual_waters.json"
             write_json(writer_source, [])
             water_registry.CUSTOM_WATERS_PATH = writer_source
+            os.environ["AI_SQLITE_DB_PATH"] = str(db)
+            water_registry.is_manual_waters_sqlite_authoritative = lambda _path: False
+
+            def sqlite_save_must_not_run(*_args, **_kwargs):
+                raise AssertionError("V7.1 manual-water QC attempted the SQLite-authoritative writer")
+
+            water_registry.save_manual_waters_sqlite_authoritative = sqlite_save_must_not_run
             captured: dict[str, object] = {}
 
             def failed_mirror(saved_path):
@@ -155,6 +166,12 @@ def main() -> int:
         finally:
             water_registry.CUSTOM_WATERS_PATH = original_path
             water_registry.mirror_manual_waters = original_mirror
+            water_registry.is_manual_waters_sqlite_authoritative = original_authority_check
+            water_registry.save_manual_waters_sqlite_authoritative = original_sqlite_save
+            if original_db is None:
+                os.environ.pop("AI_SQLITE_DB_PATH", None)
+            else:
+                os.environ["AI_SQLITE_DB_PATH"] = original_db
 
     print("PASS: V7.1.3 manual water mirror QC")
     return 0

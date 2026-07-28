@@ -1,0 +1,11 @@
+{
+  "version": "v7.3.3-manual-waters-authority",
+  "previous_version": "v7.3.2-gear-inventory-authority",
+  "target_profile_authority": "sqlite",
+  "gear_inventory_authority": "sqlite",
+  "manual_waters_authority": "sqlite",
+  "base_waters_authority": "json",
+  "other_domains_authority": "json",
+  "json_compatibility_export": true,
+  "installed_at": "2026-07-28T00:10:00-05:00"
+}
