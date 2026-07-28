@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Angler Intel - Historical Reference Review</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    body { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; background: #0b1710; color: #f4fff6; }
+    .review-card { background: #f8fff9; color: #102417; border: 1px solid rgba(166,232,182,.35); border-radius: 10px; padding: 1rem; margin: 1rem 0; }
+    .review-meta { color: #47604e; font-size: .9rem; overflow-wrap: anywhere; }
+    .review-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin-top: .9rem; }
+    .review-form label { display: grid; gap: .3rem; font-weight: 650; }
+    .review-form input, .review-form select, .review-form textarea { box-sizing: border-box; width: 100%; padding: .55rem; }
+    .review-form .review-wide { grid-column: 1 / -1; }
+    .review-actions { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+    .notice { padding: .8rem; border-radius: 8px; margin: 1rem 0; }
+    .notice-good { background: #143d26; color: #e7ffec; }.notice-warn { background: #5a2d18; color: #fff2dc; }
+    @media (max-width: 680px) { .review-form { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <p><a href="/app-health">Back to App Health</a> | <a href="/">Dashboard</a></p>
+  <h1>Historical Reference Review</h1>
+  <p>Review one historical catch reference at a time. A decision preserves the original JSON catch unchanged and never changes SQLite authority.</p>
+  {% if updated %}<p class="notice notice-good">Decision recorded. The reference list was refreshed.</p>{% endif %}
+  {% if error %}<p class="notice notice-warn">Unable to record the decision: {{ error }}</p>{% endif %}
+  <p><strong>{{ references|length }}</strong> reference{{ '' if references|length == 1 else 's' }} pending review.</p>
+  {% if not references %}<section class="review-card"><p>No unresolved historical references remain.</p></section>{% endif %}
+  {% for item in references %}
+    <section class="review-card">
+      <h2>{{ item.relationship|capitalize }} reference</h2>
+      <p><strong>Catch:</strong> <code>{{ item.catch_id }}</code></p>
+      {% if item.role %}<p><strong>Role:</strong> {{ item.role }}</p>{% endif %}
+      <p><strong>Original label:</strong> {{ item.label or 'Not recorded' }}</p>
+      <p class="review-meta">Original reference: <code>{{ item.reference }}</code></p>
+      <form class="review-form" method="post" action="/app-health/legacy-references/decision" onsubmit="return confirm('Record this reviewed decision? It will not change the original JSON catch.');">
+        <input type="hidden" name="catch_id" value="{{ item.catch_id }}">
+        <input type="hidden" name="relationship" value="{{ item.relationship }}">
+        <input type="hidden" name="role" value="{{ item.role }}">
+        <input type="hidden" name="reference" value="{{ item.reference }}">
+        <label>Decision
+          <select name="decision" required>
+            <option value="accept">Preserve as historical label</option>
+            <option value="link">Link to confirmed current item</option>
+          </select>
+        </label>
+        <label>Confirmed target (only for Link)
+          <select name="target_id">
+            <option value="">No target selected</option>
+            {% if item.relationship == 'gear' %}
+              {% for target in gear_items %}<option value="{{ target.id }}">{{ target.display_name or (target.brand ~ ' ' ~ target.model) or target.id }}</option>{% endfor %}
+            {% else %}
+              {% for target in waters %}<option value="{{ target.id }}">{{ target.name }}{% if target.city %} - {{ target.city }}{% endif %}</option>{% endfor %}
+            {% endif %}
+          </select>
+        </label>
+        <label>Operator<input name="operator" required autocomplete="name" placeholder="Your name"></label>
+        <label>Reason<textarea class="review-wide" name="note" required rows="2" placeholder="Why this link is confirmed, or why the original label must remain historical"></textarea></label>
+        <div class="review-wide review-actions"><button type="submit">Record reviewed decision</button></div>
+      </form>
+    </section>
+  {% endfor %}
+</body>
+</html>

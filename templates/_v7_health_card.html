@@ -65,6 +65,21 @@
     </details>
 
     <details class="health-details">
+      <summary>Historical reference review{% if v7_health.legacy_reference_summary %} ({{ v7_health.legacy_reference_summary.total or 0 }} pending){% endif %}</summary>
+      <p class="muted">Historical catch gear and water labels require an explicit decision. JSON remains authoritative.</p>
+      {% if v7_health.legacy_reference_summary and v7_health.legacy_reference_summary.available %}
+        <ul>
+          {% for relationship, count in v7_health.legacy_reference_summary.by_relationship.items() %}
+            <li><strong>{{ relationship }}:</strong> {{ count }} pending</li>
+          {% endfor %}
+        </ul>
+        <p><a href="/app-health/legacy-references">Review historical references</a></p>
+      {% else %}
+        <p class="status-warn">Reference review status is unavailable.</p>
+      {% endif %}
+    </details>
+
+    <details class="health-details">
       <summary>Mirror write status{% if v7_health.mirror_summary %} ({{ v7_health.mirror_summary.healthy or 0 }} healthy, {{ v7_health.mirror_summary.degraded or 0 }} degraded){% endif %}</summary>
       <p class="muted">Diagnostics only. JSON remains authoritative; no mirror writes are enabled by this screen.</p>
       <ul>

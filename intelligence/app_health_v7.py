@@ -9,6 +9,7 @@ from persistence.connection import connect
 from persistence.authority import default_authority_map
 from persistence.mirror import get_mirror_status, get_reconciliation_summary
 from persistence.runtime_paths import resolve_runtime_path
+from persistence.legacy_references import unresolved_references
 from intelligence.target_profile import get_target_profile_read_diagnostics
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -76,6 +77,18 @@ def _mirror_summary(rows: list[dict[str, Any]]) -> dict[str, int]:
     return summary
 
 
+def _legacy_reference_summary(conn) -> dict[str, Any]:
+    try:
+        rows = unresolved_references(conn)
+        by_relationship: dict[str, int] = {}
+        for row in rows:
+            relationship = str(row.get("relationship") or "unknown")
+            by_relationship[relationship] = by_relationship.get(relationship, 0) + 1
+        return {"available": True, "total": len(rows), "by_relationship": by_relationship}
+    except Exception as exc:
+        return {"available": False, "total": 0, "by_relationship": {}, "error": str(exc)}
+
+
 def get_v7_health_for_app() -> dict[str, Any]:
     db_path = DATA_DIR / "angler_intel.sqlite3"
     payload: dict[str, Any] = {
@@ -95,6 +108,7 @@ def get_v7_health_for_app() -> dict[str, Any]:
         "mirror_status": [],
         "mirror_summary": {},
         "reconciliation_summary": {"pending": [], "pending_total": 0, "stale": [], "stale_total": 0},
+        "legacy_reference_summary": {"available": False, "total": 0, "by_relationship": {}},
         "target_profile_read": get_target_profile_read_diagnostics(),
         "warnings": [],
         "errors": [],
@@ -139,6 +153,7 @@ def get_v7_health_for_app() -> dict[str, Any]:
             payload["mirror_status"] = get_mirror_status(conn)
             payload["mirror_summary"] = _mirror_summary(payload["mirror_status"])
             payload["reconciliation_summary"] = get_reconciliation_summary(conn)
+            payload["legacy_reference_summary"] = _legacy_reference_summary(conn)
     except Exception as exc:
         payload["errors"].append(str(exc))
 

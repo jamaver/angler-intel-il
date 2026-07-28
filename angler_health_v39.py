@@ -3,11 +3,12 @@ from __future__ import annotations
 import json
 import os
 import shutil
+from urllib.parse import quote_plus
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from flask import jsonify, render_template
+from flask import jsonify, redirect, render_template, request
 
 try:
     from intelligence.app_health_backup import get_backup_health_for_app
@@ -660,6 +661,58 @@ def register_health_routes_v39(app):
     def app_health_page_v39():
         payload = build_health_payload(app)
         return _render_health_html(payload)
+
+    @app.route("/app-health/legacy-references")
+    def app_health_legacy_references_v7():
+        """Maintenance-only review screen for non-deterministic historical links."""
+        try:
+            from persistence.connection import DEFAULT_DB, connect
+            from persistence.legacy_references import unresolved_references
+
+            with connect(DEFAULT_DB, read_only=True) as conn:
+                references = unresolved_references(conn)
+                gear_items = [dict(row) for row in conn.execute("SELECT id, display_name, brand, model FROM gear_items WHERE status != 'retired' ORDER BY display_name, id")]
+                waters = [dict(row) for row in conn.execute("SELECT id, name, city, state FROM waterbodies ORDER BY name, id")]
+            error = request.args.get("error", "")
+            return render_template(
+                "v7_legacy_reference_review.html",
+                references=references,
+                gear_items=gear_items,
+                waters=waters,
+                error=error,
+                updated=request.args.get("updated") == "1",
+            )
+        except Exception as exc:
+            return render_template(
+                "v7_legacy_reference_review.html",
+                references=[], gear_items=[], waters=[], error=str(exc), updated=False,
+            ), 503
+
+    @app.post("/app-health/legacy-references/decision")
+    def app_health_legacy_reference_decision_v7():
+        """Record one reviewed decision; this never changes authoritative JSON."""
+        try:
+            from persistence.connection import DEFAULT_DB, connect
+            from persistence.legacy_references import record_decision
+
+            action = request.form.get("decision", "")
+            with connect(DEFAULT_DB) as conn:
+                if not conn.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'legacy_reference_decisions'").fetchone():
+                    raise ValueError("Legacy reference review schema is unavailable. Run the V7 migration tool first.")
+                record_decision(
+                    conn,
+                    catch_id=request.form.get("catch_id", ""),
+                    relationship=request.form.get("relationship", ""),
+                    role=request.form.get("role", ""),
+                    original_reference=request.form.get("reference", ""),
+                    decision="accepted_legacy" if action == "accept" else "linked",
+                    target_id=request.form.get("target_id", ""),
+                    note=request.form.get("note", ""),
+                    operator_name=request.form.get("operator", ""),
+                )
+            return redirect("/app-health/legacy-references?updated=1")
+        except Exception as exc:
+            return redirect(f"/app-health/legacy-references?error={quote_plus(str(exc))}")
 
     @app.route("/api/app-health")
     def app_health_api_v39():
