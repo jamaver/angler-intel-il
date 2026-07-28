@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -103,9 +104,13 @@ def main() -> int:
         # The production writer saves JSON before calling the non-fatal mirror hook.
         original_path = target_profile.TARGET_PROFILE_PATH
         original_mirror = target_profile.mirror_target_profile
+        original_db = os.environ.get("AI_SQLITE_DB_PATH")
         captured: dict[str, object] = {}
         try:
             target_profile.TARGET_PROFILE_PATH = source
+            # This QC validates the V7.1 JSON-authoritative writer, even when
+            # the live application has later transitioned this domain.
+            os.environ["AI_SQLITE_DB_PATH"] = str(db)
 
             def failed_mirror(saved_profile, saved_path):
                 captured["profile"] = saved_profile
@@ -119,6 +124,10 @@ def main() -> int:
         finally:
             target_profile.TARGET_PROFILE_PATH = original_path
             target_profile.mirror_target_profile = original_mirror
+            if original_db is None:
+                os.environ.pop("AI_SQLITE_DB_PATH", None)
+            else:
+                os.environ["AI_SQLITE_DB_PATH"] = original_db
 
     print("PASS: V7.1.1 target-profile mirror QC")
     return 0
