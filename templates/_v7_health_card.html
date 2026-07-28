@@ -1,6 +1,6 @@
 <section class="card v7-health-card" id="v7-health-card">
   <h2>V7 Data Foundation</h2>
-  <p class="muted">Read-only diagnostics for the upcoming SQLite schema and migration foundation. JSON remains authoritative.</p>
+  <p class="muted">Read-only per-domain authority diagnostics for the SQLite migration program. Compatibility exports remain available for transitioned domains.</p>
 
   {% if v7_health %}
     <div class="health-grid">
@@ -66,7 +66,7 @@
 
     <details class="health-details">
       <summary>Historical reference review{% if v7_health.legacy_reference_summary %} ({{ v7_health.legacy_reference_summary.total or 0 }} pending){% endif %}</summary>
-      <p class="muted">Historical catch gear and water labels require an explicit decision. JSON remains authoritative.</p>
+      <p class="muted">Historical catch gear and water labels require an explicit decision. Original legacy labels are preserved.</p>
       {% if v7_health.legacy_reference_summary and v7_health.legacy_reference_summary.available %}
         <ul>
           {% for relationship, count in v7_health.legacy_reference_summary.by_relationship.items() %}
@@ -84,7 +84,7 @@
 
     <details class="health-details">
       <summary>Mirror write status{% if v7_health.mirror_summary %} ({{ v7_health.mirror_summary.healthy or 0 }} healthy, {{ v7_health.mirror_summary.degraded or 0 }} degraded){% endif %}</summary>
-      <p class="muted">Diagnostics only. JSON remains authoritative; no mirror writes are enabled by this screen.</p>
+      <p class="muted">Diagnostics only. This screen cannot change authority or enable writes.</p>
       <ul>
         {% for row in v7_health.mirror_status %}
           <li>
@@ -99,7 +99,7 @@
 
     <details class="health-details">
       <summary>Mirror recovery queue ({{ v7_health.reconciliation_summary.pending_total or 0 }} pending, {{ v7_health.reconciliation_summary.stale_total or 0 }} stale)</summary>
-      <p class="muted">Operator-only reconciliation: <code>./venv/bin/python tools/v7_1_reconcile.py --all --json</code>. JSON remains authoritative.</p>
+      <p class="muted">Operator-only reconciliation: <code>./venv/bin/python tools/v7_1_reconcile.py --all --json</code>. Check per-domain authority before reconciliation.</p>
       {% if v7_health.reconciliation_summary.pending %}
         <ul>{% for row in v7_health.reconciliation_summary.pending %}<li><strong>{{ row.domain }}:</strong> {{ row.count }} pending{% if row.oldest_requested_at %}, oldest {{ row.oldest_requested_at }}{% endif %}</li>{% endfor %}</ul>
       {% else %}<p class="status-good">No pending reconciliation requests.</p>{% endif %}

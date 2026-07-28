@@ -71,6 +71,18 @@ def _sqlite_metrics(path: Path) -> dict[str, Any]:
         return {"exists": True, "error": str(exc)}
 
 
+def _authority_map() -> dict[str, dict[str, Any]]:
+    db_path = DATA / "angler_intel.sqlite3"
+    if not db_path.exists():
+        return default_authority_map()
+    try:
+        with connect(db_path, read_only=True) as conn:
+            rows = [dict(row) for row in conn.execute("SELECT domain, authority, source_path, source_hash, note, updated_at FROM data_authority")]
+        return {str(row["domain"]): row for row in rows} or default_authority_map()
+    except Exception:
+        return default_authority_map()
+
+
 def _copy_json(path: Path, staging_root: Path) -> dict[str, Any]:
     rel = path.relative_to(ROOT)
     target = staging_root / rel
@@ -157,16 +169,18 @@ def _build_manifest(staging_root: Path, *, label: str | None = None) -> dict[str
     sqlite_record = _copy_sqlite_backup(sqlite_source, staging_root)
     files.append(sqlite_record)
 
+    authority_map = _authority_map()
+    authority_values = sorted({str(value.get("authority") or "json") for value in authority_map.values()})
     manifest = {
         "backup_version": "v7.0-runtime-backup-manifest",
         "created_at": _now(),
         "app_release": _app_release(),
         "git_commit": _git_commit(),
         "label": label,
-        "json_source_of_truth": True,
-        "sqlite_authority": "json",
+        "json_source_of_truth": not any(value == "sqlite" for value in authority_values),
+        "sqlite_authority": authority_values[0] if len(authority_values) == 1 else "mixed",
         "database": sqlite_record,
-        "authority": default_authority_map(),
+        "authority": authority_map,
         "files": files,
         "source_manifest_hash": text_sha256(canonical_dumps(files)),
         "source_file_summaries": source_file_summaries(),

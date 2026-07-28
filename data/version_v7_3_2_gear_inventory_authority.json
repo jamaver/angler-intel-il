@@ -1,0 +1,9 @@
+{
+  "version": "v7.3.2-gear-inventory-authority",
+  "previous_version": "v7.3.1-target-profile-authority",
+  "target_profile_authority": "sqlite",
+  "gear_inventory_authority": "sqlite",
+  "other_domains_authority": "json",
+  "json_compatibility_export": true,
+  "installed_at": "2026-07-27T20:00:00-05:00"
+}

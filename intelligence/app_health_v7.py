@@ -134,7 +134,8 @@ def get_v7_health_for_app() -> dict[str, Any]:
             authority_rows = _authority_rows(conn)
             payload["authorities"] = authority_rows
             if authority_rows:
-                payload["current_authority"] = authority_rows[0].get("authority", "json")
+                values = {str(row.get("authority") or "json") for row in authority_rows}
+                payload["current_authority"] = values.pop() if len(values) == 1 else "mixed"
 
             payload["last_migration_run"] = _latest_row(
                 conn,

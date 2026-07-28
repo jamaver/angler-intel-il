@@ -171,7 +171,21 @@ def _write_gear_item(conn: sqlite3.Connection, item: dict[str, Any], source_labe
         )
 
 
-def _write_inventory(conn: sqlite3.Connection, inventory: dict[str, Any], source_path: Path, usage_event: dict[str, Any] | None) -> None:
+def _write_inventory(
+    conn: sqlite3.Connection,
+    inventory: dict[str, Any],
+    source_path: Path,
+    usage_event: dict[str, Any] | None,
+    *,
+    authority: str = "json",
+) -> None:
+    authority_row = conn.execute(
+        "SELECT authority FROM data_authority WHERE domain = 'gear_inventory'"
+    ).fetchone()
+    if authority_row and authority_row["authority"] == "sqlite" and authority != "sqlite":
+        raise RuntimeError(
+            "gear_inventory is SQLite-authoritative; JSON-to-SQLite mirroring is disabled."
+        )
     items = _items(inventory)
     source_hash = file_sha256(source_path)
     source_label = _source_label(source_path)
@@ -228,12 +242,20 @@ def _write_inventory(conn: sqlite3.Connection, inventory: dict[str, Any], source
     conn.execute(
         """
         INSERT INTO data_authority(domain, authority, source_path, source_hash, note, updated_at)
-        VALUES('gear_inventory', 'json', ?, ?, 'JSON remains authoritative during V7.1 gear mirroring.', ?)
+        VALUES('gear_inventory', ?, ?, ?, ?, ?)
         ON CONFLICT(domain) DO UPDATE SET
-            authority='json', source_path=excluded.source_path, source_hash=excluded.source_hash,
+            authority=excluded.authority, source_path=excluded.source_path, source_hash=excluded.source_hash,
             note=excluded.note, updated_at=excluded.updated_at
         """,
-        (source_label, source_hash, now),
+        (
+            authority,
+            source_label,
+            source_hash,
+            "SQLite is authoritative; JSON is a compatibility export."
+            if authority == "sqlite"
+            else "JSON remains authoritative during V7.1 gear mirroring.",
+            now,
+        ),
     )
     conn.execute(
         "INSERT OR REPLACE INTO app_settings(key, value_json, updated_at) VALUES(?, ?, ?)",

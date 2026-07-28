@@ -8,6 +8,10 @@ from pathlib import Path
 from typing import Any
 
 from persistence.gear_inventory_mirror import mirror_gear_inventory
+from persistence.gear_inventory_authority import (
+    is_gear_inventory_sqlite_authoritative,
+    save_gear_inventory_sqlite_authoritative,
+)
 from persistence.repositories import JsonGearInventoryRepository, SQLiteGearInventoryRepository, read_domain
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -55,6 +59,10 @@ def inventory_path() -> Path:
 
 def catalog_cache_path() -> Path:
     return _path_from_env("AI_GEAR_CATALOG_CACHE_PATH", DATA_DIR / "gear_catalog_cache.json")
+
+
+def _database_path() -> Path:
+    return Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))
 
 
 def _now() -> str:
@@ -174,6 +182,8 @@ def _read_json(path: Path, default: Any) -> Any:
 
 
 def _read_source_mode() -> str:
+    if is_gear_inventory_sqlite_authoritative(_database_path()):
+        return "sqlite"
     requested = _text(os.environ.get("AI_GEAR_INVENTORY_READ_SOURCE", "compare_json")).lower()
     if requested not in {"json", "sqlite", "sqlite_with_json_fallback", "compare_json"}:
         requested = "compare_json"
@@ -191,7 +201,7 @@ def _read_inventory_document(path: Path) -> dict[str, Any]:
     result = read_domain(
         "gear_inventory",
         json_repository=JsonGearInventoryRepository(path),
-        sqlite_repository=SQLiteGearInventoryRepository(Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))),
+        sqlite_repository=SQLiteGearInventoryRepository(_database_path()),
         source=_read_source_mode(),  # type: ignore[arg-type]
     )
     _READ_DIAGNOSTICS = {
@@ -230,6 +240,9 @@ def save_inventory(data: dict[str, Any], *, usage_event: dict[str, Any] | None =
     payload["catalog_cache"] = payload.get("catalog_cache") if isinstance(payload.get("catalog_cache"), list) else []
     path = inventory_path()
     path.parent.mkdir(parents=True, exist_ok=True)
+    if is_gear_inventory_sqlite_authoritative(_database_path()):
+        save_gear_inventory_sqlite_authoritative(payload, _database_path(), path, usage_event=usage_event)
+        return
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     # JSON remains authoritative. SQLite mirror failures are non-fatal and are
     # surfaced through V7 mirror diagnostics for later reconciliation.

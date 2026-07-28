@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -144,8 +145,18 @@ def main() -> int:
         # Actual inventory writer saves JSON before a non-fatal mirror failure.
         original_path = inventory_mod.inventory_path
         original_mirror = inventory_mod.mirror_gear_inventory
+        original_authority_check = inventory_mod.is_gear_inventory_sqlite_authoritative
+        original_sqlite_save = inventory_mod.save_gear_inventory_sqlite_authoritative
+        original_db = os.environ.get("AI_SQLITE_DB_PATH")
         try:
             inventory_mod.inventory_path = lambda: source
+            os.environ["AI_SQLITE_DB_PATH"] = str(db)
+            inventory_mod.is_gear_inventory_sqlite_authoritative = lambda _path: False
+
+            def sqlite_save_must_not_run(*_args, **_kwargs):
+                raise AssertionError("V7.1 mirror QC attempted the SQLite-authoritative Gear Locker writer")
+
+            inventory_mod.save_gear_inventory_sqlite_authoritative = sqlite_save_must_not_run
             captured: dict[str, object] = {}
 
             def temp_mirror(saved_inventory, saved_path, *, usage_event=None):
@@ -170,6 +181,12 @@ def main() -> int:
         finally:
             inventory_mod.inventory_path = original_path
             inventory_mod.mirror_gear_inventory = original_mirror
+            inventory_mod.is_gear_inventory_sqlite_authoritative = original_authority_check
+            inventory_mod.save_gear_inventory_sqlite_authoritative = original_sqlite_save
+            if original_db is None:
+                os.environ.pop("AI_SQLITE_DB_PATH", None)
+            else:
+                os.environ["AI_SQLITE_DB_PATH"] = original_db
 
         # Locker CRUD remains JSON-first even when the mirror database is absent.
         offline_source = temp / "offline_inventory.json"
@@ -177,8 +194,14 @@ def main() -> int:
         offline_db = temp / "offline.sqlite3"
         original_path = inventory_mod.inventory_path
         original_mirror = inventory_mod.mirror_gear_inventory
+        original_authority_check = inventory_mod.is_gear_inventory_sqlite_authoritative
+        original_sqlite_save = inventory_mod.save_gear_inventory_sqlite_authoritative
+        original_db = os.environ.get("AI_SQLITE_DB_PATH")
         try:
             inventory_mod.inventory_path = lambda: offline_source
+            os.environ["AI_SQLITE_DB_PATH"] = str(offline_db)
+            inventory_mod.is_gear_inventory_sqlite_authoritative = lambda _path: False
+            inventory_mod.save_gear_inventory_sqlite_authoritative = sqlite_save_must_not_run
 
             def unavailable_mirror(saved_inventory, saved_path, *, usage_event=None):
                 return mirror_gear_inventory(saved_inventory, saved_path, usage_event=usage_event, db_path=offline_db)
@@ -194,6 +217,12 @@ def main() -> int:
         finally:
             inventory_mod.inventory_path = original_path
             inventory_mod.mirror_gear_inventory = original_mirror
+            inventory_mod.is_gear_inventory_sqlite_authoritative = original_authority_check
+            inventory_mod.save_gear_inventory_sqlite_authoritative = original_sqlite_save
+            if original_db is None:
+                os.environ.pop("AI_SQLITE_DB_PATH", None)
+            else:
+                os.environ["AI_SQLITE_DB_PATH"] = original_db
 
     print("PASS: V7.1.2 gear inventory mirror QC")
     return 0

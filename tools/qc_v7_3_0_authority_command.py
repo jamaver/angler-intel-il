@@ -10,7 +10,7 @@ def main() -> int:
     with tempfile.TemporaryDirectory(prefix="angler-v7-3-0-qc-") as temp_dir:
         root = Path(temp_dir); db = root / "a.sqlite3"; source = root / "data"; reports = root / "reports"; source.mkdir(); reports.mkdir()
         (source / "target_profile.json").write_text(json.dumps({"default_target_species":"Bass"}), encoding="utf-8")
-        manifest = root / "backup.manifest.json"; manifest.write_text(json.dumps({"json_source_of_truth": True}), encoding="utf-8")
+        manifest = root / "backup.manifest.json"; manifest.write_text(json.dumps({"verified": True, "authority": {"target_profile": {"authority": "json"}}}), encoding="utf-8")
         with connect(db) as conn: migrate(conn, db_path=str(db))
         cmd = [sys.executable, str(ROOT / "tools" / "v7_authority.py"), "preflight", "--domain", "target_profile", "--backup-manifest", str(manifest), "--db", str(db), "--source-root", str(source), "--reports-root", str(reports)]
         result = subprocess.run(cmd, capture_output=True, text=True)

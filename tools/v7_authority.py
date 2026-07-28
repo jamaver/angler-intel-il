@@ -20,9 +20,10 @@ from persistence.connection import connect
 from persistence.validation import validate_database
 from persistence.migrations import migrate
 from persistence.target_profile_authority import activate_target_profile_authority
+from persistence.gear_inventory_authority import activate_gear_inventory_authority
 
 DOMAINS = ("target_profile", "gear_inventory", "manual_waters", "catches", "reports", "recommendations")
-REGISTERED_TRANSITIONS = {"target_profile"}
+REGISTERED_TRANSITIONS = {"target_profile", "gear_inventory"}
 
 
 def preflight(domain: str, backup_manifest: Path, db: Path, source_root: Path, reports_root: Path) -> dict[str, object]:
@@ -32,8 +33,10 @@ def preflight(domain: str, backup_manifest: Path, db: Path, source_root: Path, r
         manifest = json.loads(backup_manifest.read_text(encoding="utf-8"))
     except Exception as exc:
         errors.append(f"Backup manifest is unreadable: {exc}")
-    if manifest and not manifest.get("json_source_of_truth"):
-        errors.append("Backup manifest does not confirm JSON source-of-truth coverage.")
+    if manifest and not manifest.get("verified"):
+        errors.append("Backup manifest has not completed verification.")
+    if manifest and not isinstance(manifest.get("authority"), dict):
+        errors.append("Backup manifest does not include per-domain authority coverage.")
     if not db.exists():
         errors.append(f"SQLite database is unavailable: {db}")
 
@@ -105,11 +108,16 @@ def main() -> int:
             try:
                 with connect(Path(args.db)) as conn:
                     migrate(conn, db_path=str(args.db))
-                profile = activate_target_profile_authority(Path(args.db), Path(args.source_root) / "target_profile.json")
+                if args.domain == "target_profile":
+                    exported = activate_target_profile_authority(Path(args.db), Path(args.source_root) / "target_profile.json")
+                elif args.domain == "gear_inventory":
+                    exported = activate_gear_inventory_authority(Path(args.db), Path(args.source_root) / "gear_inventory.json")
+                else:
+                    raise ValueError(f"No authority activation implementation for {args.domain}")
                 result["transitioned"] = True
                 result["authority_after"] = "sqlite"
                 result["sqlite_authority_enabled"] = True
-                result["exported_profile"] = profile
+                result["exported_record"] = exported
             except Exception as exc:
                 result["errors"].append(f"Target profile transition failed: {exc}")
         result["ready"] = not result["errors"]
