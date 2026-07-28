@@ -205,6 +205,8 @@ def _validate_links(
     reports_root: Path,
     source_root: Path,
 ) -> None:
+    from .legacy_references import reviewed_decision
+
     species_ids = {row["id"] for row in conn.execute("SELECT id FROM species")}
     gear_ids = {row["id"] for row in conn.execute("SELECT id FROM gear_items")}
     water_ids = {row["id"] for row in conn.execute("SELECT id FROM waterbodies")}
@@ -220,19 +222,32 @@ def _validate_links(
                 totals["unmapped_reference"] += 1
                 diffs.append({"domain": "waters", "status": "unmapped_reference", "record_key": water_id, "detail": species_id})
 
-    for row in conn.execute("SELECT id, gear_refs_json FROM catches"):
+    for row in conn.execute("SELECT id, gear_refs_json, legacy_payload_json FROM catches"):
         catch_id = row["id"]
         try:
             gear_refs = json.loads(row["gear_refs_json"] or "{}")
         except Exception:
             gear_refs = {}
+        try:
+            payload_hash = _hash_payload(json.loads(row["legacy_payload_json"] or "{}"))
+        except Exception:
+            payload_hash = ""
         if isinstance(gear_refs, dict):
             for role, gear_id in gear_refs.items():
                 if _text(gear_id) and _text(gear_id) not in gear_ids:
+                    decision = reviewed_decision(
+                        conn, catch_id=catch_id, relationship="gear", role=_text(role),
+                        original_reference=_text(gear_id), payload_hash=payload_hash,
+                    )
+                    if decision and (
+                        decision["decision"] == "accepted_legacy"
+                        or (decision["decision"] == "linked" and decision.get("target_id") in gear_ids)
+                    ):
+                        continue
                     totals["unmapped_reference"] += 1
                     diffs.append({"domain": "catches", "status": "unmapped_reference", "record_key": catch_id, "detail": {"role": role, "gear_id": gear_id}})
 
-    for row in conn.execute("SELECT id, species, waterbody FROM catches"):
+    for row in conn.execute("SELECT id, species, waterbody, legacy_payload_json FROM catches"):
         catch_id = row["id"]
         species_key = _slug(row["species"], "")
         water_key = _slug(row["waterbody"], "")
@@ -240,6 +255,18 @@ def _validate_links(
             totals["unmapped_reference"] += 1
             diffs.append({"domain": "catches", "status": "unmapped_reference", "record_key": catch_id, "detail": {"field": "species", "value": row["species"]}})
         if water_key and water_key not in water_ids:
+            try:
+                payload_hash = _hash_payload(json.loads(row["legacy_payload_json"] or "{}"))
+            except Exception:
+                payload_hash = ""
+            decision = reviewed_decision(
+                conn, catch_id=catch_id, relationship="waterbody", original_reference=_text(row["waterbody"]), payload_hash=payload_hash,
+            )
+            if decision and (
+                decision["decision"] == "accepted_legacy"
+                or (decision["decision"] == "linked" and decision.get("target_id") in water_ids)
+            ):
+                continue
             totals["unmapped_reference"] += 1
             diffs.append({"domain": "catches", "status": "unmapped_reference", "record_key": catch_id, "detail": {"field": "waterbody", "value": row["waterbody"]}})
 

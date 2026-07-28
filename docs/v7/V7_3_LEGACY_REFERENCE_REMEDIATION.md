@@ -41,3 +41,19 @@ profile authority is also held until the global validation gate is explicitly
 clear or a later V7.3 policy records these legacy exceptions.
 
 SQLite authority remains `json` during this remediation work.
+
+## Reviewed decision ledger
+
+Use `tools/v7_3_legacy_references.py list --json` to enumerate unresolved
+historical references.  A decision must include an operator name and reason:
+
+```bash
+./venv/bin/python tools/v7_3_legacy_references.py accept \
+  --catch-id CATCH_ID --relationship gear --role rod \
+  --reference OLD_GEAR_ID --note "Original rod retired" --operator pi
+```
+
+To link a confirmed normalized item instead, use `link` with `--target-id`.
+The tool verifies the target exists.  Decisions are tied to the exact canonical
+catch payload hash; editing the source catch invalidates the prior decision and
+returns it to review.  No command writes JSON or changes authority.
