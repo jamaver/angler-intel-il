@@ -15,6 +15,7 @@ if str(ROOT) not in sys.path:
 from persistence.connection import connect
 from persistence.importers import import_target_profile
 from persistence.migrations import migrate
+from persistence.authority_manifest import write_manifest
 import intelligence.target_profile as target_profile
 
 
@@ -23,15 +24,19 @@ def main() -> int:
     old_mode = os.environ.get("AI_TARGET_PROFILE_READ_SOURCE")
     old_db = os.environ.get("AI_SQLITE_DB_PATH")
     old_enable = os.environ.get("AI_ENABLE_V7_STAGED_READS")
+    old_manifest = os.environ.get("AI_AUTHORITY_MANIFEST")
     try:
         with tempfile.TemporaryDirectory(prefix="angler-v7-2-1-qc-") as temp_dir:
             temp = Path(temp_dir); source = temp / "target.json"; db = temp / "target.sqlite3"
             payload = {"default_target_species": "Largemouth Bass", "current_trip_target": "Crappie", "favorite_species": ["Crappie", "Bluegill"], "updated_at": "2026-07-23T11:00:00"}
             source.write_text(json.dumps(payload), encoding="utf-8")
+            manifest = temp / "authority.json"
+            write_manifest({"target_profile": "json"}, manifest)
             with connect(db) as conn:
                 migrate(conn, db_path=str(db)); import_target_profile(conn, source)
             target_profile.TARGET_PROFILE_PATH = source
             os.environ["AI_SQLITE_DB_PATH"] = str(db)
+            os.environ["AI_AUTHORITY_MANIFEST"] = str(manifest)
             os.environ["AI_TARGET_PROFILE_READ_SOURCE"] = "compare_json"
             os.environ.pop("AI_ENABLE_V7_STAGED_READS", None)
             profile = target_profile.load_target_profile()
@@ -52,7 +57,7 @@ def main() -> int:
             assert profile["current_trip_target"] == "Crappie"
     finally:
         target_profile.TARGET_PROFILE_PATH = old_path
-        for key, value in (("AI_TARGET_PROFILE_READ_SOURCE", old_mode), ("AI_SQLITE_DB_PATH", old_db), ("AI_ENABLE_V7_STAGED_READS", old_enable)):
+        for key, value in (("AI_TARGET_PROFILE_READ_SOURCE", old_mode), ("AI_SQLITE_DB_PATH", old_db), ("AI_ENABLE_V7_STAGED_READS", old_enable), ("AI_AUTHORITY_MANIFEST", old_manifest)):
             if value is None:
                 os.environ.pop(key, None)
             else:

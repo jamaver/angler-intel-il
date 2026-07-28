@@ -146,12 +146,14 @@ def main() -> int:
         original_path = inventory_mod.inventory_path
         original_mirror = inventory_mod.mirror_gear_inventory
         original_authority_check = inventory_mod.is_gear_inventory_sqlite_authoritative
+        original_write_authority = inventory_mod.require_write_authority
         original_sqlite_save = inventory_mod.save_gear_inventory_sqlite_authoritative
         original_db = os.environ.get("AI_SQLITE_DB_PATH")
         try:
             inventory_mod.inventory_path = lambda: source
             os.environ["AI_SQLITE_DB_PATH"] = str(db)
             inventory_mod.is_gear_inventory_sqlite_authoritative = lambda _path: False
+            inventory_mod.require_write_authority = lambda *_args, **_kwargs: "json"
 
             def sqlite_save_must_not_run(*_args, **_kwargs):
                 raise AssertionError("V7.1 mirror QC attempted the SQLite-authoritative Gear Locker writer")
@@ -182,6 +184,7 @@ def main() -> int:
             inventory_mod.inventory_path = original_path
             inventory_mod.mirror_gear_inventory = original_mirror
             inventory_mod.is_gear_inventory_sqlite_authoritative = original_authority_check
+            inventory_mod.require_write_authority = original_write_authority
             inventory_mod.save_gear_inventory_sqlite_authoritative = original_sqlite_save
             if original_db is None:
                 os.environ.pop("AI_SQLITE_DB_PATH", None)
@@ -195,12 +198,14 @@ def main() -> int:
         original_path = inventory_mod.inventory_path
         original_mirror = inventory_mod.mirror_gear_inventory
         original_authority_check = inventory_mod.is_gear_inventory_sqlite_authoritative
+        original_write_authority = inventory_mod.require_write_authority
         original_sqlite_save = inventory_mod.save_gear_inventory_sqlite_authoritative
         original_db = os.environ.get("AI_SQLITE_DB_PATH")
         try:
             inventory_mod.inventory_path = lambda: offline_source
             os.environ["AI_SQLITE_DB_PATH"] = str(offline_db)
             inventory_mod.is_gear_inventory_sqlite_authoritative = lambda _path: False
+            inventory_mod.require_write_authority = lambda *_args, **_kwargs: "json"
             inventory_mod.save_gear_inventory_sqlite_authoritative = sqlite_save_must_not_run
 
             def unavailable_mirror(saved_inventory, saved_path, *, usage_event=None):
@@ -218,6 +223,7 @@ def main() -> int:
             inventory_mod.inventory_path = original_path
             inventory_mod.mirror_gear_inventory = original_mirror
             inventory_mod.is_gear_inventory_sqlite_authoritative = original_authority_check
+            inventory_mod.require_write_authority = original_write_authority
             inventory_mod.save_gear_inventory_sqlite_authoritative = original_sqlite_save
             if original_db is None:
                 os.environ.pop("AI_SQLITE_DB_PATH", None)

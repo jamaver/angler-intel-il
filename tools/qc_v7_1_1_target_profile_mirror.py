@@ -105,6 +105,7 @@ def main() -> int:
         original_path = target_profile.TARGET_PROFILE_PATH
         original_mirror = target_profile.mirror_target_profile
         original_authority_check = target_profile.is_target_profile_sqlite_authoritative
+        original_write_authority = target_profile.require_write_authority
         original_sqlite_save = target_profile.save_target_profile_sqlite_authoritative
         original_db = os.environ.get("AI_SQLITE_DB_PATH")
         captured: dict[str, object] = {}
@@ -114,6 +115,7 @@ def main() -> int:
             # the live application has later transitioned this domain.
             os.environ["AI_SQLITE_DB_PATH"] = str(db)
             target_profile.is_target_profile_sqlite_authoritative = lambda _path: False
+            target_profile.require_write_authority = lambda *_args, **_kwargs: "json"
 
             def sqlite_save_must_not_run(*_args, **_kwargs):
                 raise AssertionError("V7.1 mirror QC attempted the SQLite-authoritative writer")
@@ -133,6 +135,7 @@ def main() -> int:
             target_profile.TARGET_PROFILE_PATH = original_path
             target_profile.mirror_target_profile = original_mirror
             target_profile.is_target_profile_sqlite_authoritative = original_authority_check
+            target_profile.require_write_authority = original_write_authority
             target_profile.save_target_profile_sqlite_authoritative = original_sqlite_save
             if original_db is None:
                 os.environ.pop("AI_SQLITE_DB_PATH", None)

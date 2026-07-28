@@ -137,6 +137,7 @@ def main() -> int:
         original_path = water_registry.CUSTOM_WATERS_PATH
         original_mirror = water_registry.mirror_manual_waters
         original_authority_check = water_registry.is_manual_waters_sqlite_authoritative
+        original_write_authority = water_registry.require_write_authority
         original_sqlite_save = water_registry.save_manual_waters_sqlite_authoritative
         original_db = os.environ.get("AI_SQLITE_DB_PATH")
         try:
@@ -145,6 +146,7 @@ def main() -> int:
             water_registry.CUSTOM_WATERS_PATH = writer_source
             os.environ["AI_SQLITE_DB_PATH"] = str(db)
             water_registry.is_manual_waters_sqlite_authoritative = lambda _path: False
+            water_registry.require_write_authority = lambda *_args, **_kwargs: "json"
 
             def sqlite_save_must_not_run(*_args, **_kwargs):
                 raise AssertionError("V7.1 manual-water QC attempted the SQLite-authoritative writer")
@@ -167,6 +169,7 @@ def main() -> int:
             water_registry.CUSTOM_WATERS_PATH = original_path
             water_registry.mirror_manual_waters = original_mirror
             water_registry.is_manual_waters_sqlite_authoritative = original_authority_check
+            water_registry.require_write_authority = original_write_authority
             water_registry.save_manual_waters_sqlite_authoritative = original_sqlite_save
             if original_db is None:
                 os.environ.pop("AI_SQLITE_DB_PATH", None)
