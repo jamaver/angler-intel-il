@@ -29,8 +29,36 @@ def _items(index_path: Path) -> list[dict[str, Any]]:
     return [item for item in payload if isinstance(item, dict)]
 
 
+def _reports_sqlite_authoritative(db_path: str | Path) -> bool:
+    """Prevent the legacy JSON mirror from being reused after cutover.
+
+    This is intentionally a database-only guard.  The full fail-closed
+    manifest resolver will be wired into report production routes during the
+    explicit V7.3.5e authority transition; V7.3.5a does not change those
+    routes or report authority.
+    """
+    database = Path(db_path)
+    if not database.exists():
+        return False
+    try:
+        with connect(database, read_only=True) as conn:
+            row = conn.execute("SELECT authority FROM data_authority WHERE domain = ?", (DOMAIN,)).fetchone()
+            return bool(row and str(row["authority"]) == "sqlite")
+    except Exception:
+        return False
+
+
 def mirror_reports(index_path: str | Path, reports_dir: str | Path, *, db_path: str | Path = DEFAULT_DB, force: bool = False) -> MirrorResult:
     index = Path(index_path); directory = Path(reports_dir)
+    if _reports_sqlite_authoritative(db_path):
+        return MirrorResult(
+            DOMAIN,
+            "reports-authority-transitioned",
+            True,
+            False,
+            error="Reports are SQLite-authoritative; legacy JSON-to-SQLite mirroring is disabled",
+            completed_at=_now(),
+        )
     try:
         records = _items(index)
         payload_hash = record_hash(records)

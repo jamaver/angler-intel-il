@@ -1,0 +1,11 @@
+{
+  "version": "v7.3.5a-report-authority-contract",
+  "previous_version": "v7.3.4.1-authority-fail-closed",
+  "reports_authority": "json",
+  "report_contract": true,
+  "sqlite_first_report_writes": false,
+  "sqlite_report_reads": false,
+  "soft_delete_schema_prepared": true,
+  "legacy_json_mirror_guard": true,
+  "installed_at": "2026-07-28"
+}

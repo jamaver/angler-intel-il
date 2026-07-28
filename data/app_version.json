@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel",
-  "version": "v7.3.4.1-authority-fail-closed",
-  "updated": "2026-07-28T14:43:00-05:00",
+  "version": "v7.3.5a-report-authority-contract",
+  "updated": "2026-07-28T14:54:00-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -40,7 +40,8 @@
     "structured_backup_restore": "v5.8",
     "modern_ui_refresh": "v5.9",
     "gear_intelligence_packing_catch_linking": "v6.13",
-    "sqlite_authority_fail_closed": "v7.3.4.1"
+    "sqlite_authority_fail_closed": "v7.3.4.1",
+    "report_authority_contract": "v7.3.5a"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -76,6 +77,7 @@
     "v5.9 refreshes the dashboard shell into a more map-first layout with stronger target-species, conditions, and nearby-water emphasis.",
     "v5.9.1 refreshes the fish and lure icon art so species and bait imagery read more like a finished fishing product.",
     "v6.13 adds gear intelligence, trip packing, maintenance summaries, and catch-linked gear usage tracking.",
-    "v7.3.4.1 adds an external authority manifest and fail-closed writes for SQLite-authoritative target profiles, gear inventory, manual waters, and catches."
+    "v7.3.4.1 adds an external authority manifest and fail-closed writes for SQLite-authoritative target profiles, gear inventory, manual waters, and catches.",
+    "v7.3.5a prepares the SQLite report authority contract, lifecycle fields, and artifact rules while reports remain JSON-authoritative."
   ]
 }
