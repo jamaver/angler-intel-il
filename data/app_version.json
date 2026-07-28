@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel",
-  "version": "v7.3.5d-report-deletion",
-  "updated": "2026-07-28T15:28:00-05:00",
+  "version": "v7.3.5e-reports-authority",
+  "updated": "2026-07-28T15:45:00-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -44,7 +44,8 @@
     "report_authority_contract": "v7.3.5a",
     "sqlite_report_creation": "v7.3.5b",
     "sqlite_report_reads_repair": "v7.3.5c",
-    "sqlite_report_deletion": "v7.3.5d"
+    "sqlite_report_deletion": "v7.3.5d",
+    "reports_authority": "v7.3.5e"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -84,6 +85,7 @@
     "v7.3.5a prepares the SQLite report authority contract, lifecycle fields, and artifact rules while reports remain JSON-authoritative.",
     "v7.3.5b adds a tested SQLite-first report save service with separately tracked JSON and printable HTML artifacts; production report routes remain JSON-authoritative.",
     "v7.3.5c adds staged SQLite report snapshot reads and repairable JSON/HTML artifact regeneration while reports remain JSON-authoritative.",
-    "v7.3.5d adds tested SQLite-first soft deletion and restore for report artifacts while retaining trips; production report routes remain JSON-authoritative."
+    "v7.3.5d adds tested SQLite-first soft deletion and restore for report artifacts while retaining trips; production report routes remain JSON-authoritative.",
+    "v7.3.5e explicitly transitions reports to SQLite authority after snapshot reconciliation, verified backup, drift validation, and regenerated JSON/HTML compatibility artifacts."
   ]
 }

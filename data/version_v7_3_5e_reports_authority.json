@@ -1,0 +1,12 @@
+{
+  "version": "v7.3.5e-reports-authority",
+  "previous_version": "v7.3.5d-report-deletion",
+  "reports_authority": "sqlite",
+  "report_identity_metadata_trip_relationships": "sqlite",
+  "report_json_role": "compatibility_export",
+  "report_html_role": "generated_printable_artifact",
+  "report_snapshot_reconciliation": true,
+  "explicit_operator_transition": true,
+  "recommendations_authority": "json",
+  "installed_at": "2026-07-28"
+}

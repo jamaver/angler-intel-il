@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from .canonical_json import canonical_dumps
+from .canonical_json import record_hash
 from .connection import DEFAULT_DB, connect
 from .report_authority_contract import ReportAuthorityPlan, build_report_authority_plan
 from .runtime_paths import BASE_DIR
@@ -320,6 +321,127 @@ def list_authoritative_report_metadata(db_path: str | Path = DEFAULT_DB) -> list
     """Return active report metadata from SQLite without requiring artifacts."""
     with connect(db_path, read_only=True) as conn:
         return _active_report_index(conn)
+
+
+def reconcile_legacy_report_snapshots(
+    *,
+    db_path: str | Path = DEFAULT_DB,
+    index_path: str | Path,
+    reports_dir: str | Path,
+) -> dict[str, Any]:
+    """Hydrate imported legacy report rows with their complete JSON snapshots.
+
+    This is a pre-transition reconciliation step. JSON remains authoritative
+    while it runs, and no JSON or HTML artifact is modified.
+    """
+    index = Path(index_path)
+    directory = Path(reports_dir)
+    try:
+        index_payload = json.loads(index.read_text(encoding="utf-8")) if index.exists() else []
+    except Exception as exc:
+        raise ValueError(f"Reports index is unreadable: {exc}") from exc
+    if isinstance(index_payload, dict):
+        index_payload = index_payload.get("reports", [])
+    if not isinstance(index_payload, list):
+        raise ValueError("Reports index must be a list or object with reports list")
+    hydrated: list[str] = []
+    errors: list[str] = []
+    database = Path(db_path)
+    with connect(database) as conn:
+        with conn:
+            for item in index_payload:
+                if not isinstance(item, dict):
+                    continue
+                report_id = _text(item.get("id"))
+                if not report_id:
+                    errors.append("Report index contains an item without an id")
+                    continue
+                json_file = str(item.get("json_file") or f"{report_id}.json")
+                if json_file != f"{report_id}.json":
+                    errors.append(f"{report_id}: invalid JSON artifact filename")
+                    continue
+                path = directory / json_file
+                if not path.exists():
+                    errors.append(f"{report_id}: snapshot JSON is missing")
+                    continue
+                try:
+                    wrapped = json.loads(path.read_text(encoding="utf-8"))
+                    if not isinstance(wrapped, dict):
+                        raise ValueError("snapshot is not an object")
+                    payload = wrapped.get("payload") if isinstance(wrapped.get("payload"), dict) else None
+                    if payload is None:
+                        raise ValueError("snapshot payload is missing")
+                    if not isinstance(wrapped.get("meta"), dict):
+                        wrapped["meta"] = dict(item)
+                    if not isinstance(wrapped.get("summary"), dict):
+                        wrapped["summary"] = {}
+                except Exception as exc:
+                    errors.append(f"{report_id}: snapshot JSON is invalid: {exc}")
+                    continue
+                row = conn.execute("SELECT id FROM trip_reports WHERE id = ?", (report_id,)).fetchone()
+                if row is None:
+                    errors.append(f"{report_id}: report is absent from SQLite")
+                    continue
+                conn.execute(
+                    """UPDATE trip_reports SET snapshot_payload_json=?, authoritative_payload_hash=?,
+                       legacy_payload_json=?, updated_at=? WHERE id=?""",
+                    (canonical_dumps(wrapped), record_hash(wrapped), canonical_dumps(item), _utc_now(), report_id),
+                )
+                hydrated.append(report_id)
+    return {"hydrated": hydrated, "errors": errors, "ok": not errors}
+
+
+def report_transition_preflight(db_path: str | Path = DEFAULT_DB) -> dict[str, Any]:
+    """Return report-specific transition blockers without changing state."""
+    with connect(db_path, read_only=True) as conn:
+        authority_row = conn.execute("SELECT authority FROM data_authority WHERE domain='reports'").fetchone()
+        rows = [dict(row) for row in conn.execute("SELECT id, status, snapshot_payload_json, json_path, html_path FROM trip_reports WHERE status='active' ORDER BY id")]
+    missing_snapshots = [str(row["id"]) for row in rows if not row["snapshot_payload_json"]]
+    invalid_paths = [str(row["id"]) for row in rows if not _text(row["json_path"]).endswith(f"{row['id']}.json") or not _text(row["html_path"]).endswith(f"{row['id']}.html")]
+    return {
+        "authority": str(authority_row["authority"]) if authority_row else "missing",
+        "active_report_count": len(rows),
+        "missing_snapshot_ids": missing_snapshots,
+        "invalid_artifact_path_ids": invalid_paths,
+        "ready": not missing_snapshots and not invalid_paths,
+    }
+
+
+def activate_reports_authority(
+    *,
+    render_html,
+    db_path: str | Path = DEFAULT_DB,
+    index_path: str | Path,
+    reports_dir: str | Path,
+) -> list[ReportSaveResult]:
+    """Activate report authority, regenerate artifacts, and leave manifest work to caller.
+
+    If artifact generation fails after the database marker changes, callers must
+    leave the external authority manifest unchanged. That deliberate marker
+    conflict fail-closes report writes until an operator repairs the state.
+    """
+    database = Path(db_path)
+    preflight = report_transition_preflight(database)
+    if preflight["authority"] != "json":
+        raise ValueError(f"Reports must be JSON-authoritative before transition, found {preflight['authority']!r}")
+    if not preflight["ready"]:
+        raise ValueError(f"Report transition preflight failed: {preflight}")
+    with connect(database) as conn:
+        with conn:
+            conn.execute(
+                """UPDATE data_authority SET authority='sqlite', note=?, updated_at=? WHERE domain='reports'""",
+                ("SQLite is authoritative for report identity, metadata, trip links, and deletion; JSON/HTML are compatibility artifacts.", _utc_now()),
+            )
+    results: list[ReportSaveResult] = []
+    try:
+        for meta in list_authoritative_report_metadata(database):
+            results.append(repair_report_artifacts(str(meta.get("id") or ""), render_html=render_html, db_path=database, index_path=index_path, reports_dir=reports_dir))
+    except Exception:
+        raise
+    failures = [result for result in results if result.warning]
+    if failures:
+        raise RuntimeError(f"Compatibility artifact export failed for {len(failures)} report(s)")
+    return results
 
 
 def _normalize_snapshot(row: Any) -> dict[str, Any]:

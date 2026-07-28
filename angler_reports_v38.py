@@ -13,13 +13,22 @@ from urllib.parse import urlencode
 from flask import jsonify, render_template, request, send_file
 from persistence.reports_mirror import mirror_reports
 from persistence.repositories import JsonReportsIndexRepository, SQLiteReportsIndexRepository, read_domain
-from persistence.reports_authority import load_authoritative_report, record_json_read_fallback
+from persistence.authority_resolution import AuthorityWriteError, require_write_authority, resolve_authority
+from persistence.reports_authority import load_authoritative_report, record_json_read_fallback, repair_report_artifacts, save_report_sqlite_authoritative, soft_delete_all_authoritative_reports, soft_delete_authoritative_report
 
 
 BASE_DIR = Path(__file__).resolve().parent
 REPORTS_DIR = BASE_DIR / "reports"
 DATA_DIR = BASE_DIR / "data"
 INDEX_PATH = DATA_DIR / "reports_index.json"
+
+
+def _reports_db_path() -> Path:
+    return Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))
+
+
+def _reports_authority():
+    return resolve_authority("reports", _reports_db_path())
 
 
 def _now() -> datetime:
@@ -57,6 +66,8 @@ def _write_json(path: Path, data: Any) -> None:
 
 def _index() -> list[dict[str, Any]]:
     source = str(os.environ.get("AI_REPORTS_READ_SOURCE", "compare_json")).strip().lower()
+    if _reports_authority().effective_authority == "sqlite":
+        source = "sqlite"
     if source not in {"json", "sqlite", "sqlite_with_json_fallback", "compare_json"}:
         source = "compare_json"
     if source in {"sqlite", "sqlite_with_json_fallback"} and os.environ.get("AI_ENABLE_V7_STAGED_READS") != "1":
@@ -64,13 +75,15 @@ def _index() -> list[dict[str, Any]]:
     result = read_domain(
         "reports",
         json_repository=JsonReportsIndexRepository(INDEX_PATH),
-        sqlite_repository=SQLiteReportsIndexRepository(Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))),
+        sqlite_repository=SQLiteReportsIndexRepository(_reports_db_path()),
         source=source,  # type: ignore[arg-type]
     )
     return [item for item in (result.value or []) if isinstance(item, dict)]
 
 
 def _save_index(items: list[dict[str, Any]]) -> None:
+    if require_write_authority("reports", _reports_db_path()) == "sqlite":
+        return
     items = sorted(items, key=lambda x: x.get("created", ""), reverse=True)
     _write_json(INDEX_PATH, items)
     # JSON report files/index remain authoritative; mirror errors are non-fatal.
@@ -863,14 +876,22 @@ def _save_report(payload: dict[str, Any], title: str | None = None, zip_code: st
         "summary": summary,
     }
 
+    rendered_html = _render_report_html(meta, payload, selected_forecast_date=selected_forecast_date)
+    if require_write_authority("reports", _reports_db_path()) == "sqlite":
+        return save_report_sqlite_authoritative(
+            meta,
+            wrapped,
+            rendered_html,
+            db_path=_reports_db_path(),
+            index_path=INDEX_PATH,
+            reports_dir=REPORTS_DIR,
+        ).response_meta()
+
     json_path = REPORTS_DIR / json_name
     html_path = REPORTS_DIR / html_name
 
     _write_json(json_path, wrapped)
-    html_path.write_text(
-        _render_report_html(meta, payload, selected_forecast_date=selected_forecast_date),
-        encoding="utf-8",
-    )
+    html_path.write_text(rendered_html, encoding="utf-8")
 
     items = _index()
     items = [x for x in items if x.get("id") != report_id]
@@ -905,6 +926,7 @@ def register_report_routes_v38(app):
         REPORTS_DIR.mkdir(parents=True, exist_ok=True)
         DATA_DIR.mkdir(parents=True, exist_ok=True)
 
+        authority = _reports_authority()
         items = _index()
         existing = []
 
@@ -921,8 +943,13 @@ def register_report_routes_v38(app):
                 enriched["overview"] = _report_overview(enriched)
                 enriched["group"] = enriched["overview"].get("group", "General")
                 existing.append(enriched)
+            elif authority.effective_authority == "sqlite":
+                enriched = dict(item)
+                enriched["overview"] = {"group": "General", "display_title": str(item.get("title") or "Trip Report")}
+                enriched["group"] = "General"
+                existing.append(enriched)
 
-        if len(existing) != len(items):
+        if len(existing) != len(items) and authority.effective_authority != "sqlite":
             _save_index(existing)
 
         return jsonify({
@@ -1028,14 +1055,10 @@ def register_report_routes_v38(app):
             "forecast_day_index": forecast_day_index,
         }
 
-        meta = _save_report(payload, title=title, zip_code=zip_code)
-        meta["selected_forecast_date"] = selected_forecast_date
-        meta["selected_forecast_label"] = selected_forecast_label
-        meta["forecast_day_index"] = forecast_day_index
-        items = _index()
-        items = [meta if item.get("id") == meta.get("id") else item for item in items]
-        _save_index(items)
-
+        try:
+            meta = _save_report(payload, title=title, zip_code=zip_code)
+        except AuthorityWriteError as exc:
+            return jsonify({"ok": False, "error": str(exc), "authority": exc.resolution.effective_authority}), exc.http_status
         return jsonify({
             "ok": True,
             "version": "v3.8",
@@ -1079,7 +1102,10 @@ def register_report_routes_v38(app):
             summary_for_title = _extract_summary(payload)
             title = _default_report_title(zip_code, payload, summary_for_title, payload.get("selected_forecast_label") or "")
 
-        meta = _save_report(payload, title=str(title), zip_code=str(zip_code))
+        try:
+            meta = _save_report(payload, title=str(title), zip_code=str(zip_code))
+        except AuthorityWriteError as exc:
+            return jsonify({"ok": False, "error": str(exc), "authority": exc.resolution.effective_authority}), exc.http_status
 
         return jsonify({
             "ok": True,
@@ -1090,6 +1116,20 @@ def register_report_routes_v38(app):
     @app.route("/api/reports/download/<filename>")
     def download_report_file_v38(filename: str):
         path = _safe_report_file(filename)
+        if path is None and _reports_authority().effective_authority == "sqlite":
+            report_id = filename[:-5] if filename.endswith((".json", ".html")) else ""
+            if report_id:
+                try:
+                    repair_report_artifacts(
+                        report_id,
+                        render_html=_render_report_html,
+                        db_path=_reports_db_path(),
+                        index_path=INDEX_PATH,
+                        reports_dir=REPORTS_DIR,
+                    )
+                    path = _safe_report_file(filename)
+                except Exception:
+                    path = None
         if path is None:
             return jsonify({"ok": False, "error": "Report not found"}), 404
 
@@ -1122,18 +1162,27 @@ def register_report_routes_v38(app):
         ).strip()
 
         try:
-            result = _delete_report_assets(report_id)
+            if require_write_authority("reports", _reports_db_path()) == "sqlite":
+                deleted = soft_delete_authoritative_report(report_id, db_path=_reports_db_path(), index_path=INDEX_PATH, reports_dir=REPORTS_DIR)
+                result = {"deleted_files": list(deleted.deleted_files), "remaining_count": len(_index()), "warning": deleted.warning}
+            else:
+                result = _delete_report_assets(report_id)
             return jsonify({
                 "ok": True,
                 "version": "v3.8",
                 "report_id": report_id,
                 "deleted_files": result["deleted_files"],
                 "remaining_count": result["remaining_count"],
+                "warning": result.get("warning"),
             })
+        except AuthorityWriteError as exc:
+            return jsonify({"ok": False, "error": str(exc), "authority": exc.resolution.effective_authority}), exc.http_status
         except FileNotFoundError:
             return jsonify({"ok": False, "error": "Report not found"}), 404
         except ValueError as exc:
             return jsonify({"ok": False, "error": str(exc)}), 400
+        except AuthorityWriteError as exc:
+            return jsonify({"ok": False, "error": str(exc), "authority": exc.resolution.effective_authority}), exc.http_status
         except Exception as exc:
             return jsonify({"ok": False, "error": str(exc)}), 500
 
@@ -1146,7 +1195,11 @@ def register_report_routes_v38(app):
             return jsonify({"ok": False, "error": "Permanent deletion confirmation is required."}), 400
 
         try:
-            result = _delete_all_report_assets()
+            if require_write_authority("reports", _reports_db_path()) == "sqlite":
+                deleted = soft_delete_all_authoritative_reports(db_path=_reports_db_path(), index_path=INDEX_PATH, reports_dir=REPORTS_DIR)
+                result = {"deleted_report_count": len(deleted), "deleted_files": [name for item in deleted for name in item.deleted_files], "remaining_count": len(_index())}
+            else:
+                result = _delete_all_report_assets()
             return jsonify({
                 "ok": True,
                 "version": "v3.8",
@@ -1174,12 +1227,13 @@ def register_report_routes_v38(app):
             return jsonify({"ok": False, "error": "Report not found"}), 404
 
         source = str(os.environ.get("AI_REPORTS_READ_SOURCE", "compare_json")).strip().lower()
-        staged_sqlite = source in {"sqlite", "sqlite_with_json_fallback"} and os.environ.get("AI_ENABLE_V7_STAGED_READS") == "1"
+        authority = _reports_authority()
+        staged_sqlite = authority.effective_authority == "sqlite" or (source in {"sqlite", "sqlite_with_json_fallback"} and os.environ.get("AI_ENABLE_V7_STAGED_READS") == "1")
         if staged_sqlite:
             try:
                 authoritative = load_authoritative_report(
                     report_id,
-                    Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3"))),
+                    _reports_db_path(),
                 )
                 payload = authoritative.wrapped_snapshot.get("payload") if isinstance(authoritative.wrapped_snapshot.get("payload"), dict) else {}
                 selected_forecast_date = (
@@ -1191,20 +1245,20 @@ def register_report_routes_v38(app):
                 ).strip()
                 return _render_report_html(authoritative.meta, payload, selected_forecast_date=selected_forecast_date)
             except LookupError as exc:
-                if source == "sqlite":
+                if source == "sqlite" or authority.effective_authority == "sqlite":
                     return jsonify({"ok": False, "error": str(exc)}), 404
                 try:
                     record_json_read_fallback(
-                        report_id, str(exc), Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))
+                        report_id, str(exc), _reports_db_path()
                     )
                 except Exception:
                     pass
             except Exception as exc:
-                if source == "sqlite":
+                if source == "sqlite" or authority.effective_authority == "sqlite":
                     return jsonify({"ok": False, "error": f"SQLite report read failed: {exc}"}), 500
                 try:
                     record_json_read_fallback(
-                        report_id, f"SQLite report read failed: {exc}", Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))
+                        report_id, f"SQLite report read failed: {exc}", _reports_db_path()
                     )
                 except Exception:
                     pass

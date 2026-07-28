@@ -23,11 +23,12 @@ from persistence.target_profile_authority import activate_target_profile_authori
 from persistence.gear_inventory_authority import activate_gear_inventory_authority
 from persistence.manual_waters_authority import activate_manual_waters_authority
 from persistence.catches_authority import activate_catches_authority
+from persistence.reports_authority import activate_reports_authority, report_transition_preflight
 from persistence.authority_manifest import set_manifest_authority
 from persistence.authority_resolution import resolve_authority
 
 DOMAINS = ("target_profile", "gear_inventory", "manual_waters", "catches", "reports", "recommendations")
-REGISTERED_TRANSITIONS = {"target_profile", "gear_inventory", "manual_waters", "catches"}
+REGISTERED_TRANSITIONS = {"target_profile", "gear_inventory", "manual_waters", "catches", "reports"}
 
 
 def preflight(domain: str, backup_manifest: Path, db: Path, source_root: Path, reports_root: Path) -> dict[str, object]:
@@ -71,6 +72,14 @@ def preflight(domain: str, backup_manifest: Path, db: Path, source_root: Path, r
         diff for diff in validation.get("diffs", [])
         if isinstance(diff, dict) and diff.get("status") in {"unmapped_reference", "orphan_reference", "invalid_source"}
     ]
+    report_preflight: dict[str, object] = {}
+    if domain == "reports" and db.exists():
+        try:
+            report_preflight = report_transition_preflight(db)
+            if not report_preflight.get("ready"):
+                errors.append("Report snapshot/artifact reconciliation is incomplete.")
+        except Exception as exc:
+            errors.append(f"Report transition preflight failed: {exc}")
     return {
         "domain": domain,
         "backup_manifest": str(backup_manifest),
@@ -83,6 +92,7 @@ def preflight(domain: str, backup_manifest: Path, db: Path, source_root: Path, r
         "validation_totals": validation.get("totals", {}),
         "legacy_reference_warning_count": len(legacy_reference_warnings),
         "legacy_reference_warning_domains": sorted({str(item.get("domain")) for item in legacy_reference_warnings}),
+        "report_preflight": report_preflight,
         "ready": not errors,
         "errors": errors,
         "sqlite_authority_enabled": False,
@@ -97,6 +107,7 @@ def main() -> int:
     parser.add_argument("--db", default=str(ROOT / "data" / "angler_intel.sqlite3"))
     parser.add_argument("--source-root", default=str(ROOT / "data"))
     parser.add_argument("--reports-root", default=str(ROOT / "reports"))
+    parser.add_argument("--manifest-path", help="External authority manifest path; defaults to runtime manifest")
     parser.add_argument("--confirm-domain", help="Must exactly match --domain for a future transition")
     parser.add_argument("--execute", action="store_true", help="Request transition after preflight; V7.3.0 refuses this safely")
     args = parser.parse_args()
@@ -120,16 +131,37 @@ def main() -> int:
                     exported = activate_manual_waters_authority(Path(args.db), Path(args.source_root) / "manual_waters.json")
                 elif args.domain == "catches":
                     exported = activate_catches_authority(Path(args.db), Path(args.source_root) / "catches.json")
+                elif args.domain == "reports":
+                    from app import app as flask_app
+                    import angler_reports_v38 as reports
+                    with flask_app.app_context():
+                        exported = activate_reports_authority(
+                            render_html=reports._render_report_html,
+                            db_path=Path(args.db),
+                            index_path=Path(args.source_root) / "reports_index.json",
+                            reports_dir=Path(args.reports_root),
+                        )
                 else:
                     raise ValueError(f"No authority activation implementation for {args.domain}")
-                set_manifest_authority(args.domain, "sqlite")
-                resolution = resolve_authority(args.domain, Path(args.db))
+                set_manifest_authority(args.domain, "sqlite", args.manifest_path)
+                resolution = resolve_authority(args.domain, Path(args.db), manifest_path=args.manifest_path)
                 if resolution.effective_authority != "sqlite" or not resolution.writable:
                     raise RuntimeError("SQLite activation completed but external authority manifest did not verify; run tools/v7_authority_manifest.py repair --confirm authority-manifest")
                 result["transitioned"] = True
                 result["authority_after"] = "sqlite"
                 result["sqlite_authority_enabled"] = True
-                result["exported_record"] = exported
+                # Activation services return domain-specific result objects.
+                # Keep operator output JSON-safe without losing the artifact
+                # status needed to diagnose a completed transition.
+                if isinstance(exported, list):
+                    result["exported_records"] = [
+                        item.response_meta() if hasattr(item, "response_meta") else str(item)
+                        for item in exported
+                    ]
+                elif hasattr(exported, "response_meta"):
+                    result["exported_record"] = exported.response_meta()
+                else:
+                    result["exported_record"] = exported
             except Exception as exc:
                 result["errors"].append(f"{args.domain} transition failed: {exc}")
         result["ready"] = not result["errors"]

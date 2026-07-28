@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import tempfile
 import zipfile
 import sys
@@ -17,6 +18,44 @@ from persistence import importers as importer_mod
 from persistence.migrations import migrate
 from persistence.validation import validate_database
 from persistence.connection import connect
+
+
+REFERENCE_DEFAULTS = (
+    "species_profiles_v43.json",
+    "species_settings_v431.json",
+    "illinois_waters.json",
+)
+
+
+def _sqlite_authoritative_domains(db_path: Path) -> list[str]:
+    """Return transitioned domains without trusting legacy JSON artifacts.
+
+    A restore rehearsal must never re-import JSON over a database that already
+    owns a domain.  The extracted DB is the object being rehearsed in that
+    case; JSON files are compatibility exports and validation inputs only.
+    """
+    with connect(db_path, read_only=True) as conn:
+        rows = conn.execute("SELECT domain FROM data_authority WHERE authority='sqlite' ORDER BY domain").fetchall()
+    return [str(row["domain"]) for row in rows]
+
+
+def _seed_reference_defaults(data_dir: Path) -> list[str]:
+    """Supply tracked reference data that a runtime-only backup excludes.
+
+    Runtime backups intentionally omit repository seed data. A real restore is
+    performed into an installed application tree, so rehearsal supplies only
+    the immutable defaults from that tree when the archive does not contain
+    them. Personal/runtime files are never copied from the live deployment.
+    """
+    seeded: list[str] = []
+    data_dir.mkdir(parents=True, exist_ok=True)
+    for filename in REFERENCE_DEFAULTS:
+        source = ROOT / "data" / filename
+        target = data_dir / filename
+        if source.exists() and not target.exists():
+            shutil.copy2(source, target)
+            seeded.append(filename)
+    return seeded
 
 
 def _safe_extract(archive: Path, target_dir: Path) -> None:
@@ -64,14 +103,20 @@ def main() -> int:
         _safe_extract(archive, root)
         db_path = root / "data" / "angler_intel.sqlite3"
         export_dir = root / "legacy_exports"
+        seeded_reference_defaults = _seed_reference_defaults(root / "data")
         old_data_dir = importer_mod.DATA_DIR
         old_reports_dir = importer_mod.REPORTS_DIR
         importer_mod.DATA_DIR = root / "data"
         importer_mod.REPORTS_DIR = root / "reports"
         try:
+            sqlite_authoritative = _sqlite_authoritative_domains(db_path)
             with connect(db_path) as conn:
                 migrate(conn, db_path=str(db_path))
-                importer_mod.import_all(conn)
+                # JSON import is only safe for an all-JSON backup. Once a
+                # domain has transitioned, use the restored SQLite database
+                # as-is and validate its compatibility exports separately.
+                if not sqlite_authoritative:
+                    importer_mod.import_all(conn)
             exports = _export_legacy_json(db_path, export_dir)
             validation = validate_database(
                 db_path,
@@ -87,6 +132,9 @@ def main() -> int:
             "manifest": str(manifest_path),
             "verified": True,
             "exports": exports,
+            "sqlite_authoritative_domains": sqlite_authoritative,
+            "json_reimport": "skipped" if sqlite_authoritative else "completed",
+            "seeded_reference_defaults": seeded_reference_defaults,
             "validation": validation,
         }
 

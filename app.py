@@ -136,8 +136,8 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v7.3.5d-report-deletion"
-APP_RELEASE = "v7.3.5d-report-deletion"
+APP_VERSION = "v7.3.5e-reports-authority"
+APP_RELEASE = "v7.3.5e-reports-authority"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the
