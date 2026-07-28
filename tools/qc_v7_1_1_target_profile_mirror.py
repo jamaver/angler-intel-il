@@ -104,6 +104,8 @@ def main() -> int:
         # The production writer saves JSON before calling the non-fatal mirror hook.
         original_path = target_profile.TARGET_PROFILE_PATH
         original_mirror = target_profile.mirror_target_profile
+        original_authority_check = target_profile.is_target_profile_sqlite_authoritative
+        original_sqlite_save = target_profile.save_target_profile_sqlite_authoritative
         original_db = os.environ.get("AI_SQLITE_DB_PATH")
         captured: dict[str, object] = {}
         try:
@@ -111,6 +113,12 @@ def main() -> int:
             # This QC validates the V7.1 JSON-authoritative writer, even when
             # the live application has later transitioned this domain.
             os.environ["AI_SQLITE_DB_PATH"] = str(db)
+            target_profile.is_target_profile_sqlite_authoritative = lambda _path: False
+
+            def sqlite_save_must_not_run(*_args, **_kwargs):
+                raise AssertionError("V7.1 mirror QC attempted the SQLite-authoritative writer")
+
+            target_profile.save_target_profile_sqlite_authoritative = sqlite_save_must_not_run
 
             def failed_mirror(saved_profile, saved_path):
                 captured["profile"] = saved_profile
@@ -124,6 +132,8 @@ def main() -> int:
         finally:
             target_profile.TARGET_PROFILE_PATH = original_path
             target_profile.mirror_target_profile = original_mirror
+            target_profile.is_target_profile_sqlite_authoritative = original_authority_check
+            target_profile.save_target_profile_sqlite_authoritative = original_sqlite_save
             if original_db is None:
                 os.environ.pop("AI_SQLITE_DB_PATH", None)
             else:
