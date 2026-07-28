@@ -73,6 +73,9 @@
             <li><strong>{{ relationship }}:</strong> {{ count }} pending</li>
           {% endfor %}
         </ul>
+        {% if v7_health.legacy_reference_summary.decisions %}
+          <p class="muted">Reviewed: {{ v7_health.legacy_reference_summary.decisions.current or 0 }} current; {{ v7_health.legacy_reference_summary.decisions.stale or 0 }} stale.</p>
+        {% endif %}
         <p><a href="/app-health/legacy-references">Review historical references</a></p>
       {% else %}
         <p class="status-warn">Reference review status is unavailable.</p>

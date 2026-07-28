@@ -25,7 +25,14 @@
   <p>Review one historical catch reference at a time. A decision preserves the original JSON catch unchanged and never changes SQLite authority.</p>
   {% if updated %}<p class="notice notice-good">Decision recorded. The reference list was refreshed.</p>{% endif %}
   {% if error %}<p class="notice notice-warn">Unable to record the decision: {{ error }}</p>{% endif %}
-  <p><strong>{{ references|length }}</strong> reference{{ '' if references|length == 1 else 's' }} pending review.</p>
+  <p><strong>{{ total_references }}</strong> reference{{ '' if total_references == 1 else 's' }} pending review. Showing page {{ page }} of {{ pages }}.</p>
+  <p class="review-meta">Reviewed decisions: {{ decisions.current or 0 }} current, {{ decisions.stale or 0 }} stale.</p>
+  {% if pages > 1 %}
+    <p class="review-actions">
+      {% if page > 1 %}<a href="/app-health/legacy-references?page={{ page - 1 }}">Previous</a>{% endif %}
+      {% if page < pages %}<a href="/app-health/legacy-references?page={{ page + 1 }}">Next</a>{% endif %}
+    </p>
+  {% endif %}
   {% if not references %}<section class="review-card"><p>No unresolved historical references remain.</p></section>{% endif %}
   {% for item in references %}
     <section class="review-card">

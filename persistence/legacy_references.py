@@ -137,3 +137,28 @@ def unresolved_references(conn: sqlite3.Connection) -> list[dict[str, Any]]:
         if waterbody and _slug(waterbody, "") not in water_ids and not reviewed_decision(conn, catch_id=catch_id, relationship="waterbody", original_reference=waterbody, payload_hash=payload_hash):
             unresolved.append({"catch_id": catch_id, "relationship": "waterbody", "role": "", "reference": waterbody, "label": waterbody})
     return unresolved
+
+
+def decision_summary(conn: sqlite3.Connection) -> dict[str, int]:
+    """Return decision counts, including reviews invalidated by catch edits."""
+    summary = {"total": 0, "accepted_legacy": 0, "linked": 0, "current": 0, "stale": 0}
+    try:
+        rows = [dict(row) for row in conn.execute(
+            "SELECT catch_id, catch_payload_hash, decision FROM legacy_reference_decisions"
+        )]
+    except sqlite3.OperationalError:
+        return summary
+    for row in rows:
+        summary["total"] += 1
+        decision = _text(row.get("decision"))
+        if decision in summary:
+            summary[decision] += 1
+        try:
+            current = catch_payload_hash(conn, _text(row.get("catch_id")))
+        except ValueError:
+            current = ""
+        if current and current == _text(row.get("catch_payload_hash")):
+            summary["current"] += 1
+        else:
+            summary["stale"] += 1
+    return summary

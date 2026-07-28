@@ -12,7 +12,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from persistence.connection import connect
-from persistence.legacy_references import record_decision, unresolved_references
+from persistence.legacy_references import decision_summary, record_decision, unresolved_references
 from persistence.migrations import migrate
 from persistence.validation import _validate_links
 
@@ -45,6 +45,8 @@ def main() -> int:
             record_decision(conn, catch_id="catch-1", relationship="gear", role="rod", original_reference="retired-rod", decision="linked", target_id="current-rod", note="Confirmed replacement", operator_name="qc")
             record_decision(conn, catch_id="catch-1", relationship="waterbody", original_reference="Old Mill Pond", decision="accepted_legacy", note="No deterministic catalog match", operator_name="qc")
             check(unresolved_references(conn) == [], "reviewed references should no longer appear unresolved")
+            summary = decision_summary(conn)
+            check(summary["total"] == 2 and summary["current"] == 2 and summary["stale"] == 0, "current reviewed decisions were not summarized")
             diffs: list[dict[str, object]] = []
             totals = {"unmapped_reference": 0, "orphan_reference": 0, "generated_only": 0}
             _validate_links(conn, diffs, totals, reports_root=Path(temp_dir) / "reports", source_root=Path(temp_dir) / "data")

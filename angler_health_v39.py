@@ -667,25 +667,41 @@ def register_health_routes_v39(app):
         """Maintenance-only review screen for non-deterministic historical links."""
         try:
             from persistence.connection import DEFAULT_DB, connect
-            from persistence.legacy_references import unresolved_references
+            from persistence.legacy_references import decision_summary, unresolved_references
+
+            try:
+                page = max(1, int(request.args.get("page", "1")))
+            except ValueError:
+                page = 1
+            page_size = 20
 
             with connect(DEFAULT_DB, read_only=True) as conn:
-                references = unresolved_references(conn)
+                all_references = unresolved_references(conn)
                 gear_items = [dict(row) for row in conn.execute("SELECT id, display_name, brand, model FROM gear_items WHERE status != 'retired' ORDER BY display_name, id")]
                 waters = [dict(row) for row in conn.execute("SELECT id, name, city, state FROM waterbodies ORDER BY name, id")]
+                decisions = decision_summary(conn)
+            total = len(all_references)
+            pages = max(1, (total + page_size - 1) // page_size)
+            page = min(page, pages)
+            start = (page - 1) * page_size
+            references = all_references[start:start + page_size]
             error = request.args.get("error", "")
             return render_template(
                 "v7_legacy_reference_review.html",
                 references=references,
                 gear_items=gear_items,
                 waters=waters,
+                total_references=total,
+                page=page,
+                pages=pages,
+                decisions=decisions,
                 error=error,
                 updated=request.args.get("updated") == "1",
             )
         except Exception as exc:
             return render_template(
-                "v7_legacy_reference_review.html",
-                references=[], gear_items=[], waters=[], error=str(exc), updated=False,
+                "v7_legacy_reference_review.html", references=[], gear_items=[], waters=[],
+                total_references=0, page=1, pages=1, decisions={}, error=str(exc), updated=False,
             ), 503
 
     @app.post("/app-health/legacy-references/decision")
