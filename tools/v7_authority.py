@@ -128,7 +128,7 @@ def main() -> int:
                 result["errors"].append(f"{args.domain} transition failed: {exc}")
         result["ready"] = not result["errors"]
     print(json.dumps(result, indent=2, sort_keys=True))
-    return 0 if result.get("ready") and args.action == "preflight" else 2
+    return 0 if result.get("ready") else 2
 
 
 if __name__ == "__main__":
