@@ -108,6 +108,7 @@ def main() -> int:
                 profile = activate_target_profile_authority(Path(args.db), Path(args.source_root) / "target_profile.json")
                 result["transitioned"] = True
                 result["authority_after"] = "sqlite"
+                result["sqlite_authority_enabled"] = True
                 result["exported_profile"] = profile
             except Exception as exc:
                 result["errors"].append(f"Target profile transition failed: {exc}")

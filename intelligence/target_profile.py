@@ -28,6 +28,11 @@ _READ_DIAGNOSTICS: dict[str, Any] = {
 }
 
 
+def _database_path() -> Path:
+    """Use the configured V7 database for both reads and authority checks."""
+    return Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))
+
+
 def _read_json(path: Path, default: Any) -> Any:
     if not path.exists():
         return default
@@ -44,7 +49,7 @@ def _read_source_mode() -> str:
     Comparison mode returns JSON and is the safe default. A real SQLite read
     requires an explicit operator environment flag; no web UI can enable it.
     """
-    if is_target_profile_sqlite_authoritative(DATA_DIR / "angler_intel.sqlite3"):
+    if is_target_profile_sqlite_authoritative(_database_path()):
         return "sqlite"
     requested = str(os.environ.get("AI_TARGET_PROFILE_READ_SOURCE", "compare_json")).strip().lower()
     if requested not in {"json", "sqlite", "sqlite_with_json_fallback", "compare_json"}:
@@ -62,7 +67,7 @@ def get_target_profile_read_diagnostics() -> dict[str, Any]:
 def _read_profile_document() -> dict[str, Any]:
     global _READ_DIAGNOSTICS
     source = _read_source_mode()
-    db_path = Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))
+    db_path = _database_path()
     result = read_domain(
         "target_profile",
         json_repository=JsonTargetProfileRepository(TARGET_PROFILE_PATH),
@@ -169,8 +174,8 @@ def save_target_profile(payload: dict[str, Any]) -> dict[str, Any]:
         profile["favorite_species"] = [item for item in profile["favorite_species"] if item != name]
 
     profile["updated_at"] = datetime.now().astimezone().isoformat(timespec="seconds")
-    if is_target_profile_sqlite_authoritative(DATA_DIR / "angler_intel.sqlite3"):
-        return save_target_profile_sqlite_authoritative(profile, DATA_DIR / "angler_intel.sqlite3", TARGET_PROFILE_PATH)
+    if is_target_profile_sqlite_authoritative(_database_path()):
+        return save_target_profile_sqlite_authoritative(profile, _database_path(), TARGET_PROFILE_PATH)
     _write_json(TARGET_PROFILE_PATH, profile)
     # JSON is authoritative. Mirror failure is intentionally non-fatal and is
     # recorded by the V7.1 diagnostics framework for later reconciliation.
