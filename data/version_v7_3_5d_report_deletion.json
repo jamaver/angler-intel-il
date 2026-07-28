@@ -1,0 +1,10 @@
+{
+  "version": "v7.3.5d-report-deletion",
+  "previous_version": "v7.3.5c-report-reads-repair",
+  "reports_authority": "json",
+  "soft_delete_service": true,
+  "trip_retention": true,
+  "artifact_cleanup_after_authoritative_commit": true,
+  "production_delete_routes_switched": false,
+  "installed_at": "2026-07-28"
+}

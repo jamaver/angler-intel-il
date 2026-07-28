@@ -121,6 +121,7 @@ def get_v7_health_for_app() -> dict[str, Any]:
         "compatibility_exports": {},
         "report_artifact_repair": {},
         "report_read_fallback": {},
+        "report_lifecycle": {},
     }
 
     manifest, manifest_error = read_manifest()
@@ -175,7 +176,7 @@ def get_v7_health_for_app() -> dict[str, Any]:
                         payload["compatibility_exports"][domain] = json.loads(row["value_json"] or "{}")
                     except Exception:
                         payload["compatibility_exports"][domain] = {"status": "invalid"}
-            for key, destination in (("v7.reports.artifact_repair", "report_artifact_repair"), ("v7.reports.read_fallback", "report_read_fallback")):
+            for key, destination in (("v7.reports.artifact_repair", "report_artifact_repair"), ("v7.reports.read_fallback", "report_read_fallback"), ("v7.reports.deletion", "report_lifecycle")):
                 row = conn.execute("SELECT value_json FROM app_settings WHERE key = ?", (key,)).fetchone()
                 if row:
                     try:

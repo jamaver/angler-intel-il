@@ -21,6 +21,7 @@ from .runtime_paths import BASE_DIR
 EXPORT_STATUS_KEY = "v7.reports.compatibility_export"
 READ_FALLBACK_KEY = "v7.reports.read_fallback"
 REPAIR_STATUS_KEY = "v7.reports.artifact_repair"
+DELETION_STATUS_KEY = "v7.reports.deletion"
 
 
 def _utc_now() -> str:
@@ -54,6 +55,15 @@ class AuthoritativeReport:
     status: str
     compatibility_export_status: str
     html_export_status: str
+
+
+@dataclass(frozen=True, slots=True)
+class ReportDeletionResult:
+    report_id: str
+    trip_id: str
+    status: str
+    deleted_files: tuple[str, ...]
+    warning: str | None = None
 
 
 def _atomic_write(path: Path, content: str) -> None:
@@ -171,6 +181,139 @@ def _active_report_index(conn) -> list[dict[str, Any]]:
         if isinstance(item, dict):
             records.append(item)
     return records
+
+
+def _safe_artifact_paths(meta: dict[str, Any], report_id: str, reports_dir: Path) -> list[Path]:
+    expected = (f"{report_id}.json", f"{report_id}.html")
+    configured = (str(meta.get("json_file") or expected[0]), str(meta.get("html_file") or expected[1]))
+    if configured != expected:
+        raise ValueError("SQLite report artifact filenames are invalid")
+    return [reports_dir / filename for filename in expected]
+
+
+def _record_lifecycle_status(db_path: str | Path, payload: dict[str, Any]) -> None:
+    now = _utc_now()
+    with connect(db_path) as conn:
+        with conn:
+            conn.execute(
+                """INSERT INTO app_settings(key, value_json, updated_at) VALUES(?, ?, ?)
+                   ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json, updated_at=excluded.updated_at""",
+                (DELETION_STATUS_KEY, canonical_dumps(payload), now),
+            )
+
+
+def _cleanup_report_artifacts(meta: dict[str, Any], report_id: str, *, db_path: str | Path, index_path: str | Path, reports_dir: str | Path) -> tuple[list[str], str | None]:
+    """Remove generated artifacts only after the authoritative state changed."""
+    deleted: list[str] = []
+    errors: list[str] = []
+    try:
+        for path in _safe_artifact_paths(meta, report_id, Path(reports_dir)):
+            if path.exists():
+                path.unlink()
+                deleted.append(path.name)
+    except Exception as exc:
+        errors.append(f"artifact file cleanup failed: {exc}")
+    try:
+        with connect(db_path, read_only=True) as conn:
+            active_index = _active_report_index(conn)
+        _atomic_write(Path(index_path), json.dumps(active_index, indent=2, ensure_ascii=False))
+    except Exception as exc:
+        errors.append(f"report index cleanup failed: {exc}")
+    return deleted, "; ".join(errors) or None
+
+
+def soft_delete_authoritative_report(
+    report_id: str,
+    *,
+    db_path: str | Path = DEFAULT_DB,
+    index_path: str | Path,
+    reports_dir: str | Path,
+) -> ReportDeletionResult:
+    """Mark one report deleted before removing any generated artifacts.
+
+    Trips remain untouched. A later restore can reactivate the report and
+    regenerate JSON/HTML from its retained snapshot.
+    """
+    report_id = _text(report_id)
+    if not report_id or "/" in report_id or "\\" in report_id or ".." in report_id:
+        raise ValueError("Invalid report id")
+    database = Path(db_path)
+    with connect(database) as conn:
+        with conn:
+            row = conn.execute("SELECT id, trip_id, legacy_payload_json FROM trip_reports WHERE id = ?", (report_id,)).fetchone()
+            if row is None:
+                raise LookupError("SQLite report not found")
+            if conn.execute("SELECT status FROM trip_reports WHERE id = ?", (report_id,)).fetchone()["status"] != "active":
+                raise LookupError("SQLite report is not active")
+            try:
+                meta = json.loads(row["legacy_payload_json"] or "{}")
+            except Exception:
+                meta = {}
+            if not isinstance(meta, dict):
+                meta = {}
+            deleted_at = _utc_now()
+            conn.execute(
+                """UPDATE trip_reports SET status='deleted', deleted_at=?, updated_at=?,
+                   compatibility_export_status='pending', html_export_status='pending', artifact_error=NULL WHERE id=?""",
+                (deleted_at, deleted_at, report_id),
+            )
+
+    deleted_files, cleanup_error = _cleanup_report_artifacts(meta, report_id, db_path=database, index_path=index_path, reports_dir=reports_dir)
+    _set_artifact_status(
+        database, report_id,
+        json_status="not_applicable" if not cleanup_error else "failed",
+        html_status="not_applicable" if not cleanup_error else "failed",
+        error=cleanup_error,
+    )
+    result = ReportDeletionResult(report_id, _text(row["trip_id"]), "deleted", tuple(deleted_files), cleanup_error)
+    _record_lifecycle_status(database, {
+        "action": "delete", "report_id": report_id, "trip_id": result.trip_id,
+        "status": result.status, "deleted_files": deleted_files, "error": cleanup_error, "at": _utc_now(),
+    })
+    return result
+
+
+def soft_delete_all_authoritative_reports(
+    *,
+    db_path: str | Path = DEFAULT_DB,
+    index_path: str | Path,
+    reports_dir: str | Path,
+) -> list[ReportDeletionResult]:
+    """Soft-delete all active reports before any JSON/HTML cleanup begins."""
+    database = Path(db_path)
+    with connect(database, read_only=True) as conn:
+        ids = [str(row["id"]) for row in conn.execute("SELECT id FROM trip_reports WHERE status='active' ORDER BY created_at, id")]
+    return [soft_delete_authoritative_report(report_id, db_path=database, index_path=index_path, reports_dir=reports_dir) for report_id in ids]
+
+
+def restore_authoritative_report(
+    report_id: str,
+    *,
+    render_html,
+    db_path: str | Path = DEFAULT_DB,
+    index_path: str | Path,
+    reports_dir: str | Path,
+) -> ReportSaveResult:
+    """Reactivate a soft-deleted report and regenerate its compatibility artifacts."""
+    report_id = _text(report_id)
+    if not report_id or "/" in report_id or "\\" in report_id or ".." in report_id:
+        raise ValueError("Invalid report id")
+    database = Path(db_path)
+    with connect(database) as conn:
+        with conn:
+            row = conn.execute("SELECT id FROM trip_reports WHERE id = ? AND status = 'deleted'", (report_id,)).fetchone()
+            if row is None:
+                raise LookupError("Deleted SQLite report not found")
+            conn.execute(
+                "UPDATE trip_reports SET status='active', deleted_at=NULL, updated_at=?, artifact_error=NULL WHERE id=?",
+                (_utc_now(), report_id),
+            )
+    result = repair_report_artifacts(report_id, render_html=render_html, db_path=database, index_path=index_path, reports_dir=reports_dir)
+    _record_lifecycle_status(database, {
+        "action": "restore", "report_id": report_id, "status": "active",
+        "error": result.warning, "at": _utc_now(),
+    })
+    return result
 
 
 def list_authoritative_report_metadata(db_path: str | Path = DEFAULT_DB) -> list[dict[str, Any]]:

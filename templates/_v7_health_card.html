@@ -64,6 +64,7 @@
       {% if v7_health.compatibility_exports %}<ul>{% for domain, export in v7_health.compatibility_exports.items() %}<li><strong>{{ domain }} export:</strong> {{ export.status or "unknown" }}{% if export.error %}<span class="status-warn"> {{ export.error }}</span>{% endif %}</li>{% endfor %}</ul>{% endif %}
       {% if v7_health.report_artifact_repair %}<p class="muted"><strong>Latest report artifact repair:</strong> {{ v7_health.report_artifact_repair.report_id or "unknown" }}; JSON {{ v7_health.report_artifact_repair.json or "unknown" }}; HTML {{ v7_health.report_artifact_repair.html or "unknown" }}{% if v7_health.report_artifact_repair.error %}<span class="status-warn"> {{ v7_health.report_artifact_repair.error }}</span>{% endif %}</p>{% endif %}
       {% if v7_health.report_read_fallback %}<p class="muted"><strong>Latest report JSON fallback:</strong> {{ v7_health.report_read_fallback.report_id or "unknown" }}{% if v7_health.report_read_fallback.reason %}; {{ v7_health.report_read_fallback.reason }}{% endif %}</p>{% endif %}
+      {% if v7_health.report_lifecycle %}<p class="muted"><strong>Latest report lifecycle action:</strong> {{ v7_health.report_lifecycle.action or "unknown" }} for {{ v7_health.report_lifecycle.report_id or "all reports" }}{% if v7_health.report_lifecycle.error %}<span class="status-warn"> {{ v7_health.report_lifecycle.error }}</span>{% endif %}</p>{% endif %}
     </details>
 
     <details class="health-details">
