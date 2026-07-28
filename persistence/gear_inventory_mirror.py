@@ -187,7 +187,7 @@ def _write_inventory(
             "gear_inventory is SQLite-authoritative; JSON-to-SQLite mirroring is disabled."
         )
     items = _items(inventory)
-    source_hash = file_sha256(source_path)
+    source_hash = record_hash(inventory) if authority == "sqlite" else file_sha256(source_path)
     source_label = _source_label(source_path)
     item_ids = {_text(item.get("id")) for item in items}
 

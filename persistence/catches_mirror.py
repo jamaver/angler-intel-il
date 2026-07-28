@@ -78,7 +78,7 @@ def _write_catches(
         raise RuntimeError("catches is SQLite-authoritative; JSON-to-SQLite mirroring is disabled.")
     records = _records(source_payload)
     source_label = _source_label(source_path)
-    source_hash = file_sha256(source_path)
+    source_hash = record_hash(source_payload) if authority == "sqlite" else file_sha256(source_path)
     valid: list[dict[str, Any]] = []
     mappings: list[tuple[str, str | None, Any, str, str | None]] = []
     seen: set[str] = set()

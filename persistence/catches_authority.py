@@ -10,7 +10,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .canonical_json import canonical_dumps
+from .canonical_json import canonical_dumps, record_hash
+from .provenance import file_sha256
 from .catches_mirror import CATCHES_ENVELOPE_KEY, _utc_now, _write_catches
 from .connection import DEFAULT_DB, connect
 
@@ -24,11 +25,14 @@ def _prepare_json_export(path: Path, payload: Any) -> Path:
     return temporary
 
 
-def _set_export_status(conn, status: str, *, error: str | None = None) -> None:
+def _set_export_status(conn, status: str, *, error: str | None = None, authoritative_payload_hash: str | None = None, compatibility_export_hash: str | None = None) -> None:
     conn.execute(
         """INSERT INTO app_settings(key, value_json, updated_at) VALUES(?, ?, ?)
            ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json, updated_at=excluded.updated_at""",
-        (EXPORT_STATUS_KEY, canonical_dumps({"domain": "catches", "status": status, "error": error}), _utc_now()),
+        (EXPORT_STATUS_KEY, canonical_dumps({"domain": "catches", "status": status, "error": error,
+            "authoritative_payload_hash": authoritative_payload_hash,
+            "compatibility_export_hash": compatibility_export_hash,
+            "compatibility_exported_at": _utc_now() if status == "ok" else None}), _utc_now()),
     )
 
 
@@ -67,7 +71,7 @@ def _write_sqlite_first(
         with connect(db_path) as conn:
             with conn:
                 _write_catches(conn, payload, json_path, usage_events, authority="sqlite")
-                _set_export_status(conn, "pending")
+                _set_export_status(conn, "pending", authoritative_payload_hash=record_hash(payload))
     except Exception:
         temporary.unlink(missing_ok=True)
         raise
@@ -76,11 +80,11 @@ def _write_sqlite_first(
     except Exception as exc:
         with connect(db_path) as conn:
             with conn:
-                _set_export_status(conn, "failed", error=str(exc))
+                _set_export_status(conn, "failed", error=str(exc), authoritative_payload_hash=record_hash(payload))
         return payload
     with connect(db_path) as conn:
         with conn:
-            _set_export_status(conn, "ok")
+            _set_export_status(conn, "ok", authoritative_payload_hash=record_hash(payload), compatibility_export_hash=file_sha256(json_path))
     return payload
 
 

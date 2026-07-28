@@ -173,7 +173,7 @@ def _write_manual_waters(
         raise RuntimeError("manual_waters is SQLite-authoritative; JSON-to-SQLite mirroring is disabled.")
     records = _source_items(source_payload)
     source_label = _source_label(source_path)
-    source_hash = file_sha256(source_path)
+    source_hash = record_hash(source_payload) if authority == "sqlite" else file_sha256(source_path)
     seen_ids: set[str] = set()
     valid_records: list[dict[str, Any]] = []
     record_map_entries: list[tuple[str, str | None, Any, str, str | None]] = []

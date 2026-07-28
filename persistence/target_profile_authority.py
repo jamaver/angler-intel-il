@@ -21,8 +21,8 @@ def _commit_json_export(temporary: Path, path: Path) -> None:
     temporary.replace(path)
 
 
-def _set_export_status(conn, status: str, *, error: str | None = None) -> None:
-    value = {"status": status, "error": error, "domain": "target_profile"}
+def _set_export_status(conn, status: str, *, error: str | None = None, authoritative_payload_hash: str | None = None, compatibility_export_hash: str | None = None) -> None:
+    value = {"status": status, "error": error, "domain": "target_profile", "authoritative_payload_hash": authoritative_payload_hash, "compatibility_export_hash": compatibility_export_hash, "compatibility_exported_at": _utc_now() if status == "ok" else None}
     conn.execute(
         """
         INSERT INTO app_settings(key, value_json, updated_at)
@@ -117,7 +117,7 @@ def _write_profile(conn, profile: dict[str, Any], *, authority: str, source_path
          "SQLite is authoritative; JSON is a compatibility export." if authority == "sqlite" else "JSON remains authoritative.", _utc_now()),
     )
     if authority == "sqlite":
-        _set_export_status(conn, "pending")
+        _set_export_status(conn, "pending", authoritative_payload_hash=record_hash(profile))
 
 
 def activate_target_profile_authority(db_path: str | Path, json_path: str | Path) -> dict[str, Any]:
@@ -136,11 +136,11 @@ def activate_target_profile_authority(db_path: str | Path, json_path: str | Path
     except Exception as exc:
         with connect(db_path) as conn:
             with conn:
-                _set_export_status(conn, "failed", error=str(exc))
+                _set_export_status(conn, "failed", error=str(exc), authoritative_payload_hash=record_hash(profile))
         raise
     with connect(db_path) as conn:
         with conn:
-            _set_export_status(conn, "ok")
+            _set_export_status(conn, "ok", authoritative_payload_hash=record_hash(profile), compatibility_export_hash=record_hash(profile))
     return profile
 
 
