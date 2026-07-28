@@ -1,0 +1,9 @@
+{
+  "version": "v7.3.4-catches-authority",
+  "previous_version": "v7.3.3-manual-waters-authority",
+  "domain": "catches",
+  "authority": "sqlite",
+  "json_compatibility_export": true,
+  "sqlite_authority_enabled": true,
+  "notes": "Catch logging is SQLite-first. Legacy catches.json remains a compatibility export."
+}
