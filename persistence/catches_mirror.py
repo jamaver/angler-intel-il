@@ -14,7 +14,7 @@ from .provenance import file_sha256
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DOMAIN = "catches"
-CATCHEs_ENVELOPE_KEY = "v7.catches.envelope"
+CATCHES_ENVELOPE_KEY = "v7.catches.envelope"
 
 
 def _utc_now() -> str:
@@ -63,7 +63,19 @@ def _write_map(conn, source_label: str, source_key: str, normalized_id: str | No
     )
 
 
-def _write_catches(conn, source_payload: Any, source_path: Path, usage_events: list[dict[str, Any]] | None) -> None:
+def _write_catches(
+    conn,
+    source_payload: Any,
+    source_path: Path,
+    usage_events: list[dict[str, Any]] | None,
+    *,
+    authority: str = "json",
+) -> None:
+    authority_row = conn.execute(
+        "SELECT authority FROM data_authority WHERE domain = 'catches'"
+    ).fetchone()
+    if authority_row and authority_row["authority"] == "sqlite" and authority != "sqlite":
+        raise RuntimeError("catches is SQLite-authoritative; JSON-to-SQLite mirroring is disabled.")
     records = _records(source_payload)
     source_label = _source_label(source_path)
     source_hash = file_sha256(source_path)
@@ -159,16 +171,24 @@ def _write_catches(conn, source_payload: Any, source_path: Path, usage_events: l
 
     now = _utc_now()
     conn.execute("""INSERT INTO source_files(domain, logical_name, path, file_hash, record_count, source_of_truth, generated_only, last_seen_at, last_imported_at)
-                 VALUES('catches', 'catches', ?, ?, ?, 'json', 0, ?, ?)
+                 VALUES('catches', 'catches', ?, ?, ?, ?, 0, ?, ?)
                  ON CONFLICT(domain, path) DO UPDATE SET file_hash=excluded.file_hash, record_count=excluded.record_count,
-                 source_of_truth='json', generated_only=0, last_seen_at=excluded.last_seen_at, last_imported_at=excluded.last_imported_at""",
-                 (source_label, source_hash, len(records), now, now))
+                 source_of_truth=excluded.source_of_truth, generated_only=0, last_seen_at=excluded.last_seen_at, last_imported_at=excluded.last_imported_at""",
+                 (source_label, source_hash, len(records), authority, now, now))
     conn.execute("""INSERT INTO data_authority(domain, authority, source_path, source_hash, note, updated_at)
-                 VALUES('catches', 'json', ?, ?, 'JSON remains authoritative during V7.1 catch mirroring.', ?)
-                 ON CONFLICT(domain) DO UPDATE SET authority='json', source_path=excluded.source_path, source_hash=excluded.source_hash,
-                 note=excluded.note, updated_at=excluded.updated_at""", (source_label, source_hash, now))
+                 VALUES('catches', ?, ?, ?, ?, ?)
+                 ON CONFLICT(domain) DO UPDATE SET authority=excluded.authority, source_path=excluded.source_path, source_hash=excluded.source_hash,
+                 note=excluded.note, updated_at=excluded.updated_at""", (
+                     authority,
+                     source_label,
+                     source_hash,
+                     "SQLite is authoritative; JSON is a compatibility export."
+                     if authority == "sqlite"
+                     else "JSON remains authoritative during V7.1 catch mirroring.",
+                     now,
+                 ))
     conn.execute("INSERT OR REPLACE INTO app_settings(key, value_json, updated_at) VALUES(?, ?, ?)",
-                 (CATCHEs_ENVELOPE_KEY, canonical_dumps(source_payload), now))
+                 (CATCHES_ENVELOPE_KEY, canonical_dumps(source_payload), now))
 
 
 def mirror_catches(source_path: str | Path, *, usage_events: list[dict[str, Any]] | None = None, db_path: str | Path = DEFAULT_DB, force: bool = False) -> MirrorResult:

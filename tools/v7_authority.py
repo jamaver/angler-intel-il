@@ -22,9 +22,10 @@ from persistence.migrations import migrate
 from persistence.target_profile_authority import activate_target_profile_authority
 from persistence.gear_inventory_authority import activate_gear_inventory_authority
 from persistence.manual_waters_authority import activate_manual_waters_authority
+from persistence.catches_authority import activate_catches_authority
 
 DOMAINS = ("target_profile", "gear_inventory", "manual_waters", "catches", "reports", "recommendations")
-REGISTERED_TRANSITIONS = {"target_profile", "gear_inventory", "manual_waters"}
+REGISTERED_TRANSITIONS = {"target_profile", "gear_inventory", "manual_waters", "catches"}
 
 
 def preflight(domain: str, backup_manifest: Path, db: Path, source_root: Path, reports_root: Path) -> dict[str, object]:
@@ -115,6 +116,8 @@ def main() -> int:
                     exported = activate_gear_inventory_authority(Path(args.db), Path(args.source_root) / "gear_inventory.json")
                 elif args.domain == "manual_waters":
                     exported = activate_manual_waters_authority(Path(args.db), Path(args.source_root) / "manual_waters.json")
+                elif args.domain == "catches":
+                    exported = activate_catches_authority(Path(args.db), Path(args.source_root) / "catches.json")
                 else:
                     raise ValueError(f"No authority activation implementation for {args.domain}")
                 result["transitioned"] = True
