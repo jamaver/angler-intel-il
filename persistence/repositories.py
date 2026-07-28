@@ -293,7 +293,17 @@ class SQLiteReportsIndexRepository:
 
     def read(self) -> list[Any]:
         with connect(self.db_path, read_only=True) as conn:
+            rows = conn.execute(
+                "SELECT legacy_payload_json FROM trip_reports WHERE status = 'active' ORDER BY created_at DESC, id DESC"
+            ).fetchall()
             row = conn.execute("SELECT value_json FROM app_settings WHERE key = ?", (self.SETTING_KEY,)).fetchone()
+        if rows:
+            payload = []
+            for report_row in rows:
+                item = json.loads(report_row["legacy_payload_json"] or "{}")
+                if isinstance(item, dict):
+                    payload.append(item)
+            return canonicalize(payload)
         if row is None:
             raise LookupError("SQLite reports index envelope not found")
         payload = json.loads(row["value_json"] or "[]")

@@ -119,6 +119,8 @@ def get_v7_health_for_app() -> dict[str, Any]:
         "authority_manifest": {"path": str(manifest_path()), "error": None, "domains": {}},
         "authority_resolutions": [],
         "compatibility_exports": {},
+        "report_artifact_repair": {},
+        "report_read_fallback": {},
     }
 
     manifest, manifest_error = read_manifest()
@@ -166,13 +168,20 @@ def get_v7_health_for_app() -> dict[str, Any]:
             payload["mirror_summary"] = _mirror_summary(payload["mirror_status"])
             payload["reconciliation_summary"] = get_reconciliation_summary(conn)
             payload["legacy_reference_summary"] = _legacy_reference_summary(conn)
-            for domain in ("target_profile", "gear_inventory", "manual_waters", "catches"):
+            for domain in ("target_profile", "gear_inventory", "manual_waters", "catches", "reports"):
                 row = conn.execute("SELECT value_json FROM app_settings WHERE key = ?", (f"v7.{domain}.compatibility_export",)).fetchone()
                 if row:
                     try:
                         payload["compatibility_exports"][domain] = json.loads(row["value_json"] or "{}")
                     except Exception:
                         payload["compatibility_exports"][domain] = {"status": "invalid"}
+            for key, destination in (("v7.reports.artifact_repair", "report_artifact_repair"), ("v7.reports.read_fallback", "report_read_fallback")):
+                row = conn.execute("SELECT value_json FROM app_settings WHERE key = ?", (key,)).fetchone()
+                if row:
+                    try:
+                        payload[destination] = json.loads(row["value_json"] or "{}")
+                    except Exception:
+                        payload[destination] = {"status": "invalid"}
     except Exception as exc:
         payload["errors"].append(str(exc))
 

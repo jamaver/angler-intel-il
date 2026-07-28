@@ -1,0 +1,9 @@
+{
+  "version": "v7.3.5c-report-reads-repair",
+  "previous_version": "v7.3.5b-sqlite-report-creation",
+  "reports_authority": "json",
+  "staged_sqlite_report_reads": true,
+  "artifact_repair": true,
+  "legacy_json_fallback": "staged_only",
+  "installed_at": "2026-07-28"
+}

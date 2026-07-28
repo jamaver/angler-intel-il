@@ -43,8 +43,8 @@
     const nav = document.querySelector(".ai-main-tabs");
     if (!nav || nav.querySelector(".ai-version-badge-v442")) return;
 
-    const CURRENT_VERSION = "v7.3.5b";
-    const CURRENT_RELEASE = "v7.3.5b-sqlite-report-creation";
+    const CURRENT_VERSION = "v7.3.5c";
+    const CURRENT_RELEASE = "v7.3.5c-report-reads-repair";
 
     const badge = document.createElement("span");
     badge.className = "ai-version-badge-v442";

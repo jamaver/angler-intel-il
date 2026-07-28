@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel",
-  "version": "v7.3.5b-sqlite-report-creation",
-  "updated": "2026-07-28T15:05:00-05:00",
+  "version": "v7.3.5c-report-reads-repair",
+  "updated": "2026-07-28T15:18:00-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -42,7 +42,8 @@
     "gear_intelligence_packing_catch_linking": "v6.13",
     "sqlite_authority_fail_closed": "v7.3.4.1",
     "report_authority_contract": "v7.3.5a",
-    "sqlite_report_creation": "v7.3.5b"
+    "sqlite_report_creation": "v7.3.5b",
+    "sqlite_report_reads_repair": "v7.3.5c"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -80,6 +81,7 @@
     "v6.13 adds gear intelligence, trip packing, maintenance summaries, and catch-linked gear usage tracking.",
     "v7.3.4.1 adds an external authority manifest and fail-closed writes for SQLite-authoritative target profiles, gear inventory, manual waters, and catches.",
     "v7.3.5a prepares the SQLite report authority contract, lifecycle fields, and artifact rules while reports remain JSON-authoritative.",
-    "v7.3.5b adds a tested SQLite-first report save service with separately tracked JSON and printable HTML artifacts; production report routes remain JSON-authoritative."
+    "v7.3.5b adds a tested SQLite-first report save service with separately tracked JSON and printable HTML artifacts; production report routes remain JSON-authoritative.",
+    "v7.3.5c adds staged SQLite report snapshot reads and repairable JSON/HTML artifact regeneration while reports remain JSON-authoritative."
   ]
 }

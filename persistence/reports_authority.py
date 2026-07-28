@@ -19,6 +19,8 @@ from .report_authority_contract import ReportAuthorityPlan, build_report_authori
 from .runtime_paths import BASE_DIR
 
 EXPORT_STATUS_KEY = "v7.reports.compatibility_export"
+READ_FALLBACK_KEY = "v7.reports.read_fallback"
+REPAIR_STATUS_KEY = "v7.reports.artifact_repair"
 
 
 def _utc_now() -> str:
@@ -43,6 +45,15 @@ class ReportSaveResult:
         if self.warning:
             result["warning"] = self.warning
         return result
+
+
+@dataclass(frozen=True, slots=True)
+class AuthoritativeReport:
+    meta: dict[str, Any]
+    wrapped_snapshot: dict[str, Any]
+    status: str
+    compatibility_export_status: str
+    html_export_status: str
 
 
 def _atomic_write(path: Path, content: str) -> None:
@@ -160,6 +171,128 @@ def _active_report_index(conn) -> list[dict[str, Any]]:
         if isinstance(item, dict):
             records.append(item)
     return records
+
+
+def list_authoritative_report_metadata(db_path: str | Path = DEFAULT_DB) -> list[dict[str, Any]]:
+    """Return active report metadata from SQLite without requiring artifacts."""
+    with connect(db_path, read_only=True) as conn:
+        return _active_report_index(conn)
+
+
+def _normalize_snapshot(row: Any) -> dict[str, Any]:
+    raw = json.loads(row["snapshot_payload_json"] or "{}")
+    if not isinstance(raw, dict):
+        raise ValueError("SQLite report snapshot must be an object")
+    legacy_meta = json.loads(row["legacy_payload_json"] or "{}")
+    if not isinstance(legacy_meta, dict):
+        legacy_meta = {}
+    if not isinstance(raw.get("meta"), dict):
+        raw["meta"] = legacy_meta
+    if not isinstance(raw.get("payload"), dict):
+        # Older snapshot envelopes may have stored the user payload directly.
+        raw = {"meta": legacy_meta, "payload": raw, "summary": {}}
+    if not isinstance(raw.get("summary"), dict):
+        raw["summary"] = {}
+    return raw
+
+
+def load_authoritative_report(report_id: str, db_path: str | Path = DEFAULT_DB) -> AuthoritativeReport:
+    """Load a complete active report snapshot from SQLite.
+
+    A legacy mirrored report without a full snapshot intentionally raises
+    ``LookupError`` so callers can use their explicitly-labelled JSON fallback
+    during the staged-read period.
+    """
+    with connect(db_path, read_only=True) as conn:
+        row = conn.execute(
+            "SELECT * FROM trip_reports WHERE id = ? AND status = 'active'", (report_id,)
+        ).fetchone()
+    if row is None:
+        raise LookupError(f"SQLite report not found: {report_id}")
+    if not row["snapshot_payload_json"]:
+        raise LookupError(f"SQLite report snapshot is unavailable for legacy report: {report_id}")
+    snapshot = _normalize_snapshot(row)
+    meta = snapshot.get("meta") if isinstance(snapshot.get("meta"), dict) else {}
+    if not meta:
+        meta = json.loads(row["legacy_payload_json"] or "{}")
+    if not isinstance(meta, dict):
+        raise ValueError("SQLite report metadata is invalid")
+    return AuthoritativeReport(
+        meta=meta,
+        wrapped_snapshot=snapshot,
+        status=str(row["status"] or "active"),
+        compatibility_export_status=str(row["compatibility_export_status"] or "not_applicable"),
+        html_export_status=str(row["html_export_status"] or "not_applicable"),
+    )
+
+
+def record_json_read_fallback(report_id: str, reason: str, db_path: str | Path = DEFAULT_DB) -> None:
+    """Record a visible staged-read fallback without changing report data."""
+    now = _utc_now()
+    with connect(db_path) as conn:
+        with conn:
+            conn.execute(
+                """INSERT INTO app_settings(key, value_json, updated_at) VALUES(?, ?, ?)
+                   ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json, updated_at=excluded.updated_at""",
+                (READ_FALLBACK_KEY, canonical_dumps({"report_id": report_id, "reason": reason, "at": now}), now),
+            )
+
+
+def repair_report_artifacts(
+    report_id: str,
+    *,
+    render_html,
+    db_path: str | Path = DEFAULT_DB,
+    index_path: str | Path,
+    reports_dir: str | Path,
+) -> ReportSaveResult:
+    """Regenerate compatibility JSON and printable HTML from an SQLite snapshot."""
+    report = load_authoritative_report(report_id, db_path)
+    meta = report.meta
+    snapshot = report.wrapped_snapshot
+    report_id = str(meta.get("id") or report_id)
+    json_filename = str(meta.get("json_file") or f"{report_id}.json")
+    html_filename = str(meta.get("html_file") or f"{report_id}.html")
+    if json_filename != f"{report_id}.json" or html_filename != f"{report_id}.html":
+        raise ValueError("SQLite report artifact filenames are invalid")
+    payload = snapshot.get("payload") if isinstance(snapshot.get("payload"), dict) else {}
+    selected_date = _text(meta.get("selected_forecast_date") or payload.get("selected_forecast_date"))
+    rendered_html = render_html(meta, payload, selected_forecast_date=selected_date)
+    plan = build_report_authority_plan(meta, snapshot, rendered_html)
+    database, index, directory = Path(db_path), Path(index_path), Path(reports_dir)
+
+    json_status, html_status = "pending", "pending"
+    errors: list[str] = []
+    try:
+        with connect(database, read_only=True) as conn:
+            active_index = _active_report_index(conn)
+        _atomic_write(directory / json_filename, json.dumps(snapshot, indent=2, ensure_ascii=False))
+        _atomic_write(index, json.dumps(active_index, indent=2, ensure_ascii=False))
+        json_status = "ok"
+    except Exception as exc:
+        json_status = "failed"
+        errors.append(f"Compatibility JSON repair failed: {exc}")
+    try:
+        _atomic_write(directory / html_filename, rendered_html)
+        html_status = "ok"
+    except Exception as exc:
+        html_status = "failed"
+        errors.append(f"Printable HTML repair failed: {exc}")
+    error = "; ".join(errors) or None
+    _set_artifact_status(
+        database, report_id, json_status=json_status, html_status=html_status,
+        json_hash=plan.authoritative_payload_hash if json_status == "ok" else None,
+        html_hash=plan.html_export_hash if html_status == "ok" else None, error=error,
+    )
+    now = _utc_now()
+    with connect(database) as conn:
+        with conn:
+            conn.execute(
+                """INSERT INTO app_settings(key, value_json, updated_at) VALUES(?, ?, ?)
+                   ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json, updated_at=excluded.updated_at""",
+                (REPAIR_STATUS_KEY, canonical_dumps({"report_id": report_id, "json": json_status, "html": html_status, "error": error, "at": now}), now),
+            )
+    return ReportSaveResult(dict(meta), "sqlite", json_status, html_status, error)
 
 
 def _set_artifact_status(

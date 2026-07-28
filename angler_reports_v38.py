@@ -13,6 +13,7 @@ from urllib.parse import urlencode
 from flask import jsonify, render_template, request, send_file
 from persistence.reports_mirror import mirror_reports
 from persistence.repositories import JsonReportsIndexRepository, SQLiteReportsIndexRepository, read_domain
+from persistence.reports_authority import load_authoritative_report, record_json_read_fallback
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -1171,6 +1172,42 @@ def register_report_routes_v38(app):
 
         if not match:
             return jsonify({"ok": False, "error": "Report not found"}), 404
+
+        source = str(os.environ.get("AI_REPORTS_READ_SOURCE", "compare_json")).strip().lower()
+        staged_sqlite = source in {"sqlite", "sqlite_with_json_fallback"} and os.environ.get("AI_ENABLE_V7_STAGED_READS") == "1"
+        if staged_sqlite:
+            try:
+                authoritative = load_authoritative_report(
+                    report_id,
+                    Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3"))),
+                )
+                payload = authoritative.wrapped_snapshot.get("payload") if isinstance(authoritative.wrapped_snapshot.get("payload"), dict) else {}
+                selected_forecast_date = (
+                    request.args.get("selected_forecast_date")
+                    or request.args.get("forecast_date")
+                    or authoritative.meta.get("selected_forecast_date")
+                    or payload.get("selected_forecast_date")
+                    or ""
+                ).strip()
+                return _render_report_html(authoritative.meta, payload, selected_forecast_date=selected_forecast_date)
+            except LookupError as exc:
+                if source == "sqlite":
+                    return jsonify({"ok": False, "error": str(exc)}), 404
+                try:
+                    record_json_read_fallback(
+                        report_id, str(exc), Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))
+                    )
+                except Exception:
+                    pass
+            except Exception as exc:
+                if source == "sqlite":
+                    return jsonify({"ok": False, "error": f"SQLite report read failed: {exc}"}), 500
+                try:
+                    record_json_read_fallback(
+                        report_id, f"SQLite report read failed: {exc}", Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))
+                    )
+                except Exception:
+                    pass
 
         json_file = match.get("json_file")
         if not json_file:
