@@ -12,7 +12,7 @@ if str(ROOT) not in sys.path:
 
 from persistence.connection import connect
 from persistence.migrations import migrate
-from persistence.personal_analytics import AnalyticsInputError, build_personal_analytics
+from persistence.personal_analytics import AnalyticsInputError, build_catch_water_analytics, build_personal_analytics
 
 
 def _insert(conn, catch_id, timestamp, species, waterbody, lure):
@@ -53,6 +53,12 @@ def main() -> int:
         assert any("Frequency summaries" in note for note in summary["notes"])
         filtered = build_personal_analytics(db, date_from="2026-07-02", date_to="2026-07-05", species="Largemouth Bass")
         assert filtered["sample"]["catch_count"] == 2
+        catch_water = build_catch_water_analytics(db, limit=3)
+        assert catch_water["waterbody_frequency"]["rows"][0]["label"] == "Fox River"
+        assert catch_water["time_of_day"]["available"]
+        assert catch_water["seasonal_frequency"]["rows"][1]["label"] == "summer"
+        assert not catch_water["catch_rate_by_trip"]["available"]
+        assert not catch_water["no_catch_trip_frequency"]["available"]
         try:
             build_personal_analytics(db, date_from="not-a-date")
         except AnalyticsInputError:
@@ -65,6 +71,7 @@ def main() -> int:
             assert list(conn.execute("PRAGMA foreign_key_check")) == []
     app_text = (ROOT / "app.py").read_text(encoding="utf-8")
     assert "register_analytics_routes_v74" in app_text
+    assert "catch-water" in (ROOT / "angler_analytics_v74.py").read_text(encoding="utf-8")
     assert "Admin" not in (ROOT / "templates" / "index.html").read_text(encoding="utf-8")
     print("PASS: V7.4.0 analytics query layer QC")
     return 0

@@ -79,6 +79,17 @@ def _daypart(moment: datetime) -> str:
     return "night"
 
 
+def _season(moment: datetime) -> str:
+    month = moment.month
+    if month in (12, 1, 2):
+        return "winter"
+    if month in (3, 4, 5):
+        return "spring"
+    if month in (6, 7, 8):
+        return "summer"
+    return "fall"
+
+
 def build_personal_analytics(
     db_path: str | Path = DEFAULT_DB,
     *,
@@ -193,4 +204,113 @@ def build_personal_analytics(
         "dayparts": dayparts,
         "missing_data": dict(missing),
         "notes": notes,
+    }
+
+
+def build_catch_water_analytics(
+    db_path: str | Path = DEFAULT_DB,
+    *,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    species: str | None = None,
+    waterbody: str | None = None,
+    limit: int = 5,
+) -> dict[str, Any]:
+    """Build V7.4.1 catch and water frequency analytics without rate claims."""
+    baseline = build_personal_analytics(
+        db_path,
+        date_from=date_from,
+        date_to=date_to,
+        species=species,
+        waterbody=waterbody,
+        limit=limit,
+    )
+    start = baseline["query"]["date_from"]
+    end = baseline["query"]["date_to"]
+    clean_species = baseline["query"]["species"]
+    clean_waterbody = baseline["query"]["waterbody"]
+    clauses: list[str] = []
+    params: list[str | int] = []
+    if start:
+        clauses.append("substr(COALESCE(timestamp, ''), 1, 10) >= ?")
+        params.append(start)
+    if end:
+        clauses.append("substr(COALESCE(timestamp, ''), 1, 10) <= ?")
+        params.append(end)
+    if clean_species:
+        clauses.append("lower(trim(COALESCE(species, ''))) = lower(?)")
+        params.append(clean_species)
+    if clean_waterbody:
+        clauses.append("lower(trim(COALESCE(waterbody, ''))) = lower(?)")
+        params.append(clean_waterbody)
+    where_sql = f" WHERE {' AND '.join(clauses)}" if clauses else ""
+    query = f"SELECT timestamp, species, waterbody, lure FROM catches{where_sql} ORDER BY timestamp DESC, id DESC LIMIT ?"
+    params.append(MAX_ANALYTICS_ROWS + 1)
+    with connect(db_path, read_only=True) as conn:
+        rows = [dict(row) for row in conn.execute(query, params)][:MAX_ANALYTICS_ROWS]
+
+    total = len(rows)
+    seasonal_counts: Counter[str] = Counter()
+    dated_count = 0
+    for row in rows:
+        moment = _parse_timestamp(row["timestamp"])
+        if moment:
+            seasonal_counts[_season(moment)] += 1
+            dated_count += 1
+    quality = baseline["sample"]["quality"]
+    water_note = "Waterbody frequency only; trip count and no-catch outcomes are not deterministically linked to historical catches."
+    season_rows = [
+        {
+            "label": label,
+            "count": seasonal_counts.get(label, 0),
+            "share_percent": round((seasonal_counts.get(label, 0) / dated_count) * 100, 1) if dated_count else 0.0,
+        }
+        for label in ("spring", "summer", "fall", "winter")
+    ]
+    return {
+        "ok": True,
+        "source": "sqlite",
+        "generated_at": _utc_now(),
+        "query": baseline["query"],
+        "sample": baseline["sample"],
+        "catch_frequency": {
+            "by_species": baseline["top_species"],
+            "by_waterbody": baseline["top_waterbodies"],
+            "by_lure": baseline["top_lures"],
+        },
+        "waterbody_frequency": {
+            "available": total > 0,
+            "rows": baseline["top_waterbodies"],
+            "label": "Recorded catch frequency by waterbody",
+            "note": water_note,
+        },
+        "time_of_day": {
+            "available": dated_count > 0,
+            "rows": baseline["dayparts"],
+            "label": "Recorded catches by daypart",
+            "note": "Daypart patterns use catch timestamps and do not yet include total effort or no-catch trips.",
+        },
+        "seasonal_frequency": {
+            "available": dated_count > 0,
+            "rows": season_rows,
+            "label": "Recorded catches by season",
+            "note": "Seasonal frequency uses recorded catch timestamps, not fishing effort.",
+        },
+        "catch_rate_by_trip": {
+            "available": False,
+            "label": "Catch rate by trip",
+            "reason": "Historical catches do not yet carry deterministic trip IDs, so a reliable trip denominator is unavailable.",
+        },
+        "no_catch_trip_frequency": {
+            "available": False,
+            "label": "No-catch trip frequency",
+            "reason": "Trip-completion outcomes are not yet complete enough to measure no-catch frequency.",
+        },
+        "sample_quality": {
+            "label": quality,
+            "confidence": baseline["sample"]["confidence"],
+            "note": next((note for note in baseline["notes"] if "sample" in note.lower()), "Sample quality is based on recorded catch count."),
+        },
+        "missing_data": baseline["missing_data"],
+        "notes": baseline["notes"] + [water_note],
     }

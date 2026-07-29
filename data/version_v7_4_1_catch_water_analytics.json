@@ -1,0 +1,10 @@
+{
+  "version": "v7.4.1-catch-water-analytics",
+  "previous_version": "v7.4.0-analytics-query-layer",
+  "catch_water_frequency": true,
+  "daypart_frequency": true,
+  "seasonal_frequency": true,
+  "trip_catch_rate_claimed": false,
+  "no_catch_frequency_claimed": false,
+  "installed_at": "2026-07-29T17:45:00-05:00"
+}

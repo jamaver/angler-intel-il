@@ -43,8 +43,8 @@
     const nav = document.querySelector(".ai-main-tabs");
     if (!nav || nav.querySelector(".ai-version-badge-v442")) return;
 
-    const CURRENT_VERSION = "v7.4.0";
-    const CURRENT_RELEASE = "v7.4.0-analytics-query-layer";
+    const CURRENT_VERSION = "v7.4.1";
+    const CURRENT_RELEASE = "v7.4.1-catch-water-analytics";
 
     const badge = document.createElement("span");
     badge.className = "ai-version-badge-v442";
