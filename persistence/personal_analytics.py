@@ -429,3 +429,116 @@ def build_lure_presentation_analytics(
         "missing_data": {**baseline["missing_data"], "rig": missing_rig},
         "notes": notes,
     }
+
+
+def build_gear_analytics(
+    db_path: str | Path = DEFAULT_DB,
+    *,
+    limit: int = 5,
+) -> dict[str, Any]:
+    """Build V7.4.3 read-only ownership, usage, catch-link, and maintenance summaries."""
+    try:
+        requested_limit = int(limit)
+    except (TypeError, ValueError) as exc:
+        raise AnalyticsInputError("limit must be a number between 1 and 20") from exc
+    if not 1 <= requested_limit <= 20:
+        raise AnalyticsInputError("limit must be between 1 and 20")
+    with connect(db_path, read_only=True) as conn:
+        gear_rows = [dict(row) for row in conn.execute(
+            """SELECT id, category, display_name, brand, model, status, favorite, quantity
+               FROM gear_items ORDER BY display_name COLLATE NOCASE, id"""
+        )]
+        usage_rows = [dict(row) for row in conn.execute(
+            "SELECT gear_item_id, count(*) AS usage_events, max(used_at) AS last_used FROM gear_usage GROUP BY gear_item_id"
+        )]
+        linked_rows = [dict(row) for row in conn.execute(
+            """SELECT cg.gear_item_id, cg.gear_role, c.species, c.waterbody, c.timestamp
+               FROM catch_gear cg JOIN catches c ON c.id = cg.catch_id
+               WHERE cg.gear_item_id IS NOT NULL"""
+        )]
+        maintenance_rows = [dict(row) for row in conn.execute(
+            "SELECT gear_item_id, maintenance_type, due_at, last_done_at FROM gear_maintenance"
+        )]
+
+    usage_by_id = {row["gear_item_id"]: row for row in usage_rows}
+    linked_by_id: dict[str, list[dict[str, Any]]] = {}
+    for row in linked_rows:
+        linked_by_id.setdefault(str(row["gear_item_id"]), []).append(row)
+    maintenance_by_id: dict[str, list[dict[str, Any]]] = {}
+    for row in maintenance_rows:
+        maintenance_by_id.setdefault(str(row["gear_item_id"]), []).append(row)
+    today = datetime.now(timezone.utc).date().isoformat()
+
+    items: list[dict[str, Any]] = []
+    category_counts: Counter[str] = Counter()
+    underused: list[dict[str, Any]] = []
+    due_maintenance: list[dict[str, Any]] = []
+    for gear in gear_rows:
+        item_id = str(gear["id"])
+        usage = usage_by_id.get(item_id, {})
+        linked = linked_by_id.get(item_id, [])
+        species_counts = Counter(_clean_text(row["species"]) for row in linked if _clean_text(row["species"]))
+        water_counts = Counter(_clean_text(row["waterbody"]) for row in linked if _clean_text(row["waterbody"]))
+        label = _clean_text(gear["display_name"]) or " ".join(part for part in (_clean_text(gear["brand"]), _clean_text(gear["model"])) if part) or item_id
+        item = {
+            "id": item_id,
+            "label": label,
+            "category": _clean_text(gear["category"]) or "other",
+            "status": _clean_text(gear["status"]) or "owned",
+            "favorite": bool(gear["favorite"]),
+            "quantity": int(gear["quantity"] or 0),
+            "usage_events": int(usage.get("usage_events") or 0),
+            "last_used": usage.get("last_used"),
+            "linked_catches": len(linked),
+            "top_species": _ranked(species_counts, len(linked), requested_limit),
+            "top_waterbodies": _ranked(water_counts, len(linked), requested_limit),
+        }
+        items.append(item)
+        category_counts[item["category"]] += 1
+        if item["status"] == "owned" and not item["usage_events"] and not item["linked_catches"]:
+            underused.append(item)
+        for record in maintenance_by_id.get(item_id, []):
+            due_at = _clean_text(record["due_at"])
+            if due_at and due_at[:10] <= today:
+                due_maintenance.append({"id": item_id, "label": label, "maintenance_type": _clean_text(record["maintenance_type"]) or "maintenance", "due_at": due_at[:10]})
+
+    active = [item for item in items if item["status"] == "owned"]
+    most_linked = sorted(items, key=lambda item: (-item["linked_catches"], -item["usage_events"], item["label"].lower()))[:requested_limit]
+    most_used = sorted(items, key=lambda item: (-item["usage_events"], -item["linked_catches"], item["label"].lower()))[:requested_limit]
+    linked_count = sum(item["linked_catches"] for item in items)
+    quality, quality_note = _sample_quality(linked_count)
+    return {
+        "ok": True,
+        "source": "sqlite",
+        "generated_at": _utc_now(),
+        "sample": {
+            "gear_items": len(items),
+            "owned_items": len(active),
+            "catch_gear_links": linked_count,
+            "quality": quality,
+            "confidence": _confidence_label(quality),
+        },
+        "inventory": {
+            "by_category": _ranked(category_counts, len(items), requested_limit),
+            "favorites": sum(1 for item in items if item["favorite"]),
+            "retired": sum(1 for item in items if item["status"] in {"retired", "archived"}),
+        },
+        "most_used": most_used,
+        "most_catch_linked": most_linked,
+        "underused": underused[:requested_limit],
+        "maintenance": {
+            "tracked_records": len(maintenance_rows),
+            "due": sorted(due_maintenance, key=lambda item: (item["due_at"], item["label"].lower()))[:requested_limit],
+            "note": "Maintenance is shown only for records with an explicit due date.",
+        },
+        "setup_outcomes": {
+            "available": False,
+            "label": "Catch outcomes by saved setup",
+            "reason": "Historical catches do not yet store deterministic gear setup IDs.",
+        },
+        "notes": [
+            quality_note,
+            "Catch-linked gear counts reflect logged catches, not total fishing effort or gear effectiveness.",
+            "Underused means no recorded usage event or catch link; it does not mean unsuitable gear.",
+        ],
+    }

@@ -1,0 +1,9 @@
+{
+  "version": "v7.4.3-gear-analytics",
+  "previous_version": "v7.4.2-lure-presentation-analytics",
+  "gear_usage_analytics": true,
+  "catch_gear_analytics": true,
+  "maintenance_summary": true,
+  "setup_outcomes_claimed": false,
+  "installed_at": "2026-07-29T18:45:00-05:00"
+}

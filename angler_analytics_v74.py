@@ -11,6 +11,7 @@ from persistence.connection import DEFAULT_DB
 from persistence.personal_analytics import (
     AnalyticsInputError,
     build_catch_water_analytics,
+    build_gear_analytics,
     build_lure_presentation_analytics,
     build_personal_analytics,
 )
@@ -20,18 +21,21 @@ def _analytics_db_path() -> Path:
     return Path(os.environ.get("AI_SQLITE_DB_PATH", str(DEFAULT_DB)))
 
 
-def _unavailable_response():
-    resolution = resolve_authority("catches", _analytics_db_path())
-    if resolution.effective_authority == "sqlite":
-        return None
-    status = 503 if resolution.effective_authority == "sqlite_unavailable" else 409
-    return jsonify({
-        "ok": False,
-        "error": "Personal analytics are unavailable until the catches authority store is healthy.",
-        "authority": resolution.effective_authority,
-        "authority_status": resolution.status,
-        "source": "unavailable",
-    }), status
+def _unavailable_response(*domains: str):
+    for domain in domains or ("catches",):
+        resolution = resolve_authority(domain, _analytics_db_path())
+        if resolution.effective_authority == "sqlite":
+            continue
+        status = 503 if resolution.effective_authority == "sqlite_unavailable" else 409
+        return jsonify({
+            "ok": False,
+            "error": f"Personal analytics are unavailable until the {domain} authority store is healthy.",
+            "domain": domain,
+            "authority": resolution.effective_authority,
+            "authority_status": resolution.status,
+            "source": "unavailable",
+        }), status
+    return None
 
 
 def register_analytics_routes_v74(app):
@@ -104,4 +108,17 @@ def register_analytics_routes_v74(app):
             return jsonify({"ok": False, "error": str(exc)}), 400
         except Exception as exc:
             return jsonify({"ok": False, "error": f"Lure analytics query failed: {type(exc).__name__}"}), 503
+        return jsonify(payload)
+
+    @app.route("/api/analytics/gear")
+    def gear_analytics():
+        unavailable = _unavailable_response("gear_inventory", "catches")
+        if unavailable is not None:
+            return unavailable
+        try:
+            payload = build_gear_analytics(_analytics_db_path(), limit=request.args.get("limit", 5))
+        except AnalyticsInputError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+        except Exception as exc:
+            return jsonify({"ok": False, "error": f"Gear analytics query failed: {type(exc).__name__}"}), 503
         return jsonify(payload)
