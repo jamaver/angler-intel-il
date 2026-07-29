@@ -73,6 +73,15 @@ except Exception as exc:
 # --- end v4.4 smart recommendation routes ---
 
 
+# --- Angler Intel V7.4 read-only personal analytics routes ---
+try:
+    from angler_analytics_v74 import register_analytics_routes_v74
+    register_analytics_routes_v74(app)
+except Exception as exc:
+    print(f"[angler-intel v7.4 analytics disabled] {exc}")
+# --- end V7.4 personal analytics routes ---
+
+
 # --- Angler Intel IL v4.3.1 cleanup/readiness routes ---
 try:
     from angler_cleanup_v431 import register_cleanup_routes_v431
@@ -136,8 +145,8 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v7.3.6-recommendations-authority"
-APP_RELEASE = "v7.3.6-recommendations-authority"
+APP_VERSION = "v7.4.0-analytics-query-layer"
+APP_RELEASE = "v7.4.0-analytics-query-layer"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the

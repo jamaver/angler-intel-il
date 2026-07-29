@@ -1,0 +1,9 @@
+{
+  "version": "v7.4.0-analytics-query-layer",
+  "previous_version": "v7.3.6-recommendations-authority",
+  "analytics_query_layer": true,
+  "read_only": true,
+  "catches_authority_required": "sqlite",
+  "live_smart_intelligence_changed": false,
+  "installed_at": "2026-07-29T17:30:00-05:00"
+}
