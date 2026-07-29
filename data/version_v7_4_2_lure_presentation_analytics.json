@@ -1,0 +1,9 @@
+{
+  "version": "v7.4.2-lure-presentation-analytics",
+  "previous_version": "v7.4.1-catch-water-analytics",
+  "lure_frequency": true,
+  "presentation_frequency": true,
+  "normalized_color_required": true,
+  "normalized_weight_required": true,
+  "installed_at": "2026-07-29T18:30:00-05:00"
+}

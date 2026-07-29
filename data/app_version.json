@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel",
-  "version": "v7.4.1-catch-water-analytics",
-  "updated": "2026-07-29T17:45:00-05:00",
+  "version": "v7.4.2-lure-presentation-analytics",
+  "updated": "2026-07-29T18:30:00-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -48,7 +48,8 @@
     "reports_authority": "v7.3.5e",
     "recommendations_authority": "v7.3.6",
     "personal_analytics_query_layer": "v7.4.0",
-    "catch_water_analytics": "v7.4.1"
+    "catch_water_analytics": "v7.4.1",
+    "lure_presentation_analytics": "v7.4.2"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -92,6 +93,7 @@
     "v7.3.5e explicitly transitions reports to SQLite authority after snapshot reconciliation, verified backup, drift validation, and regenerated JSON/HTML compatibility artifacts.",
     "v7.3.6 explicitly transitions persisted intelligence snapshots, recommendations, explanations, and feedback to SQLite authority while live Smart Intelligence remains application-computed.",
     "v7.4.0 adds a read-only, bounded SQLite personal analytics query layer with sample-quality and missing-data labels; it does not change live Smart Intelligence or recommendation ranking.",
-    "v7.4.1 adds read-only catch and water frequency summaries by species, waterbody, lure, daypart, and season without claiming catch rates where completed trip data is unavailable."
+    "v7.4.1 adds read-only catch and water frequency summaries by species, waterbody, lure, daypart, and season without claiming catch rates where completed trip data is unavailable.",
+    "v7.4.2 adds read-only lure and rig or presentation frequency summaries without inferring normalized lure colors or weights from free text."
   ]
 }

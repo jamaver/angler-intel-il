@@ -8,7 +8,12 @@ from flask import jsonify, request
 
 from persistence.authority_resolution import resolve_authority
 from persistence.connection import DEFAULT_DB
-from persistence.personal_analytics import AnalyticsInputError, build_catch_water_analytics, build_personal_analytics
+from persistence.personal_analytics import (
+    AnalyticsInputError,
+    build_catch_water_analytics,
+    build_lure_presentation_analytics,
+    build_personal_analytics,
+)
 
 
 def _analytics_db_path() -> Path:
@@ -79,4 +84,24 @@ def register_analytics_routes_v74(app):
             return jsonify({"ok": False, "error": str(exc)}), 400
         except Exception as exc:
             return jsonify({"ok": False, "error": f"Catch and water analytics query failed: {type(exc).__name__}"}), 503
+        return jsonify(payload)
+
+    @app.route("/api/analytics/lures")
+    def lure_presentation_analytics():
+        unavailable = _unavailable_response()
+        if unavailable is not None:
+            return unavailable
+        try:
+            payload = build_lure_presentation_analytics(
+                _analytics_db_path(),
+                date_from=request.args.get("date_from"),
+                date_to=request.args.get("date_to"),
+                species=request.args.get("species"),
+                waterbody=request.args.get("waterbody"),
+                limit=request.args.get("limit", 5),
+            )
+        except AnalyticsInputError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+        except Exception as exc:
+            return jsonify({"ok": False, "error": f"Lure analytics query failed: {type(exc).__name__}"}), 503
         return jsonify(payload)

@@ -314,3 +314,118 @@ def build_catch_water_analytics(
         "missing_data": baseline["missing_data"],
         "notes": baseline["notes"] + [water_note],
     }
+
+
+def build_lure_presentation_analytics(
+    db_path: str | Path = DEFAULT_DB,
+    *,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    species: str | None = None,
+    waterbody: str | None = None,
+    limit: int = 5,
+) -> dict[str, Any]:
+    """Build V7.4.2 lure and rig frequency summaries from stored catch fields."""
+    baseline = build_personal_analytics(
+        db_path,
+        date_from=date_from,
+        date_to=date_to,
+        species=species,
+        waterbody=waterbody,
+        limit=limit,
+    )
+    start = baseline["query"]["date_from"]
+    end = baseline["query"]["date_to"]
+    clean_species = baseline["query"]["species"]
+    clean_waterbody = baseline["query"]["waterbody"]
+    clauses: list[str] = []
+    params: list[str | int] = []
+    if start:
+        clauses.append("substr(COALESCE(timestamp, ''), 1, 10) >= ?")
+        params.append(start)
+    if end:
+        clauses.append("substr(COALESCE(timestamp, ''), 1, 10) <= ?")
+        params.append(end)
+    if clean_species:
+        clauses.append("lower(trim(COALESCE(species, ''))) = lower(?)")
+        params.append(clean_species)
+    if clean_waterbody:
+        clauses.append("lower(trim(COALESCE(waterbody, ''))) = lower(?)")
+        params.append(clean_waterbody)
+    where_sql = f" WHERE {' AND '.join(clauses)}" if clauses else ""
+    query = f"SELECT species, waterbody, lure, rig FROM catches{where_sql} ORDER BY timestamp DESC, id DESC LIMIT ?"
+    params.append(MAX_ANALYTICS_ROWS + 1)
+    with connect(db_path, read_only=True) as conn:
+        rows = [dict(row) for row in conn.execute(query, params)][:MAX_ANALYTICS_ROWS]
+
+    total = len(rows)
+    rig_counts: Counter[str] = Counter()
+    species_lures: dict[str, Counter[str]] = {}
+    water_lures: dict[str, Counter[str]] = {}
+    missing_rig = 0
+    for row in rows:
+        lure = _clean_text(row["lure"])
+        rig = _clean_text(row["rig"])
+        fish = _clean_text(row["species"])
+        water = _clean_text(row["waterbody"])
+        if rig:
+            rig_counts[rig] += 1
+        else:
+            missing_rig += 1
+        if lure and fish:
+            species_lures.setdefault(fish, Counter())[lure] += 1
+        if lure and water:
+            water_lures.setdefault(water, Counter())[lure] += 1
+
+    def grouped_rows(groups: dict[str, Counter[str]]) -> list[dict[str, Any]]:
+        ordered = sorted(groups.items(), key=lambda item: (-sum(item[1].values()), item[0].lower()))[:baseline["query"]["limit"]]
+        return [
+            {
+                "label": label,
+                "catch_count": sum(counter.values()),
+                "top_lures": _ranked(counter, sum(counter.values()), baseline["query"]["limit"]),
+            }
+            for label, counter in ordered
+        ]
+
+    notes = list(baseline["notes"])
+    notes.append("Lure and rig values are saved catch-log text; this release does not infer colors, weights, or retrieves from wording.")
+    if missing_rig:
+        notes.append(f"{missing_rig} catch record(s) lack rig or presentation data.")
+    return {
+        "ok": True,
+        "source": "sqlite",
+        "generated_at": _utc_now(),
+        "query": baseline["query"],
+        "sample": baseline["sample"],
+        "lure_frequency": {
+            "available": total > 0,
+            "rows": baseline["top_lures"],
+            "label": "Recorded lure frequency",
+            "note": "Frequency reflects logged catches, not total fishing effort or lure effectiveness.",
+        },
+        "presentation_frequency": {
+            "available": bool(rig_counts),
+            "rows": _ranked(rig_counts, total, baseline["query"]["limit"]),
+            "label": "Recorded rig or presentation frequency",
+            "note": "Rig and presentation details are user-entered catch-log text.",
+        },
+        "lures_by_species": grouped_rows(species_lures),
+        "lures_by_waterbody": grouped_rows(water_lures),
+        "lure_color_performance": {
+            "available": False,
+            "label": "Lure color performance",
+            "reason": "Catch records do not yet store lure color as a normalized field.",
+        },
+        "lure_weight_performance": {
+            "available": False,
+            "label": "Lure weight performance",
+            "reason": "Catch records do not yet store lure weight as a normalized field.",
+        },
+        "sample_quality": {
+            "label": baseline["sample"]["quality"],
+            "confidence": baseline["sample"]["confidence"],
+        },
+        "missing_data": {**baseline["missing_data"], "rig": missing_rig},
+        "notes": notes,
+    }
