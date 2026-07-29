@@ -3,12 +3,16 @@ from __future__ import annotations
 import html
 import json
 import math
+import os
 import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from flask import jsonify, render_template, request
+from persistence.authority_resolution import AuthorityWriteError, require_write_authority, resolve_authority
+from persistence.recommendation_history import json_recommendation_history
+from persistence.recommendations_authority import list_authoritative_recommendation_history, record_recommendation_feedback
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -19,8 +23,17 @@ SPECIES_PATH = DATA_DIR / "species_profiles_v43.json"
 RIGS_PATH = DATA_DIR / "lure_rig_setups_v43.json"
 SETTINGS_PATH = DATA_DIR / "species_settings_v431.json"
 RULES_PATH = DATA_DIR / "recommendation_rules_v44.json"
+REPORTS_DIR = BASE_DIR / "reports"
 
 VERSION = "v4.4"
+
+
+def _recommendations_db_path() -> Path:
+    return Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))
+
+
+def _recommendations_authority():
+    return resolve_authority("recommendations", _recommendations_db_path())
 
 
 ALIASES = {
@@ -548,6 +561,8 @@ def register_recommendation_routes_v44(app):
                 "/recommendations",
                 "/api/recommendations",
                 "/api/recommendations/status",
+                "/api/recommendations/history",
+                "/api/recommendations/feedback",
             ],
             "data": {
                 "waters": len(_waters()),
@@ -556,3 +571,55 @@ def register_recommendation_routes_v44(app):
                 "rules_file": str(RULES_PATH),
             },
         })
+
+    @app.route("/api/recommendations/history")
+    def recommendations_history_api_v44():
+        """Return persisted history only; live advice remains computed above."""
+        authority = _recommendations_authority()
+        if authority.effective_authority == "sqlite":
+            try:
+                rows = list_authoritative_recommendation_history(_recommendations_db_path())
+                return jsonify({"ok": True, "authority": "sqlite", "records": rows, "count": len(rows)})
+            except Exception as exc:
+                return jsonify({"ok": False, "error": f"SQLite recommendation history read failed: {exc}"}), 500
+
+        # A transition outage may use the historical report snapshots for a
+        # visibly labelled emergency read only. It never permits JSON writes.
+        rows = json_recommendation_history(REPORTS_DIR)
+        source = "json" if authority.effective_authority == "json" else "json_emergency_read_fallback"
+        return jsonify({
+            "ok": True,
+            "authority": authority.effective_authority,
+            "source": source,
+            "warning": authority.error,
+            "records": rows,
+            "count": len(rows),
+        })
+
+    @app.route("/api/recommendations/feedback", methods=["POST"])
+    def recommendations_feedback_api_v44():
+        payload = request.get_json(silent=True) or {}
+        if not isinstance(payload, dict):
+            return jsonify({"ok": False, "error": "POST a JSON object."}), 400
+        try:
+            authority = require_write_authority("recommendations", _recommendations_db_path())
+            if authority != "sqlite":
+                return jsonify({"ok": False, "error": "Recommendation feedback is available only after SQLite authority is enabled."}), 409
+            raw_rating = payload.get("rating")
+            rating = int(raw_rating) if raw_rating not in (None, "") else None
+            feedback = record_recommendation_feedback(
+                str(payload.get("recommendation_id") or payload.get("id") or ""),
+                feedback_type=str(payload.get("feedback_type") or payload.get("type") or ""),
+                rating=rating,
+                notes=str(payload.get("notes") or ""),
+                db_path=_recommendations_db_path(),
+            )
+            return jsonify({"ok": True, "authority": "sqlite", "feedback": feedback}), 201
+        except AuthorityWriteError as exc:
+            return jsonify({"ok": False, "error": str(exc), "authority": exc.resolution.effective_authority}), exc.http_status
+        except LookupError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 404
+        except ValueError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 500

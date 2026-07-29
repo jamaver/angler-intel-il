@@ -1,0 +1,10 @@
+{
+  "version": "v7.3.6-recommendations-authority",
+  "previous_version": "v7.3.5e-reports-authority",
+  "recommendations_authority": "sqlite",
+  "persisted_intelligence_snapshots": "sqlite",
+  "recommendation_feedback": "sqlite",
+  "live_smart_intelligence": "application_computed",
+  "report_snapshot_role": "compatibility_source_for_report_artifacts",
+  "installed_at": "2026-07-28"
+}

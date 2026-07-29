@@ -24,11 +24,12 @@ from persistence.gear_inventory_authority import activate_gear_inventory_authori
 from persistence.manual_waters_authority import activate_manual_waters_authority
 from persistence.catches_authority import activate_catches_authority
 from persistence.reports_authority import activate_reports_authority, report_transition_preflight
+from persistence.recommendations_authority import activate_recommendations_authority, recommendation_transition_preflight
 from persistence.authority_manifest import set_manifest_authority
 from persistence.authority_resolution import resolve_authority
 
 DOMAINS = ("target_profile", "gear_inventory", "manual_waters", "catches", "reports", "recommendations")
-REGISTERED_TRANSITIONS = {"target_profile", "gear_inventory", "manual_waters", "catches", "reports"}
+REGISTERED_TRANSITIONS = {"target_profile", "gear_inventory", "manual_waters", "catches", "reports", "recommendations"}
 
 
 def preflight(domain: str, backup_manifest: Path, db: Path, source_root: Path, reports_root: Path) -> dict[str, object]:
@@ -80,6 +81,14 @@ def preflight(domain: str, backup_manifest: Path, db: Path, source_root: Path, r
                 errors.append("Report snapshot/artifact reconciliation is incomplete.")
         except Exception as exc:
             errors.append(f"Report transition preflight failed: {exc}")
+    recommendation_preflight: dict[str, object] = {}
+    if domain == "recommendations" and db.exists():
+        try:
+            recommendation_preflight = recommendation_transition_preflight(db)
+            if not recommendation_preflight.get("ready"):
+                errors.append("Recommendation snapshot reconciliation is incomplete.")
+        except Exception as exc:
+            errors.append(f"Recommendation transition preflight failed: {exc}")
     return {
         "domain": domain,
         "backup_manifest": str(backup_manifest),
@@ -93,6 +102,7 @@ def preflight(domain: str, backup_manifest: Path, db: Path, source_root: Path, r
         "legacy_reference_warning_count": len(legacy_reference_warnings),
         "legacy_reference_warning_domains": sorted({str(item.get("domain")) for item in legacy_reference_warnings}),
         "report_preflight": report_preflight,
+        "recommendation_preflight": recommendation_preflight,
         "ready": not errors,
         "errors": errors,
         "sqlite_authority_enabled": False,
@@ -141,6 +151,8 @@ def main() -> int:
                             index_path=Path(args.source_root) / "reports_index.json",
                             reports_dir=Path(args.reports_root),
                         )
+                elif args.domain == "recommendations":
+                    exported = activate_recommendations_authority(Path(args.db))
                 else:
                     raise ValueError(f"No authority activation implementation for {args.domain}")
                 set_manifest_authority(args.domain, "sqlite", args.manifest_path)

@@ -167,6 +167,21 @@ def _upsert_authoritative_report(conn, plan: ReportAuthorityPlan, meta: dict[str
             plan.authoritative_payload_hash,
         ),
     )
+    recommendation_authority = conn.execute(
+        "SELECT authority FROM data_authority WHERE domain='recommendations'"
+    ).fetchone()
+    if recommendation_authority and str(recommendation_authority["authority"]) == "sqlite":
+        # Recommendation history is a persisted companion to the report
+        # snapshot. Live Smart Intelligence remains computed by the app.
+        from .recommendations_authority import persist_report_recommendation_history
+
+        persist_report_recommendation_history(
+            conn,
+            report_id=plan.report_id,
+            trip_id=plan.trip_id,
+            meta=meta,
+            wrapped_snapshot=wrapped,
+        )
 
 
 def _active_report_index(conn) -> list[dict[str, Any]]:
