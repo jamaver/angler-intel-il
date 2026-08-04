@@ -73,6 +73,15 @@ except Exception as exc:
 # --- end v4.4 smart recommendation routes ---
 
 
+# --- Angler Intel V7.5 trip completion routes ---
+try:
+    from angler_trip_completion_v75 import register_trip_completion_routes_v75
+    register_trip_completion_routes_v75(app)
+except Exception as exc:
+    print(f"[angler-intel v7.5 trip completion disabled] {exc}")
+# --- end V7.5 trip completion routes ---
+
+
 # --- Angler Intel V7.4 read-only personal analytics routes ---
 try:
     from angler_analytics_v74 import register_analytics_routes_v74
@@ -145,8 +154,8 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v7.4.4-restrained-analytics-ui"
-APP_RELEASE = "v7.4.4-restrained-analytics-ui"
+APP_VERSION = "v7.5.0-trip-completion"
+APP_RELEASE = "v7.5.0-trip-completion"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the

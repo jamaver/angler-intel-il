@@ -1,0 +1,9 @@
+{
+  "version": "v7.5.0-trip-completion",
+  "previous_version": "v7.4.4-restrained-analytics-ui",
+  "trip_completion": true,
+  "no_catch_outcomes": true,
+  "catch_logging_remains_separate": true,
+  "recommendation_scoring_changed": false,
+  "installed_at": "2026-08-04T18:15:00-05:00"
+}

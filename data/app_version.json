@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel",
-  "version": "v7.4.4-restrained-analytics-ui",
-  "updated": "2026-08-04T18:05:00-05:00",
+  "version": "v7.5.0-trip-completion",
+  "updated": "2026-08-04T18:15:00-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -51,7 +51,8 @@
     "catch_water_analytics": "v7.4.1",
     "lure_presentation_analytics": "v7.4.2",
     "gear_analytics": "v7.4.3",
-    "restrained_analytics_ui": "v7.4.4"
+    "restrained_analytics_ui": "v7.4.4",
+    "trip_completion": "v7.5.0"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -98,6 +99,7 @@
     "v7.4.1 adds read-only catch and water frequency summaries by species, waterbody, lure, daypart, and season without claiming catch rates where completed trip data is unavailable.",
     "v7.4.2 adds read-only lure and rig or presentation frequency summaries without inferring normalized lure colors or weights from free text.",
     "v7.4.3 adds read-only owned-gear, usage-event, catch-link, and maintenance summaries without claiming outcomes by setup where catch records do not carry setup IDs.",
-    "v7.4.4 adds a default-collapsed Personal evidence disclosure inside the Learning accordion so recorded analytics support the map-first dashboard without competing with the trip plan."
+    "v7.4.4 adds a default-collapsed Personal evidence disclosure inside the Learning accordion so recorded analytics support the map-first dashboard without competing with the trip plan.",
+    "v7.5.0 adds explicit saved-report trip completion records, including no-catch and did-not-fish outcomes, without fabricating catch-log entries."
   ]
 }

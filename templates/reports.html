@@ -220,6 +220,22 @@
     .report-actions-row .danger:hover {
       background: #ffdcdc;
     }
+    dialog.trip-completion-dialog {
+      width: min(620px, calc(100vw - 2rem));
+      border: 1px solid #8bbd96;
+      border-radius: 14px;
+      padding: 0;
+      color: #102417;
+      background: #f8fff9;
+    }
+    dialog.trip-completion-dialog::backdrop { background: rgba(2, 10, 5, 0.6); }
+    .trip-completion-form { display: grid; gap: 0.75rem; padding: 1rem; }
+    .trip-completion-form h3 { margin: 0; }
+    .trip-completion-form label { display: grid; gap: 0.3rem; font-weight: 700; }
+    .trip-completion-form select, .trip-completion-form textarea, .trip-completion-form input { max-width: none; box-sizing: border-box; }
+    .trip-completion-form textarea { min-height: 5rem; resize: vertical; }
+    .trip-completion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+    .trip-completion-actions { display: flex; flex-wrap: wrap; gap: 0.55rem; justify-content: flex-end; }
     .report-card-top,
     .report-card-top h4,
     .report-detail-row,
@@ -299,6 +315,7 @@
       .report-grid {
         grid-template-columns: 1fr;
       }
+      .trip-completion-grid { grid-template-columns: 1fr; }
       .report-card-media {
         grid-template-columns: 72px minmax(0, 1fr);
       }
@@ -365,6 +382,34 @@
     <a href="/app-health">App Health</a>
   </p>
   </main>
+
+  <dialog id="tripCompletionDialog" class="trip-completion-dialog">
+    <form id="tripCompletionForm" class="trip-completion-form">
+      <input id="completionReportId" type="hidden">
+      <h3>Complete Trip</h3>
+      <p id="completionReportLabel" class="muted">Record what happened. No-catch trips are useful learning data.</p>
+      <div class="trip-completion-grid">
+        <label>Did the trip occur?
+          <select id="completionOccurred"><option value="yes">Yes</option><option value="no">No</option></select>
+        </label>
+        <label>Plan followed?
+          <select id="completionFollowed"><option value="unknown">Not sure</option><option value="exact">Followed as planned</option><option value="partial">Followed partly</option><option value="substituted">Changed gear or lure</option><option value="changed_water">Changed water</option><option value="changed_target">Changed target</option></select>
+        </label>
+      </div>
+      <div class="trip-completion-grid">
+        <label>Catch count
+          <input id="completionCatchCount" type="number" min="0" step="1" placeholder="0 for no catch">
+        </label>
+        <label>Trip satisfaction (optional)
+          <select id="completionSatisfaction"><option value="">Not rated</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+        </label>
+      </div>
+      <label>Actual waterbody (optional)<input id="completionWaterbody" placeholder="Where you actually fished"></label>
+      <label>Actual target species (optional)<input id="completionSpecies" placeholder="What you targeted"></label>
+      <label>Trip notes (optional)<textarea id="completionNotes" placeholder="Conditions, substitutions, outcome, or why plans changed"></textarea></label>
+      <div class="trip-completion-actions"><button type="button" onclick="closeTripCompletion()">Cancel</button><button type="submit">Save Trip Outcome</button></div>
+    </form>
+  </dialog>
 
 <script>
 async function createReport() {
@@ -486,6 +531,9 @@ async function loadReports() {
     box.querySelectorAll("[data-delete-report]").forEach(button => {
       button.addEventListener("click", () => deleteReport(button.getAttribute("data-delete-report") || ""));
     });
+    box.querySelectorAll("[data-complete-report]").forEach(button => {
+      button.addEventListener("click", () => openTripCompletion(button.getAttribute("data-complete-report") || "", button.getAttribute("data-report-title") || ""));
+    });
   } catch (err) {
     box.textContent = "Unable to load reports: " + err;
   }
@@ -543,12 +591,72 @@ function renderReportCard(r) {
       </div>
       <div class="report-actions-row">
         <a href="${escapeHtml(r.view_url || "#")}">View</a>
+        <button type="button" data-complete-report="${escapeHtml(r.id || "")}" data-report-title="${escapeHtml(title)}">Complete Trip</button>
         <a href="${escapeHtml(r.html_url || "#")}">Download HTML</a>
         <a href="${escapeHtml(r.json_url || "#")}">Download JSON</a>
       </div>
     </article>
   `;
 }
+
+function closeTripCompletion() {
+  document.getElementById("tripCompletionDialog")?.close();
+}
+
+async function openTripCompletion(reportId, title) {
+  const dialog = document.getElementById("tripCompletionDialog");
+  if (!reportId || !dialog) return;
+  document.getElementById("completionReportId").value = reportId;
+  document.getElementById("completionReportLabel").textContent = `Record what happened for ${title || reportId}. No-catch trips are useful learning data.`;
+  document.getElementById("completionOccurred").value = "yes";
+  document.getElementById("completionFollowed").value = "unknown";
+  document.getElementById("completionCatchCount").value = "";
+  document.getElementById("completionSatisfaction").value = "";
+  document.getElementById("completionWaterbody").value = "";
+  document.getElementById("completionSpecies").value = "";
+  document.getElementById("completionNotes").value = "";
+  try {
+    const res = await fetch(`/api/trips/completion?report_id=${encodeURIComponent(reportId)}`);
+    const data = await res.json();
+    const saved = data.ok ? data.completion : null;
+    if (saved) {
+      document.getElementById("completionOccurred").value = saved.trip_occurred ? "yes" : "no";
+      document.getElementById("completionFollowed").value = saved.followed_plan || "unknown";
+      document.getElementById("completionCatchCount").value = saved.catch_count ?? "";
+      document.getElementById("completionSatisfaction").value = saved.satisfaction ?? "";
+      document.getElementById("completionWaterbody").value = saved.actual_waterbody || "";
+      document.getElementById("completionSpecies").value = saved.actual_target_species || "";
+      document.getElementById("completionNotes").value = saved.notes || "";
+    }
+  } catch (err) {
+    console.warn("Could not load prior trip outcome", err);
+  }
+  dialog.showModal();
+}
+
+document.getElementById("tripCompletionForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const box = document.getElementById("createResult");
+  const payload = {
+    report_id: document.getElementById("completionReportId").value,
+    trip_occurred: document.getElementById("completionOccurred").value === "yes",
+    followed_plan: document.getElementById("completionFollowed").value,
+    catch_count: document.getElementById("completionCatchCount").value,
+    satisfaction: document.getElementById("completionSatisfaction").value,
+    actual_waterbody: document.getElementById("completionWaterbody").value,
+    actual_target_species: document.getElementById("completionSpecies").value,
+    notes: document.getElementById("completionNotes").value,
+  };
+  try {
+    const res = await fetch("/api/trips/completion", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(payload)});
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || "Could not save trip outcome");
+    closeTripCompletion();
+    box.textContent = "Trip outcome saved. Catch records remain separate so only actual catches are logged.";
+  } catch (err) {
+    box.textContent = "Trip outcome failed: " + err.message;
+  }
+});
 
 async function deleteReport(reportId) {
   const box = document.getElementById("createResult");
