@@ -8,6 +8,7 @@ from flask import jsonify, request
 
 from persistence.authority_resolution import AuthorityWriteError, require_write_authority, resolve_authority
 from persistence.connection import DEFAULT_DB
+from persistence.recommendations_authority import load_recommendation_adherence
 from persistence.trip_completion import TripCompletionError, load_trip_completion, record_trip_completion
 
 
@@ -24,7 +25,11 @@ def register_trip_completion_routes_v75(app):
         resolution = resolve_authority("reports", _db_path())
         if resolution.effective_authority != "sqlite":
             return jsonify({"ok": False, "error": "Trip completion is unavailable until reports SQLite authority is healthy.", "authority": resolution.effective_authority}), 503
-        return jsonify({"ok": True, "completion": load_trip_completion(report_id, _db_path())})
+        adherence = None
+        recommendation_resolution = resolve_authority("recommendations", _db_path())
+        if recommendation_resolution.effective_authority == "sqlite":
+            adherence = load_recommendation_adherence(report_id, _db_path())
+        return jsonify({"ok": True, "completion": load_trip_completion(report_id, _db_path()), "recommendation_adherence": adherence})
 
     @app.route("/api/trips/completion", methods=["POST"])
     def save_trip_completion():

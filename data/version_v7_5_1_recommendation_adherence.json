@@ -1,0 +1,9 @@
+{
+  "version": "v7.5.1-recommendation-adherence",
+  "previous_version": "v7.5.0-trip-completion",
+  "direct_adherence": true,
+  "no_catch_outcomes_preserved": true,
+  "adherence_inferred_from_catches": false,
+  "live_ranking_changed": false,
+  "installed_at": "2026-08-04T18:30:00-05:00"
+}

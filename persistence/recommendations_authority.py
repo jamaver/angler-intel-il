@@ -16,6 +16,7 @@ from .connection import DEFAULT_DB, connect
 
 FEEDBACK_STATUS_KEY = "v7.recommendations.feedback"
 RECONCILIATION_STATUS_KEY = "v7.recommendations.reconciliation"
+ADHERENCE_STATUS_KEY = "v7.recommendations.adherence"
 
 
 def _now() -> str:
@@ -307,4 +308,81 @@ def record_recommendation_feedback(
                    ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json, updated_at=excluded.updated_at""",
                 (FEEDBACK_STATUS_KEY, canonical_dumps({**result, "at": _now()}), _now()),
             )
+    return result
+
+
+def sync_recommendation_adherence(
+    conn,
+    *,
+    report_id: str,
+    trip_id: str | None,
+    trip_outcome_id: int,
+    adherence: str,
+    trip_occurred: bool,
+    outcome: str,
+    catch_count: int | None,
+    satisfaction: int | None,
+    notes: str = "",
+) -> dict[str, Any]:
+    """Upsert direct user adherence for a report's deterministic best-bet record.
+
+    This function intentionally does not infer adherence from catch records. A
+    report without a persisted best-bet recommendation remains a valid trip
+    completion but has no recommendation link to record.
+    """
+    recommendation_id = f"{_text(report_id)}-best-bet"
+    if not _recommendations_authoritative(conn):
+        return {"status": "unavailable", "reason": "Recommendation authority is not active."}
+    if conn.execute("SELECT 1 FROM recommendations WHERE id=?", (recommendation_id,)).fetchone() is None:
+        return {"status": "not_linked", "reason": "This report has no persisted best-bet recommendation."}
+    now = _now()
+    conn.execute(
+        """INSERT INTO recommendation_adherence(
+             recommendation_id, trip_outcome_id, trip_id, report_id, adherence,
+             trip_occurred, outcome, catch_count, satisfaction, notes, created_at, updated_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(report_id) DO UPDATE SET
+             recommendation_id=excluded.recommendation_id,
+             trip_outcome_id=excluded.trip_outcome_id,
+             trip_id=excluded.trip_id,
+             adherence=excluded.adherence,
+             trip_occurred=excluded.trip_occurred,
+             outcome=excluded.outcome,
+             catch_count=excluded.catch_count,
+             satisfaction=excluded.satisfaction,
+             notes=excluded.notes,
+             updated_at=excluded.updated_at""",
+        (
+            recommendation_id, trip_outcome_id, _text(trip_id) or None, _text(report_id),
+            _text(adherence), 1 if trip_occurred else 0, _text(outcome), catch_count,
+            satisfaction, _text(notes) or None, now, now,
+        ),
+    )
+    result = {
+        "status": "linked",
+        "recommendation_id": recommendation_id,
+        "report_id": _text(report_id),
+        "adherence": _text(adherence),
+        "outcome": _text(outcome),
+    }
+    conn.execute(
+        """INSERT INTO app_settings(key, value_json, updated_at) VALUES(?, ?, ?)
+           ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json, updated_at=excluded.updated_at""",
+        (ADHERENCE_STATUS_KEY, canonical_dumps({**result, "at": now}), now),
+    )
+    return result
+
+
+def load_recommendation_adherence(report_id: str, db_path: str | Path = DEFAULT_DB) -> dict[str, Any] | None:
+    with connect(db_path, read_only=True) as conn:
+        row = conn.execute(
+            """SELECT recommendation_id, trip_outcome_id, trip_id, report_id, adherence,
+               trip_occurred, outcome, catch_count, satisfaction, notes, created_at, updated_at
+               FROM recommendation_adherence WHERE report_id=?""",
+            (_text(report_id),),
+        ).fetchone()
+    if not row:
+        return None
+    result = dict(row)
+    result["trip_occurred"] = bool(result.get("trip_occurred"))
     return result

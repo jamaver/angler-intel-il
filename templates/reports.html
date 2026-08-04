@@ -627,6 +627,9 @@ async function openTripCompletion(reportId, title) {
       document.getElementById("completionWaterbody").value = saved.actual_waterbody || "";
       document.getElementById("completionSpecies").value = saved.actual_target_species || "";
       document.getElementById("completionNotes").value = saved.notes || "";
+      if (data.recommendation_adherence?.status === "linked") {
+        document.getElementById("completionReportLabel").textContent += " Recommendation adherence is linked to this saved plan.";
+      }
     }
   } catch (err) {
     console.warn("Could not load prior trip outcome", err);
@@ -652,7 +655,9 @@ document.getElementById("tripCompletionForm").addEventListener("submit", async e
     const data = await res.json();
     if (!res.ok || !data.ok) throw new Error(data.error || "Could not save trip outcome");
     closeTripCompletion();
-    box.textContent = "Trip outcome saved. Catch records remain separate so only actual catches are logged.";
+    const adherence = data.recommendation_adherence || {};
+    const linked = adherence.status === "linked" ? " Recommendation adherence was linked to this plan." : " This report has no persisted recommendation link to update.";
+    box.textContent = "Trip outcome saved. Catch records remain separate so only actual catches are logged." + linked;
   } catch (err) {
     box.textContent = "Trip outcome failed: " + err.message;
   }

@@ -150,7 +150,24 @@ def record_trip_completion(payload: dict[str, Any], db_path: str | Path = DEFAUL
                     values,
                 )
                 outcome_id = int(cursor.lastrowid)
-    return {"ok": True, "id": outcome_id, "trip_id": trip_id or None, "report_id": completion["report_id"], **completion, "completed_at": now}
+            from .recommendations_authority import sync_recommendation_adherence
+            adherence = sync_recommendation_adherence(
+                conn,
+                report_id=completion["report_id"],
+                trip_id=trip_id or None,
+                trip_outcome_id=outcome_id,
+                adherence=completion["followed_plan"],
+                trip_occurred=bool(completion["trip_occurred"]),
+                outcome=completion["outcome"],
+                catch_count=completion["catch_count"],
+                satisfaction=completion["satisfaction"],
+                notes=completion["notes"],
+            )
+    return {
+        "ok": True, "id": outcome_id, "trip_id": trip_id or None,
+        "report_id": completion["report_id"], **completion, "completed_at": now,
+        "recommendation_adherence": adherence,
+    }
 
 
 def load_trip_completion(report_id: str, db_path: str | Path = DEFAULT_DB) -> dict[str, Any] | None:
