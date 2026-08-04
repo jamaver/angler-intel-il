@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel",
-  "version": "v7.4.3-gear-analytics",
-  "updated": "2026-07-29T18:45:00-05:00",
+  "version": "v7.4.4-restrained-analytics-ui",
+  "updated": "2026-08-04T18:05:00-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -50,7 +50,8 @@
     "personal_analytics_query_layer": "v7.4.0",
     "catch_water_analytics": "v7.4.1",
     "lure_presentation_analytics": "v7.4.2",
-    "gear_analytics": "v7.4.3"
+    "gear_analytics": "v7.4.3",
+    "restrained_analytics_ui": "v7.4.4"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -96,6 +97,7 @@
     "v7.4.0 adds a read-only, bounded SQLite personal analytics query layer with sample-quality and missing-data labels; it does not change live Smart Intelligence or recommendation ranking.",
     "v7.4.1 adds read-only catch and water frequency summaries by species, waterbody, lure, daypart, and season without claiming catch rates where completed trip data is unavailable.",
     "v7.4.2 adds read-only lure and rig or presentation frequency summaries without inferring normalized lure colors or weights from free text.",
-    "v7.4.3 adds read-only owned-gear, usage-event, catch-link, and maintenance summaries without claiming outcomes by setup where catch records do not carry setup IDs."
+    "v7.4.3 adds read-only owned-gear, usage-event, catch-link, and maintenance summaries without claiming outcomes by setup where catch records do not carry setup IDs.",
+    "v7.4.4 adds a default-collapsed Personal evidence disclosure inside the Learning accordion so recorded analytics support the map-first dashboard without competing with the trip plan."
   ]
 }

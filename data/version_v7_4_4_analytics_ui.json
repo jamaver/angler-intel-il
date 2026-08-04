@@ -1,0 +1,9 @@
+{
+  "version": "v7.4.4-restrained-analytics-ui",
+  "previous_version": "v7.4.3-gear-analytics",
+  "analytics_ui": true,
+  "default_collapsed": true,
+  "map_first_dashboard_preserved": true,
+  "live_smart_intelligence_changed": false,
+  "installed_at": "2026-08-04T18:05:00-05:00"
+}

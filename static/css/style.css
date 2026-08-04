@@ -1206,6 +1206,10 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .analytics-evidence-grid {
+    grid-template-columns: 1fr;
+  }
+
   .trip-plan-media,
   .trip-plan-lure,
   .dashboard-accordion summary {
@@ -1302,6 +1306,71 @@ button {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
+}
+
+.analytics-evidence {
+  margin-top: 0.9rem;
+  border: 1px solid rgba(96, 165, 250, 0.14);
+  border-radius: 12px;
+  background: rgba(8, 18, 31, 0.34);
+  overflow: hidden;
+}
+
+.analytics-evidence summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem 0.85rem;
+  cursor: pointer;
+  color: #eef3fb;
+  font-weight: 700;
+}
+
+.analytics-evidence-note,
+.analytics-evidence-disclaimer {
+  color: #c8d3e4;
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.analytics-evidence-body {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0 0.85rem 0.85rem;
+}
+
+.analytics-evidence-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.analytics-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.analytics-evidence-grid > div {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.65rem;
+  border-radius: 10px;
+  background: rgba(15, 29, 48, 0.62);
+}
+
+.analytics-evidence-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: #dce8f8;
+  font-size: 0.85rem;
+}
+
+.analytics-evidence-row strong {
+  color: #f8fafc;
 }
 
 .pill-line {

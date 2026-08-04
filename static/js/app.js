@@ -862,6 +862,88 @@ function renderInsights(insights) {
   `;
 }
 
+function analyticsRows(rows, emptyText) {
+  if (!Array.isArray(rows) || !rows.length) {
+    return `<div class="small">${escapeHtml(emptyText)}</div>`;
+  }
+  return rows.slice(0, 3).map(row => `
+    <div class="analytics-evidence-row">
+      <span>${escapeHtml(row.label || "Recorded item")}</span>
+      <strong>${Number(row.count || row.catch_count || row.usage_events || row.linked_catches || 0)}</strong>
+    </div>
+  `).join("");
+}
+
+function analyticsResult(result) {
+  return result.status === "fulfilled" && result.value && result.value.ok ? result.value : null;
+}
+
+async function loadAnalyticsEvidence(data = {}) {
+  const body = el("analyticsEvidenceBody");
+  if (!body) return;
+  const params = new URLSearchParams({ limit: "3" });
+  const target = currentTargetSpecies();
+  const waterbody = String(data.water?.name || "").trim();
+  if (target) params.set("species", target);
+  if (waterbody) params.set("waterbody", waterbody);
+  const query = params.toString();
+  try {
+    const fetchJson = async path => {
+      const response = await fetch(`${path}?${query}`);
+      if (!response.ok) return null;
+      return response.json();
+    };
+    const results = await Promise.allSettled([
+      fetchJson("/api/analytics/personal"),
+      fetchJson("/api/analytics/catch-water"),
+      fetchJson("/api/analytics/lures"),
+      fetchJson("/api/analytics/gear"),
+    ]);
+    const personal = analyticsResult(results[0]);
+    const waters = analyticsResult(results[1]);
+    const lures = analyticsResult(results[2]);
+    const gear = analyticsResult(results[3]);
+    if (!personal && !waters && !lures && !gear) {
+      body.innerHTML = `<div class="small">Recorded analytics are unavailable right now. Catch logging and trip planning remain available.</div>`;
+      return;
+    }
+    const sample = personal?.sample || waters?.sample || lures?.sample || gear?.sample || {};
+    const summary = Number(sample.catch_count || sample.catch_gear_links || 0);
+    const quality = sample.quality || "limited";
+    const topWater = waters?.waterbody_frequency?.rows || personal?.top_waterbodies || [];
+    const topLures = lures?.lure_frequency?.rows || personal?.top_lures || [];
+    const dayparts = waters?.time_of_day?.rows || [];
+    const mostUsed = gear?.most_used || [];
+    const firstDaypart = dayparts.find(row => Number(row.count) > 0);
+    body.innerHTML = `
+      <div class="analytics-evidence-summary">
+        <span class="mini">${escapeHtml(quality)} sample</span>
+        <span class="small">${summary} recorded ${summary === 1 ? "catch" : "catches"} in this view.</span>
+      </div>
+      <div class="analytics-evidence-grid">
+        <div>
+          <b>Water patterns</b>
+          ${analyticsRows(topWater, "No named water patterns logged yet.")}
+          ${firstDaypart ? `<div class="small">Most recorded: ${escapeHtml(firstDaypart.label)} (${Number(firstDaypart.count)})</div>` : ""}
+        </div>
+        <div>
+          <b>Lure patterns</b>
+          ${analyticsRows(topLures, "No lure patterns logged yet.")}
+        </div>
+        <div>
+          <b>Gear history</b>
+          ${analyticsRows(mostUsed, "No recorded gear-use events yet.")}
+          ${gear?.underused?.length ? `<div class="small">${Number(gear.underused.length)} owned item(s) have no recorded use yet.</div>` : ""}
+        </div>
+      </div>
+      <div class="small analytics-evidence-disclaimer">Patterns show recorded catches and gear use, not total effort or guaranteed effectiveness.</div>
+    `;
+  } catch (err) {
+    console.warn("Personal analytics evidence unavailable", err);
+    body.innerHTML = `<div class="small">Recorded analytics are temporarily unavailable.</div>`;
+  }
+}
+
 async function syncTargetSpecies(payload = {}) {
   const value = targetSpeciesNode ? targetSpeciesNode.value.trim() : "";
   const nextPayload = { ...payload };
@@ -1196,6 +1278,7 @@ function render(data) {
   `).join("") : emptyDashboardPanel("7-day forecast is unavailable for this weather update."));
 
   setHTML("catchInsights", renderInsights(data.catch_insights));
+  loadAnalyticsEvidence(data);
 }
 
 loadFavorites();
