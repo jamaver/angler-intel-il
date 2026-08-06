@@ -63,8 +63,8 @@ if "structured_backup_restore" not in app_text and "modern_ui_refresh" not in ap
 backup_text = read("angler_health_backup_v443.py")
 for needle, message in [
     ('@app.route("/api/app-health/backups/restore"', "Missing backup restore route"),
-    ("safe_user_data_backup_path", "Restore route should validate backup filenames"),
-    ("restore_user_data_backup", "Restore route should use structured restore helper"),
+    ("Live restore is disabled", "V7 App Health must reject live directory replacement restore"),
+    ("rehearse_restore", "V7 App Health should expose restore rehearsal"),
 ]:
     if needle not in backup_text:
         errors.append(message)
@@ -80,8 +80,8 @@ for needle, message in [
 
 js_text = read("static/js/app_health_backups_v443.js")
 for needle, message in [
-    ("Restore", "App Health backups UI should include restore controls"),
-    ("restoreBackup", "App Health backups UI should include restore action"),
+    ("Run restore rehearsal", "App Health backups UI should include restore rehearsal"),
+    ("Create verified backup", "App Health backups UI should create verified V7 backups"),
 ]:
     if needle not in js_text:
         errors.append(message)

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import ast
 import json
+import os
 import tempfile
 import zipfile
 import sys
@@ -18,6 +19,9 @@ from app import app as flask_app
 import angler_reports_v38 as reports_mod
 import angler_health_backup_v443 as backup_mod
 import tools.backup_restore as backup_helper
+from persistence.authority_manifest import write_manifest
+from persistence.connection import connect
+from persistence.migrations import migrate
 
 errors: list[str] = []
 
@@ -109,6 +113,8 @@ def main() -> int:
     original_data_dir = reports_mod.DATA_DIR
     original_backup_dir = backup_mod.BACKUP_DIR
     original_user_data_backup_dir = backup_helper.USER_DATA_BACKUP_DIR
+    original_db_path = os.environ.get("AI_SQLITE_DB_PATH")
+    original_manifest_path = os.environ.get("AI_AUTHORITY_MANIFEST")
 
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -122,6 +128,14 @@ def main() -> int:
             reports_mod.INDEX_PATH = report_fixture["index_path"]
             backup_mod.BACKUP_DIR = backup_fixture["backup_dir"]
             backup_helper.USER_DATA_BACKUP_DIR = backup_fixture["backup_dir"]
+            sqlite_path = tmp / "reports-qc.sqlite3"
+            manifest_path = tmp / "authority.json"
+            with connect(sqlite_path) as conn:
+                migrate(conn, db_path=str(sqlite_path))
+                conn.execute("UPDATE data_authority SET authority='json' WHERE domain='reports'")
+            write_manifest({"reports": "json"}, manifest_path)
+            os.environ["AI_SQLITE_DB_PATH"] = str(sqlite_path)
+            os.environ["AI_AUTHORITY_MANIFEST"] = str(manifest_path)
 
             client = flask_app.test_client()
 
@@ -187,6 +201,14 @@ def main() -> int:
         reports_mod.DATA_DIR = original_data_dir
         backup_mod.BACKUP_DIR = original_backup_dir
         backup_helper.USER_DATA_BACKUP_DIR = original_user_data_backup_dir
+        if original_db_path is None:
+            os.environ.pop("AI_SQLITE_DB_PATH", None)
+        else:
+            os.environ["AI_SQLITE_DB_PATH"] = original_db_path
+        if original_manifest_path is None:
+            os.environ.pop("AI_AUTHORITY_MANIFEST", None)
+        else:
+            os.environ["AI_AUTHORITY_MANIFEST"] = original_manifest_path
 
     if errors:
         print("QC FAILED: reports and backup delete")

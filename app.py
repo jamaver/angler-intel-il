@@ -154,8 +154,8 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v7.5.1.1-adherence-hardening"
-APP_RELEASE = "v7.5.1.1-adherence-hardening"
+APP_VERSION = "v7.5.1.2-verified-app-health-backups"
+APP_RELEASE = "v7.5.1.2-verified-app-health-backups"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the

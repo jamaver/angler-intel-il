@@ -1,0 +1,9 @@
+{
+  "version": "v7.5.1.2-verified-app-health-backups",
+  "previous_version": "v7.5.1.1-adherence-hardening",
+  "verified_v7_backup_creation": true,
+  "live_restore_disabled": true,
+  "restore_rehearsal_available": true,
+  "sqlite_authority_unchanged": true,
+  "installed_at": "2026-08-05T20:15:00-05:00"
+}

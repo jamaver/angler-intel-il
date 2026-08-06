@@ -80,23 +80,18 @@ def _export_legacy_json(db_path: Path, export_dir: Path) -> dict[str, str]:
     return exports
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Rehearse restore for a V7 backup archive")
-    parser.add_argument("archive", help="Path to a V7 runtime backup zip")
-    parser.add_argument("--json", action="store_true", help="Print JSON")
-    parser.add_argument("--output", help="Write JSON to PATH")
-    args = parser.parse_args()
-
-    archive = Path(args.archive)
+def rehearse_restore(archive: str | Path) -> dict:
+    """Validate a verified V7 backup without touching live runtime paths."""
+    archive = Path(archive)
     manifest_path = archive.with_suffix(".manifest.json")
     if not archive.exists():
-        raise SystemExit(f"Archive not found: {archive}")
+        raise ValueError(f"Archive not found: {archive}")
     if not manifest_path.exists():
-        raise SystemExit(f"Manifest not found: {manifest_path}")
+        raise ValueError(f"Manifest not found: {manifest_path}")
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     if not isinstance(manifest, dict) or not manifest.get("verified"):
-        raise SystemExit("Backup manifest is not verified")
+        raise ValueError("Backup manifest is not verified")
 
     with tempfile.TemporaryDirectory(prefix="angler-v7-restore-") as tmpdir:
         root = Path(tmpdir)
@@ -127,7 +122,7 @@ def main() -> int:
         finally:
             importer_mod.DATA_DIR = old_data_dir
             importer_mod.REPORTS_DIR = old_reports_dir
-        result = {
+        return {
             "archive": str(archive),
             "manifest": str(manifest_path),
             "verified": True,
@@ -137,6 +132,19 @@ def main() -> int:
             "seeded_reference_defaults": seeded_reference_defaults,
             "validation": validation,
         }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Rehearse restore for a V7 backup archive")
+    parser.add_argument("archive", help="Path to a V7 runtime backup zip")
+    parser.add_argument("--json", action="store_true", help="Print JSON")
+    parser.add_argument("--output", help="Write JSON to PATH")
+    args = parser.parse_args()
+
+    try:
+        result = rehearse_restore(args.archive)
+    except (OSError, ValueError, RuntimeError, json.JSONDecodeError) as exc:
+        raise SystemExit(str(exc)) from exc
 
     rendered = json.dumps(result, indent=2, ensure_ascii=False, sort_keys=True)
     if args.output:
