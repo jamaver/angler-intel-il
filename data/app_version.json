@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel",
-  "version": "v7.5.1-recommendation-adherence",
-  "updated": "2026-08-04T18:30:00-05:00",
+  "version": "v7.5.1.1-adherence-hardening",
+  "updated": "2026-08-05T20:00:00-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -53,7 +53,8 @@
     "gear_analytics": "v7.4.3",
     "restrained_analytics_ui": "v7.4.4",
     "trip_completion": "v7.5.0",
-    "recommendation_adherence": "v7.5.1"
+    "recommendation_adherence": "v7.5.1",
+    "adherence_hardening": "v7.5.1.1"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -102,6 +103,7 @@
     "v7.4.3 adds read-only owned-gear, usage-event, catch-link, and maintenance summaries without claiming outcomes by setup where catch records do not carry setup IDs.",
     "v7.4.4 adds a default-collapsed Personal evidence disclosure inside the Learning accordion so recorded analytics support the map-first dashboard without competing with the trip plan.",
     "v7.5.0 adds explicit saved-report trip completion records, including no-catch and did-not-fish outcomes, without fabricating catch-log entries.",
-    "v7.5.1 records the user's direct plan-adherence choice against persisted report recommendations without inferring adherence from catches or changing live ranking."
+    "v7.5.1 records the user's direct plan-adherence choice against persisted report recommendations without inferring adherence from catches or changing live ranking.",
+    "v7.5.1.1 hardens adherence against authority-marker failures, preserves first completion timestamps, and adds non-destructive SQLite validation triggers."
   ]
 }

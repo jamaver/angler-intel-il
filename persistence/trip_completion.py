@@ -34,6 +34,16 @@ def _optional_timestamp(value: Any, label: str) -> str | None:
         raise TripCompletionError(f"{label} must be a valid date and time") from exc
 
 
+def _optional_date(value: Any, label: str) -> str | None:
+    raw = _text(value)
+    if not raw:
+        return None
+    try:
+        return datetime.fromisoformat(raw[:10]).date().isoformat()
+    except ValueError as exc:
+        raise TripCompletionError(f"{label} must use YYYY-MM-DD format") from exc
+
+
 def _optional_count(value: Any) -> int | None:
     if value in (None, ""):
         return None
@@ -80,6 +90,7 @@ def _normalize_completion(payload: dict[str, Any]) -> dict[str, Any]:
         "outcome": outcome,
         "actual_waterbody": _text(payload.get("actual_waterbody")),
         "actual_target_species": _text(payload.get("actual_target_species")),
+        "actual_trip_date": _optional_date(payload.get("actual_trip_date"), "actual_trip_date"),
         "started_at": _optional_timestamp(payload.get("started_at"), "started_at"),
         "ended_at": _optional_timestamp(payload.get("ended_at"), "ended_at"),
         "followed_plan": followed,
@@ -90,7 +101,12 @@ def _normalize_completion(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def record_trip_completion(payload: dict[str, Any], db_path: str | Path = DEFAULT_DB) -> dict[str, Any]:
+def record_trip_completion(
+    payload: dict[str, Any],
+    db_path: str | Path = DEFAULT_DB,
+    *,
+    manifest_path: str | Path | None = None,
+) -> dict[str, Any]:
     """Create or update the latest outcome for an active authoritative report."""
     completion = _normalize_completion(payload)
     now = _now()
@@ -104,11 +120,11 @@ def record_trip_completion(payload: dict[str, Any], db_path: str | Path = DEFAUL
                 raise TripCompletionError("Saved report was not found or is deleted")
             trip_id = _text(report["trip_id"])
             latest = conn.execute(
-                "SELECT id FROM trip_outcomes WHERE report_id=? ORDER BY completed_at DESC, id DESC LIMIT 1",
+                "SELECT id, completed_at FROM trip_outcomes WHERE report_id=? ORDER BY completed_at DESC, id DESC LIMIT 1",
                 (completion["report_id"],),
             ).fetchone()
             legacy = {
-                "schema": "v7.5.0-trip-completion",
+                "schema": "v7.5.1.1-adherence-hardening",
                 "report_id": completion["report_id"],
                 "trip_id": trip_id or None,
                 "saved_at": now,
@@ -123,19 +139,20 @@ def record_trip_completion(payload: dict[str, Any], db_path: str | Path = DEFAUL
                 completion["trip_occurred"],
                 completion["actual_waterbody"] or None,
                 completion["actual_target_species"] or None,
+                completion["actual_trip_date"],
                 completion["started_at"],
                 completion["ended_at"],
                 completion["followed_plan"],
                 completion["catch_count"],
                 completion["satisfaction"],
                 canonical_dumps(completion["gear_refs"]),
-                now,
+                _text(latest["completed_at"]) if latest and _text(latest["completed_at"]) else now,
                 now,
             )
             if latest:
                 conn.execute(
                     """UPDATE trip_outcomes SET trip_id=?, report_id=?, outcome=?, notes=?, legacy_payload_json=?,
-                       trip_occurred=?, actual_waterbody=?, actual_target_species=?, started_at=?, ended_at=?,
+                       trip_occurred=?, actual_waterbody=?, actual_target_species=?, actual_trip_date=?, started_at=?, ended_at=?,
                        followed_plan=?, catch_count=?, satisfaction=?, gear_refs_json=?, completed_at=?, updated_at=?
                        WHERE id=?""",
                     (*values, latest["id"]),
@@ -144,28 +161,40 @@ def record_trip_completion(payload: dict[str, Any], db_path: str | Path = DEFAUL
             else:
                 cursor = conn.execute(
                     """INSERT INTO trip_outcomes(trip_id, report_id, outcome, notes, legacy_payload_json,
-                       trip_occurred, actual_waterbody, actual_target_species, started_at, ended_at,
+                       trip_occurred, actual_waterbody, actual_target_species, actual_trip_date, started_at, ended_at,
                        followed_plan, catch_count, satisfaction, gear_refs_json, completed_at, updated_at)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     values,
                 )
                 outcome_id = int(cursor.lastrowid)
             from .recommendations_authority import sync_recommendation_adherence
-            adherence = sync_recommendation_adherence(
-                conn,
-                report_id=completion["report_id"],
-                trip_id=trip_id or None,
-                trip_outcome_id=outcome_id,
-                adherence=completion["followed_plan"],
-                trip_occurred=bool(completion["trip_occurred"]),
-                outcome=completion["outcome"],
-                catch_count=completion["catch_count"],
-                satisfaction=completion["satisfaction"],
-                notes=completion["notes"],
-            )
+            try:
+                adherence = sync_recommendation_adherence(
+                    conn,
+                    report_id=completion["report_id"],
+                    trip_id=trip_id or None,
+                    trip_outcome_id=outcome_id,
+                    adherence=completion["followed_plan"],
+                    trip_occurred=bool(completion["trip_occurred"]),
+                    outcome=completion["outcome"],
+                    catch_count=completion["catch_count"],
+                    satisfaction=completion["satisfaction"],
+                    notes=completion["notes"],
+                    db_path=db_path,
+                    manifest_path=manifest_path,
+                )
+            except Exception as exc:
+                adherence = {
+                    "status": "unavailable",
+                    "reason": f"Recommendation adherence was not recorded: {type(exc).__name__}",
+                    "report_id": completion["report_id"],
+                    "recommendation_id": f"{completion['report_id']}-best-bet",
+                }
     return {
         "ok": True, "id": outcome_id, "trip_id": trip_id or None,
-        "report_id": completion["report_id"], **completion, "completed_at": now,
+        "report_id": completion["report_id"], **completion,
+        "completed_at": _text(latest["completed_at"]) if latest and _text(latest["completed_at"]) else now,
+        "updated_at": now,
         "recommendation_adherence": adherence,
     }
 
@@ -174,7 +203,7 @@ def load_trip_completion(report_id: str, db_path: str | Path = DEFAULT_DB) -> di
     with connect(db_path, read_only=True) as conn:
         row = conn.execute(
             """SELECT id, trip_id, report_id, outcome, notes, trip_occurred, actual_waterbody,
-               actual_target_species, started_at, ended_at, followed_plan, catch_count, satisfaction,
+               actual_target_species, actual_trip_date, started_at, ended_at, followed_plan, catch_count, satisfaction,
                gear_refs_json, completed_at, updated_at
                FROM trip_outcomes WHERE report_id=? ORDER BY completed_at DESC, id DESC LIMIT 1""",
             (report_id,),

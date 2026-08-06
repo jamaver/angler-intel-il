@@ -122,6 +122,7 @@ def get_v7_health_for_app() -> dict[str, Any]:
         "report_artifact_repair": {},
         "report_read_fallback": {},
         "report_lifecycle": {},
+        "recommendation_adherence": {},
     }
 
     manifest, manifest_error = read_manifest()
@@ -183,6 +184,12 @@ def get_v7_health_for_app() -> dict[str, Any]:
                         payload[destination] = json.loads(row["value_json"] or "{}")
                     except Exception:
                         payload[destination] = {"status": "invalid"}
+            row = conn.execute("SELECT value_json FROM app_settings WHERE key = ?", ("v7.recommendations.adherence",)).fetchone()
+            if row:
+                try:
+                    payload["recommendation_adherence"] = json.loads(row["value_json"] or "{}")
+                except Exception:
+                    payload["recommendation_adherence"] = {"status": "invalid"}
     except Exception as exc:
         payload["errors"].append(str(exc))
 

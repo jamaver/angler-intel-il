@@ -1,0 +1,9 @@
+{
+  "version": "v7.5.1.1-adherence-hardening",
+  "previous_version": "v7.5.1-recommendation-adherence",
+  "authority_aware_adherence": true,
+  "completion_timestamp_preserved": true,
+  "database_validation_triggers": true,
+  "live_ranking_changed": false,
+  "installed_at": "2026-08-05T20:00:00-05:00"
+}

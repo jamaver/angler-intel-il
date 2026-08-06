@@ -12,6 +12,7 @@ from typing import Any
 
 from .canonical_json import canonical_dumps, record_hash
 from .connection import DEFAULT_DB, connect
+from .authority_resolution import resolve_authority
 
 
 FEEDBACK_STATUS_KEY = "v7.recommendations.feedback"
@@ -323,6 +324,8 @@ def sync_recommendation_adherence(
     catch_count: int | None,
     satisfaction: int | None,
     notes: str = "",
+    db_path: str | Path = DEFAULT_DB,
+    manifest_path: str | Path | None = None,
 ) -> dict[str, Any]:
     """Upsert direct user adherence for a report's deterministic best-bet record.
 
@@ -331,10 +334,33 @@ def sync_recommendation_adherence(
     completion but has no recommendation link to record.
     """
     recommendation_id = f"{_text(report_id)}-best-bet"
-    if not _recommendations_authoritative(conn):
-        return {"status": "unavailable", "reason": "Recommendation authority is not active."}
+    resolution = resolve_authority("recommendations", db_path, manifest_path=manifest_path)
+    authority = {
+        "effective_authority": resolution.effective_authority,
+        "authority_status": resolution.status,
+        "manifest_authority": resolution.manifest_authority,
+        "database_authority": resolution.database_authority,
+    }
+    if resolution.effective_authority != "sqlite" or not _recommendations_authoritative(conn):
+        result = {
+            "status": "unavailable",
+            "reason": resolution.error or "Recommendation authority is not healthy.",
+            "recommendation_id": recommendation_id,
+            "report_id": _text(report_id),
+            **authority,
+        }
+        _record_adherence_status(conn, result)
+        return result
     if conn.execute("SELECT 1 FROM recommendations WHERE id=?", (recommendation_id,)).fetchone() is None:
-        return {"status": "not_linked", "reason": "This report has no persisted best-bet recommendation."}
+        result = {
+            "status": "not_linked",
+            "reason": "This report has no persisted best-bet recommendation.",
+            "recommendation_id": recommendation_id,
+            "report_id": _text(report_id),
+            **authority,
+        }
+        _record_adherence_status(conn, result)
+        return result
     now = _now()
     conn.execute(
         """INSERT INTO recommendation_adherence(
@@ -364,13 +390,19 @@ def sync_recommendation_adherence(
         "report_id": _text(report_id),
         "adherence": _text(adherence),
         "outcome": _text(outcome),
+        **authority,
     }
+    _record_adherence_status(conn, result, at=now)
+    return result
+
+
+def _record_adherence_status(conn, result: dict[str, Any], *, at: str | None = None) -> None:
+    timestamp = at or _now()
     conn.execute(
         """INSERT INTO app_settings(key, value_json, updated_at) VALUES(?, ?, ?)
            ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json, updated_at=excluded.updated_at""",
-        (ADHERENCE_STATUS_KEY, canonical_dumps({**result, "at": now}), now),
+        (ADHERENCE_STATUS_KEY, canonical_dumps({**result, "at": timestamp}), timestamp),
     )
-    return result
 
 
 def load_recommendation_adherence(report_id: str, db_path: str | Path = DEFAULT_DB) -> dict[str, Any] | None:
