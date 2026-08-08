@@ -63,6 +63,14 @@ except Exception as exc:
     print(f"[angler-intel v4.4.3 health backups disabled] {exc}")
 # --- end v4.4.3 App Health backup routes ---
 
+# --- Angler Intel V7.5 optional Google Drive export routes ---
+try:
+    from angler_google_drive_v751 import register_google_drive_routes_v751
+    register_google_drive_routes_v751(app)
+except Exception as exc:
+    print(f"[angler-intel v7.5 Google Drive export disabled] {exc}")
+# --- end V7.5 Google Drive export routes ---
+
 
 # --- Angler Intel IL v4.4 smart recommendation routes ---
 try:
@@ -154,8 +162,8 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v7.5.1.2-verified-app-health-backups"
-APP_RELEASE = "v7.5.1.2-verified-app-health-backups"
+APP_VERSION = "v7.5.1.3-google-drive-export-foundation"
+APP_RELEASE = "v7.5.1.3-google-drive-export-foundation"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the

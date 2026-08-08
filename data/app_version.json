@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel",
-  "version": "v7.5.1.2-verified-app-health-backups",
-  "updated": "2026-08-05T20:15:00-05:00",
+  "version": "v7.5.1.3-google-drive-export-foundation",
+  "updated": "2026-08-08T07:45:00-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -55,7 +55,8 @@
     "trip_completion": "v7.5.0",
     "recommendation_adherence": "v7.5.1",
     "adherence_hardening": "v7.5.1.1",
-    "verified_app_health_backups": "v7.5.1.2"
+    "verified_app_health_backups": "v7.5.1.2",
+    "google_drive_export_foundation": "v7.5.1.3"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -106,6 +107,7 @@
     "v7.5.0 adds explicit saved-report trip completion records, including no-catch and did-not-fish outcomes, without fabricating catch-log entries.",
     "v7.5.1 records the user's direct plan-adherence choice against persisted report recommendations without inferring adherence from catches or changing live ranking.",
     "v7.5.1.1 hardens adherence against authority-marker failures, preserves first completion timestamps, and adds non-destructive SQLite validation triggers.",
-    "v7.5.1.2 replaces App Health legacy shell backups with verified V7 runtime backup creation and temporary restore rehearsal."
+    "v7.5.1.2 replaces App Health legacy shell backups with verified V7 runtime backup creation and temporary restore rehearsal.",
+    "v7.5.1.3 adds an optional disabled-by-default rclone Google Drive export queue for verified backups and generated report artifacts."
   ]
 }

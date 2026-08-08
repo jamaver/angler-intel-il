@@ -1,0 +1,8 @@
+{
+  "version": "v7.5.1.3-google-drive-export-foundation",
+  "previous_version": "v7.5.1.2-verified-app-health-backups",
+  "google_drive_secondary_export": true,
+  "rclone_required_when_enabled": true,
+  "local_authority_unchanged": true,
+  "installed_at": "2026-08-08T07:45:00-05:00"
+}

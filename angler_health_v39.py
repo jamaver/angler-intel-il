@@ -651,6 +651,7 @@ def _render_health_html(payload: dict[str, Any]) -> str:
   <script src="/static/js/global_nav_v433.js"></script>
   <script src="/static/js/ui_polish_v442.js"></script>
   <script src="/static/js/app_health_backups_v443.js"></script>
+  <script src="/static/js/google_drive_v751.js"></script>
 </body>
 </html>
 """

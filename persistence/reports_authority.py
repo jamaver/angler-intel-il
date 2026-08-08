@@ -661,7 +661,25 @@ def save_report_sqlite_authoritative(
         html_hash=plan.html_export_hash if html_status == "ok" else None,
         error=error,
     )
+    # Queue only completed local artifacts. Drive remains an optional secondary
+    # export, so any queue/upload issue is intentionally outside this save.
+    cloud_warning: str | None = None
+    if json_status == "ok" and html_status == "ok":
+        cloud_auto_enabled = False
+        try:
+            from integrations.google_drive import get_config, queue_report_export, upload_pending
+
+            cloud_auto_enabled = get_config().auto_reports
+            queue_report_export(plan.report_id, db_path=database, reports_dir=directory)
+            if cloud_auto_enabled:
+                cloud_result = upload_pending(db_path=database, object_id=plan.report_id)
+                if not cloud_result.get("ok"):
+                    cloud_warning = "Report saved locally; Google Drive export is pending repair."
+        except Exception:
+            if cloud_auto_enabled:
+                cloud_warning = "Report saved locally; Google Drive export could not be queued."
+    warning = "; ".join(part for part in (error, cloud_warning) if part) or None
     return ReportSaveResult(
         meta=dict(meta), authority="sqlite", compatibility_export=json_status,
-        html_export=html_status, warning=error,
+        html_export=html_status, warning=warning,
     )
