@@ -28,7 +28,16 @@ def register_trip_completion_routes_v75(app):
         adherence = None
         recommendation_resolution = resolve_authority("recommendations", _db_path())
         if recommendation_resolution.effective_authority == "sqlite":
-            adherence = load_recommendation_adherence(report_id, _db_path())
+            adherence = load_recommendation_adherence(report_id, _db_path()) or {
+                "status": "not_linked",
+                "reason": "This legacy report has no stored Best Bet to link.",
+            }
+        else:
+            adherence = {
+                "status": "unavailable",
+                "reason": "Recommendation feedback was not loaded because its authority markers need attention.",
+                "authority": recommendation_resolution.effective_authority,
+            }
         return jsonify({"ok": True, "completion": load_trip_completion(report_id, _db_path()), "recommendation_adherence": adherence})
 
     @app.route("/api/trips/completion", methods=["POST"])

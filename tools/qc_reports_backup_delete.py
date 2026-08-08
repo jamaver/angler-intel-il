@@ -105,7 +105,8 @@ def main() -> int:
     reports_template = APP_ROOT / "templates/reports.html" if (APP_ROOT / "templates/reports.html").exists() else APP_ROOT / "angler_reports_v38.py"
     assert_contains(reports_template, "data-delete-report", "Reports page should expose delete controls")
     assert_contains(reports_template, "deleteAllReports", "Reports page should expose bulk delete control")
-    assert_contains(reports_template, "Permanently delete all", "Reports bulk delete must warn about permanent deletion")
+    assert_contains(reports_template, "Remove all", "Reports bulk remove control must require confirmation")
+    assert_contains(reports_template, "archived SQLite history is retained", "Reports bulk remove should explain soft-delete retention")
     assert_contains(APP_ROOT / "static/js/app_health_backups_v443.js", "data-delete-backup", "App Health backups UI should expose delete controls")
 
     original_reports_dir = reports_mod.REPORTS_DIR

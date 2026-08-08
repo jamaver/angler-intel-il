@@ -162,8 +162,8 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v7.5.1.3-google-drive-export-foundation"
-APP_RELEASE = "v7.5.1.3-google-drive-export-foundation"
+APP_VERSION = "v7.5.1.4-reports-ui-polish"
+APP_RELEASE = "v7.5.1.4-reports-ui-polish"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the

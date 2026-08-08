@@ -15,6 +15,9 @@ from persistence.reports_mirror import mirror_reports
 from persistence.repositories import JsonReportsIndexRepository, SQLiteReportsIndexRepository, read_domain
 from persistence.authority_resolution import AuthorityWriteError, require_write_authority, resolve_authority
 from persistence.reports_authority import load_authoritative_report, record_json_read_fallback, repair_report_artifacts, save_report_sqlite_authoritative, soft_delete_all_authoritative_reports, soft_delete_authoritative_report
+from persistence.trip_completion import load_trip_completion
+from persistence.recommendations_authority import load_recommendation_adherence
+from integrations.google_drive import report_export_status
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -29,6 +32,28 @@ def _reports_db_path() -> Path:
 
 def _reports_authority():
     return resolve_authority("reports", _reports_db_path())
+
+
+def _report_runtime_status(report_id: str) -> dict[str, Any]:
+    """Read saved completion/export state only; never infer it from catches."""
+    result: dict[str, Any] = {"completion": None, "recommendation_adherence": None, "drive_export": {"status": "not_queued", "items": []}}
+    try:
+        result["completion"] = load_trip_completion(report_id, _reports_db_path())
+    except Exception:
+        pass
+    try:
+        resolution = resolve_authority("recommendations", _reports_db_path())
+        if resolution.effective_authority == "sqlite":
+            result["recommendation_adherence"] = load_recommendation_adherence(report_id, _reports_db_path())
+        else:
+            result["recommendation_adherence"] = {"status": "unavailable", "reason": resolution.error or "Recommendation feedback is unavailable."}
+    except Exception:
+        result["recommendation_adherence"] = {"status": "unavailable", "reason": "Recommendation feedback is unavailable."}
+    try:
+        result["drive_export"] = report_export_status(report_id, _reports_db_path())
+    except Exception:
+        pass
+    return result
 
 
 def _now() -> datetime:
@@ -937,16 +962,19 @@ def register_report_routes_v38(app):
                 enriched = dict(item)
                 enriched["overview"] = _report_overview(enriched)
                 enriched["group"] = enriched["overview"].get("group", "General")
+                enriched.update(_report_runtime_status(str(enriched.get("id") or "")))
                 existing.append(enriched)
             elif html_file and (REPORTS_DIR / html_file).exists():
                 enriched = dict(item)
                 enriched["overview"] = _report_overview(enriched)
                 enriched["group"] = enriched["overview"].get("group", "General")
+                enriched.update(_report_runtime_status(str(enriched.get("id") or "")))
                 existing.append(enriched)
             elif authority.effective_authority == "sqlite":
                 enriched = dict(item)
                 enriched["overview"] = {"group": "General", "display_title": str(item.get("title") or "Trip Report")}
                 enriched["group"] = "General"
+                enriched.update(_report_runtime_status(str(enriched.get("id") or "")))
                 existing.append(enriched)
 
         if len(existing) != len(items) and authority.effective_authority != "sqlite":

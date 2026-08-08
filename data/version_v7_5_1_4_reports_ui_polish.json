@@ -1,0 +1,10 @@
+{
+  "version": "v7.5.1.4-reports-ui-polish",
+  "previous_version": "v7.5.1.3-google-drive-export-foundation",
+  "reports_ui_polish": true,
+  "trip_completion_context": true,
+  "google_drive_status_badges": true,
+  "recommendation_adherence_visible": true,
+  "live_ranking_changed": false,
+  "installed_at": "2026-08-08T08:30:00-05:00"
+}

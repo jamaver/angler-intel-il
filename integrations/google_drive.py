@@ -252,5 +252,20 @@ def queue_summary(db_path: str | Path = DEFAULT_DB) -> dict[str, Any]:
         return {"pending": 0, "failed": 0, "ok": 0, "last_success": None, "last_error": f"queue unavailable: {type(exc).__name__}"}
 
 
+def report_export_status(report_id: str, db_path: str | Path = DEFAULT_DB) -> dict[str, Any]:
+    """Return compact queue state for a saved report without attempting upload."""
+    try:
+        with connect(db_path, read_only=True) as conn:
+            rows = [dict(row) for row in conn.execute(
+                "SELECT object_type, status, updated_at, last_error FROM cloud_exports WHERE provider='google_drive' AND object_id=? ORDER BY id",
+                (str(report_id),),
+            )]
+    except Exception:
+        return {"status": "not_queued", "items": []}
+    statuses = {str(row.get("status") or "pending") for row in rows}
+    status = "failed" if "failed" in statuses else "pending" if statuses & {"pending", "uploading"} else "ok" if statuses else "not_queued"
+    return {"status": status, "items": rows}
+
+
 def public_status(db_path: str | Path = DEFAULT_DB) -> dict[str, Any]:
     return {**drive_status(), **queue_summary(db_path)}

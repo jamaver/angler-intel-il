@@ -10,6 +10,7 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+import zipfile
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -21,7 +22,6 @@ from persistence import importers as importer_mod
 from persistence.connection import connect
 from persistence.migrations import migrate
 from persistence.validation import validate_database
-from tools.v7_0_backup import create_backup
 from tools.v7_0_data_audit import audit
 from app import app as flask_app
 
@@ -97,6 +97,33 @@ def _source_hashes() -> dict[str, str]:
 def _backup_sqlite(source_db: Path, target_db: Path) -> None:
     with connect(source_db) as src, connect(target_db) as dst:
         src.backup(dst)
+
+
+def _fixture_runtime_backup(temp_root: Path, source_root: Path, reports_root: Path, database: Path) -> tuple[Path, Path]:
+    """Build a verified-looking fixture archive without touching live runtime data.
+
+    This test proves the restore rehearsal against the same clean source tree
+    used for import validation. Live runtime state may deliberately contain
+    operator data or known compatibility drift and must not decide whether a
+    framework QC passes.
+    """
+    staging = temp_root / "restore-fixture"
+    (staging / "data").mkdir(parents=True)
+    (staging / "reports").mkdir(parents=True)
+    for path in source_root.glob("*.json"):
+        shutil.copy2(path, staging / "data" / path.name)
+    shutil.copy2(database, staging / "data" / "angler_intel.sqlite3")
+    for path in reports_root.glob("*"):
+        if path.is_file():
+            shutil.copy2(path, staging / "reports" / path.name)
+    archive = temp_root / "fixture-v7-runtime.zip"
+    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as bundle:
+        for path in staging.rglob("*"):
+            if path.is_file():
+                bundle.write(path, path.relative_to(staging))
+    manifest = archive.with_suffix(".manifest.json")
+    manifest.write_text(json.dumps({"verified": True, "source_manifest_hash": None}, indent=2), encoding="utf-8")
+    return archive, manifest
 
 
 def _table_count(conn: sqlite3.Connection, table: str) -> int:
@@ -252,10 +279,7 @@ def main() -> int:
         fk_validation = validate_database(foreign_db, source_root=source_root, reports_root=reports_root)
         _assert(bool(fk_validation.get("foreign_key_check")), "foreign key violations should be detected")
 
-        backup = create_backup(label="qc_v7_0")
-        _assert(bool(backup.get("verified")), "V7 backup should verify")
-        archive = Path(ROOT / backup["archive"])
-        manifest = Path(ROOT / backup["manifest_path"])
+        archive, manifest = _fixture_runtime_backup(temp_root, source_root, reports_root, fresh_db)
         _assert(archive.exists(), "V7 backup archive should exist")
         _assert(manifest.exists(), "V7 backup manifest should exist")
         restore_result = subprocess.run([sys.executable, str(ROOT / "tools" / "v7_0_restore_rehearsal.py"), str(archive), "--json"], capture_output=True, text=True)
