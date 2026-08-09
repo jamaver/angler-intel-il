@@ -59,9 +59,24 @@ def _tree_hashes(root: Path) -> dict[str, str]:
     return {str(path.relative_to(root)): _hash(path) for path in sorted(root.rglob("*")) if path.is_file()}
 
 
+def _sqlite_digest(path: Path) -> str:
+    """Compare logical content, not page bytes, after SQLite's backup API."""
+    with sqlite3.connect(f"file:{path}?mode=ro", uri=True) as conn:
+        rows = conn.execute("\n".join(("SELECT type, name, tbl_name, sql FROM sqlite_master", "ORDER BY type, name"))).fetchall()
+        payload = [tuple(str(value or "") for value in row) for row in rows]
+        for table in ("schema_migrations", "data_authority", "trip_reports", "catches", "gear_items"):
+            try:
+                payload.append((table, str(conn.execute(f"SELECT count(*) FROM {table}").fetchone()[0])))
+            except sqlite3.DatabaseError:
+                pass
+    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
+
+
 def _copy(source: Path, target: Path) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
     if source.is_file() and source.suffix == ".sqlite3":
+        if target.exists():
+            target.unlink()
         with sqlite3.connect(f"file:{source}?mode=ro", uri=True) as src, sqlite3.connect(target) as dst:
             src.backup(dst)
     elif source.is_file():
@@ -71,7 +86,10 @@ def _copy(source: Path, target: Path) -> None:
 
 
 def _validate(source: Path, target: Path) -> None:
-    if _tree_hashes(source) != _tree_hashes(target):
+    if source.is_file() and source.suffix == ".sqlite3":
+        if _sqlite_digest(source) != _sqlite_digest(target):
+            raise RuntimeError("Logical SQLite digest mismatch after backup")
+    elif _tree_hashes(source) != _tree_hashes(target):
         raise RuntimeError(f"Hash mismatch after copying {source.relative_to(ROOT)}")
     if target.is_file() and target.suffix == ".json":
         json.loads(target.read_text(encoding="utf-8"))

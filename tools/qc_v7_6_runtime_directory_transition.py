@@ -15,7 +15,7 @@ def main() -> int:
     tool = ROOT / "tools" / "v7_6_runtime_transition.py"
     source = tool.read_text(encoding="utf-8")
     ast.parse(source)
-    for needle in ("--dry-run", "--apply", "MOVE_RUNTIME_DATA", "legacy_pre_v7_6", "PRAGMA integrity_check", "PRAGMA foreign_key_check"):
+    for needle in ("--dry-run", "--apply", "MOVE_RUNTIME_DATA", "legacy_pre_v7_6", "PRAGMA integrity_check", "PRAGMA foreign_key_check", "_sqlite_digest"):
         assert needle in source, f"missing transition safety: {needle}"
     config = (ROOT / "deploy" / "systemd" / "angler-intel-runtime.conf").read_text(encoding="utf-8")
     for needle in ("AI_INSTANCE_DIR", "AI_SQLITE_DB_PATH", "AI_AUTHORITY_MANIFEST"):
