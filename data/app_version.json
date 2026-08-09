@@ -1,7 +1,7 @@
 {
   "app_name": "Angler Intel",
-  "version": "v7.5.2-outcome-analytics",
-  "updated": "2026-08-09T15:50:00-05:00",
+  "version": "v7.5.3-shadow-personal-intelligence",
+  "updated": "2026-08-09T16:05:00-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
     "exports": "v3.7",
@@ -59,7 +59,8 @@
     "google_drive_export_foundation": "v7.5.1.3",
     "reports_ui_polish": "v7.5.1.4",
     "compatibility_reconciliation": "v7.5.1.5",
-    "outcome_analytics": "v7.5.2"
+    "outcome_analytics": "v7.5.2",
+    "shadow_personal_intelligence": "v7.5.3"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -114,6 +115,7 @@
     "v7.5.1.3 adds an optional disabled-by-default rclone Google Drive export queue for verified backups and generated report artifacts.",
     "v7.5.1.4 refines Saved Reports with clear trip/adherence/export status, richer trip completion context, compact feedback, and soft-delete-consistent wording.",
     "v7.5.1.5 regenerates JSON compatibility exports from SQLite-authoritative domains and validates active reports without treating soft-deleted history as drift.",
-    "v7.5.2 adds read-only trip-completion outcome analytics with honest fished-trip denominators, sample labels, and no live-ranking changes."
+    "v7.5.2 adds read-only trip-completion outcome analytics with honest fished-trip denominators, sample labels, and no live-ranking changes.",
+    "v7.5.3 calculates capped personal outcome evidence in shadow mode only; it is not applied to live ranking."
   ]
 }

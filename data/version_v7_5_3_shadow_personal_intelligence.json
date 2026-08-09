@@ -1,0 +1,8 @@
+{
+  "version": "v7.5.3-shadow-personal-intelligence",
+  "previous_version": "v7.5.2-outcome-analytics",
+  "shadow_personal_intelligence": true,
+  "live_recommendation_ranking_changed": false,
+  "maximum_adjustment": 5,
+  "installed_at": "2026-08-09"
+}
