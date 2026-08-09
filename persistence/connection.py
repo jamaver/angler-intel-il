@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import sqlite3
+import os
 from pathlib import Path
 
 from .runtime_paths import BASE_DIR, DATA_DIR
 
-DEFAULT_DB = DATA_DIR / "angler_intel.sqlite3"
+DEFAULT_DB = Path(os.environ.get("AI_SQLITE_DB_PATH", str(DATA_DIR / "angler_intel.sqlite3")))
 
 
 def connect(db_path: str | Path = DEFAULT_DB, *, read_only: bool = False) -> sqlite3.Connection:

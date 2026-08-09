@@ -1,0 +1,8 @@
+{
+  "version": "v7.6-runtime-directory-transition",
+  "previous_version": "v7.5.3-shadow-personal-intelligence",
+  "runtime_directory_transition": true,
+  "instance_directory": true,
+  "authority_transition": false,
+  "installed_at": "2026-08-09"
+}

@@ -162,8 +162,8 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v7.5.3-shadow-personal-intelligence"
-APP_RELEASE = "v7.5.3-shadow-personal-intelligence"
+APP_VERSION = "v7.6-runtime-directory-transition"
+APP_RELEASE = "v7.6-runtime-directory-transition"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the
