@@ -1,0 +1,16 @@
+{
+  "version": "v7.5.1.5-compatibility-reconciliation",
+  "previous_version": "v7.5.1.4-reports-ui-polish",
+  "sqlite_authoritative_domains": [
+    "target_profile",
+    "gear_inventory",
+    "manual_waters",
+    "catches",
+    "reports",
+    "recommendations"
+  ],
+  "compatibility_exports_regenerated": true,
+  "active_reports_only_drift_validation": true,
+  "authority_changed": false,
+  "installed_at": "2026-08-09T15:40:00-05:00"
+}

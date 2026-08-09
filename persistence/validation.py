@@ -453,7 +453,12 @@ def validate_database(
                             }
                         )
 
-            sqlite_rows = [dict(row) for row in conn.execute(f"SELECT id, legacy_payload_json FROM {table_name}")]
+            query = f"SELECT id, legacy_payload_json FROM {table_name}"
+            # Report deletion is intentionally soft: historical rows remain in
+            # SQLite while compatibility JSON contains only active reports.
+            if domain == "reports":
+                query += " WHERE COALESCE(status, 'active') = 'active'"
+            sqlite_rows = [dict(row) for row in conn.execute(query)]
 
             diffs, counts = _compare_records(domain, [item for item in source_rows if isinstance(item, dict)], sqlite_rows)
             summary["domains"][domain] = counts

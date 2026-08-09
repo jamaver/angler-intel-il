@@ -12,6 +12,7 @@ if str(ROOT) not in sys.path:
 
 from persistence.connection import connect
 from persistence.migrations import migrate
+from persistence.validation import validate_database
 import persistence.reports_authority as authority
 
 
@@ -50,6 +51,16 @@ def main() -> int:
             assert conn.execute("SELECT COUNT(*) FROM trips").fetchone()[0] == 2
             assert conn.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
             assert list(conn.execute("PRAGMA foreign_key_check")) == []
+        # Soft-deleted report rows are retained for auditability and must not
+        # be compared against the active compatibility index as false drift.
+        data = temp / "data"; data.mkdir()
+        (data / "reports_index.json").write_text("[]", encoding="utf-8")
+        (data / "species_profiles_v43.json").write_text("[]", encoding="utf-8")
+        (data / "illinois_waters.json").write_text("[]", encoding="utf-8")
+        for name in ("target_profile.json", "favorites.json", "gear_inventory.json", "catches.json"):
+            (data / name).write_text("{}" if name == "target_profile.json" else "[]", encoding="utf-8")
+        validation = validate_database(db, source_root=data, reports_root=reports)
+        assert validation["domains"]["reports"]["extra_in_sqlite"] == 0
     print("PASS: V7.3.5d report deletion QC")
     return 0
 

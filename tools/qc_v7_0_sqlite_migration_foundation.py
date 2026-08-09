@@ -112,7 +112,9 @@ def _fixture_runtime_backup(temp_root: Path, source_root: Path, reports_root: Pa
     (staging / "reports").mkdir(parents=True)
     for path in source_root.glob("*.json"):
         shutil.copy2(path, staging / "data" / path.name)
-    shutil.copy2(database, staging / "data" / "angler_intel.sqlite3")
+    # The fixture database may be in WAL mode. Use SQLite's backup API so the
+    # archive always contains a complete, checkpoint-consistent schema.
+    _backup_sqlite(database, staging / "data" / "angler_intel.sqlite3")
     for path in reports_root.glob("*"):
         if path.is_file():
             shutil.copy2(path, staging / "reports" / path.name)
