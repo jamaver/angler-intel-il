@@ -6,6 +6,9 @@ venv/
 env/
 backups/
 reports/
+instance/
+backups
+reports
 *.log
 *.tmp
 *.bak
@@ -16,8 +19,10 @@ data/reports_index.json
 data/angler_intel.sqlite3
 data/angler_intel.sqlite3-*
 data/exports/
+data/exports
 data/gear_catalog_cache.json
 data/gear_uploads/
+data/gear_uploads
 data/gear_settings.json
 data/gear_inventory.json
 data/manual_waters.json
