@@ -1340,6 +1340,21 @@ button {
   padding: 0 0.85rem 0.85rem;
 }
 
+.analytics-outcome-summary,
+.analytics-shadow-summary {
+  display: grid;
+  gap: 0.38rem;
+  padding: 0.72rem;
+  border-radius: 10px;
+  border: 1px solid rgba(74, 222, 128, 0.14);
+  background: rgba(16, 44, 34, 0.28);
+}
+
+.analytics-shadow-summary {
+  border-color: rgba(251, 191, 36, 0.18);
+  background: rgba(68, 46, 10, 0.18);
+}
+
 .analytics-evidence-summary {
   display: flex;
   flex-wrap: wrap;

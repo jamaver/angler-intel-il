@@ -898,12 +898,16 @@ async function loadAnalyticsEvidence(data = {}) {
       fetchJson("/api/analytics/catch-water"),
       fetchJson("/api/analytics/lures"),
       fetchJson("/api/analytics/gear"),
+      fetchJson("/api/analytics/outcomes"),
+      fetchJson("/api/analytics/shadow-personal-intelligence"),
     ]);
     const personal = analyticsResult(results[0]);
     const waters = analyticsResult(results[1]);
     const lures = analyticsResult(results[2]);
     const gear = analyticsResult(results[3]);
-    if (!personal && !waters && !lures && !gear) {
+    const outcomes = analyticsResult(results[4]);
+    const shadow = analyticsResult(results[5]);
+    if (!personal && !waters && !lures && !gear && !outcomes && !shadow) {
       body.innerHTML = `<div class="small">Recorded analytics are unavailable right now. Catch logging and trip planning remain available.</div>`;
       return;
     }
@@ -936,6 +940,18 @@ async function loadAnalyticsEvidence(data = {}) {
           ${gear?.underused?.length ? `<div class="small">${Number(gear.underused.length)} owned item(s) have no recorded use yet.</div>` : ""}
         </div>
       </div>
+      ${outcomes ? `<div class="analytics-outcome-summary">
+        <b>Trip outcomes</b>
+        <div class="analytics-evidence-row"><span>Completed trips</span><strong>${Number(outcomes.sample?.completed_outcomes || 0)}</strong></div>
+        <div class="analytics-evidence-row"><span>Fished / with catch</span><strong>${Number(outcomes.sample?.fished_trips || 0)} / ${Number(outcomes.sample?.trips_with_catches || 0)}</strong></div>
+        <div class="small">${outcomes.sample?.catch_success_percent == null ? "Catch success needs completed fished trips." : `${Number(outcomes.sample.catch_success_percent)}% caught a fish; ${Number(outcomes.sample.no_catch_trips || 0)} no-catch trip(s).`}</div>
+      </div>` : ""}
+      ${shadow ? `<div class="analytics-shadow-summary">
+        <b>Personal evidence</b>
+        <span class="mini">${escapeHtml(shadow.sample_quality || "none")}</span>
+        <div class="small">${escapeHtml(shadow.note || "Shadow evidence is unavailable.")}</div>
+        <div class="small">Proposed adjustment: ${Number(shadow.proposed_adjustment || 0) >= 0 ? "+" : ""}${Number(shadow.proposed_adjustment || 0)} (not applied to live ranking).</div>
+      </div>` : ""}
       <div class="small analytics-evidence-disclaimer">Patterns show recorded catches and gear use, not total effort or guaranteed effectiveness.</div>
     `;
   } catch (err) {

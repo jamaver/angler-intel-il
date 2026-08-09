@@ -1,6 +1,7 @@
 """Read-only, bounded personal fishing analytics queries for V7.4.0."""
 from __future__ import annotations
 
+import json
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -541,4 +542,155 @@ def build_gear_analytics(
             "Catch-linked gear counts reflect logged catches, not total fishing effort or gear effectiveness.",
             "Underused means no recorded usage event or catch link; it does not mean unsuitable gear.",
         ],
+    }
+
+
+def _outcome_quality(fished_trips: int) -> tuple[str, str]:
+    if fished_trips < 3:
+        return "exploratory", "Fewer than three fished trips are recorded; do not draw a performance conclusion."
+    if fished_trips < 8:
+        return "limited", "Three to seven fished trips provide directional evidence only."
+    return "useful", "Eight or more fished trips support a guarded personal evidence review."
+
+
+def build_trip_outcome_analytics(
+    db_path: str | Path = DEFAULT_DB,
+    *,
+    limit: int = 5,
+) -> dict[str, Any]:
+    """Return direct trip-completion outcomes without inferring missing effort."""
+    try:
+        requested_limit = int(limit)
+    except (TypeError, ValueError) as exc:
+        raise AnalyticsInputError("limit must be a number between 1 and 20") from exc
+    if not 1 <= requested_limit <= 20:
+        raise AnalyticsInputError("limit must be between 1 and 20")
+
+    with connect(db_path, read_only=True) as conn:
+        planned_reports = int(conn.execute(
+            "SELECT count(*) FROM trip_reports WHERE COALESCE(status, 'active')='active'"
+        ).fetchone()[0])
+        rows = [dict(row) for row in conn.execute(
+            """SELECT o.id, o.report_id, o.trip_occurred, o.outcome, o.actual_waterbody,
+                      o.actual_target_species, o.catch_count, o.satisfaction, o.gear_refs_json,
+                      o.completed_at, o.updated_at, o.followed_plan, a.adherence
+                 FROM trip_outcomes o
+                 LEFT JOIN recommendation_adherence a ON a.trip_outcome_id=o.id
+                 ORDER BY o.completed_at DESC, o.id DESC LIMIT ?""",
+            (MAX_ANALYTICS_ROWS + 1,),
+        )]
+
+    truncated = len(rows) > MAX_ANALYTICS_ROWS
+    rows = rows[:MAX_ANALYTICS_ROWS]
+    completed = len(rows)
+    fished = [row for row in rows if bool(row.get("trip_occurred"))]
+    did_not_fish = completed - len(fished)
+    no_catch = [row for row in fished if int(row.get("catch_count") or 0) == 0]
+    with_catch = [row for row in fished if int(row.get("catch_count") or 0) > 0]
+    catch_total = sum(max(int(row.get("catch_count") or 0), 0) for row in fished)
+    satisfaction = [int(row["satisfaction"]) for row in fished if row.get("satisfaction") is not None]
+    adherence_counts: Counter[str] = Counter(
+        _clean_text(row.get("adherence") or row.get("followed_plan") or "unknown") for row in rows
+    )
+    water_counts: Counter[str] = Counter(_clean_text(row.get("actual_waterbody")) for row in fished if _clean_text(row.get("actual_waterbody")))
+    target_counts: Counter[str] = Counter(_clean_text(row.get("actual_target_species")) for row in fished if _clean_text(row.get("actual_target_species")))
+    gear_counts: Counter[str] = Counter()
+    missing = Counter()
+    for row in fished:
+        try:
+            refs = json.loads(row.get("gear_refs_json") or "{}")
+        except (TypeError, json.JSONDecodeError):
+            refs = {}
+        if not isinstance(refs, dict) or not refs:
+            missing["gear"] += 1
+            continue
+        for role, gear_id in refs.items():
+            label = _clean_text(gear_id)
+            if label:
+                gear_counts[f"{_clean_text(role) or 'gear'}: {label}"] += 1
+    quality, quality_note = _outcome_quality(len(fished))
+    return {
+        "ok": True,
+        "source": "sqlite",
+        "generated_at": _utc_now(),
+        "sample": {
+            "planned_reports": planned_reports,
+            "completed_outcomes": completed,
+            "fished_trips": len(fished),
+            "did_not_fish_trips": did_not_fish,
+            "no_catch_trips": len(no_catch),
+            "trips_with_catches": len(with_catch),
+            "catch_success_percent": round((len(with_catch) / len(fished)) * 100, 1) if fished else None,
+            "catches_per_fished_trip": round(catch_total / len(fished), 2) if fished else None,
+            "average_satisfaction": round(sum(satisfaction) / len(satisfaction), 2) if satisfaction else None,
+            "satisfaction_responses": len(satisfaction),
+            "quality": quality,
+            "truncated": truncated,
+        },
+        "by_adherence": _ranked(adherence_counts, completed, requested_limit),
+        "by_actual_water": _ranked(water_counts, len(fished), requested_limit),
+        "by_actual_target": _ranked(target_counts, len(fished), requested_limit),
+        "by_actual_gear": _ranked(gear_counts, len(fished), requested_limit),
+        "missing_data": dict(missing),
+        "notes": [
+            quality_note,
+            "Did-not-fish records are excluded from catch-success and catch-rate denominators.",
+            "Missing trip completion records are not treated as failures.",
+            "Outcomes remain separate from catch-log frequency and do not infer actual water, target, gear, or adherence.",
+        ],
+    }
+
+
+def build_shadow_personal_intelligence(
+    db_path: str | Path = DEFAULT_DB,
+) -> dict[str, Any]:
+    """Calculate a capped, non-production personal evidence adjustment.
+
+    The output is intentionally informational. No caller in this release may feed
+    it into live Smart Intelligence or map ranking.
+    """
+    with connect(db_path, read_only=True) as conn:
+        rows = [dict(row) for row in conn.execute(
+            """SELECT o.trip_occurred, o.catch_count, o.followed_plan, a.adherence
+                 FROM trip_outcomes o
+                 LEFT JOIN recommendation_adherence a ON a.trip_outcome_id=o.id
+                 ORDER BY o.completed_at DESC, o.id DESC LIMIT ?""",
+            (MAX_ANALYTICS_ROWS,),
+        )]
+    fished = [row for row in rows if bool(row.get("trip_occurred"))]
+    comparable = [
+        row for row in fished
+        if _clean_text(row.get("adherence") or row.get("followed_plan")) in {"exact", "partial"}
+    ]
+    excluded = len(rows) - len(comparable)
+    successes = sum(1 for row in comparable if int(row.get("catch_count") or 0) > 0)
+    no_catches = len(comparable) - successes
+    evidence_count = len(comparable)
+    if evidence_count < 3:
+        proposed = 0
+        quality = "none"
+        note = "No personal adjustment: fewer than three comparable fished, followed-plan outcomes."
+    else:
+        baseline_success = (sum(1 for row in fished if int(row.get("catch_count") or 0) > 0) / len(fished)) if fished else 0.0
+        comparable_success = successes / evidence_count
+        proposed = max(-5, min(5, round((comparable_success - baseline_success) * 10)))
+        quality = "exploratory" if evidence_count < 8 else "eligible_for_later_review"
+        note = (
+            "Shadow-only result from three to seven comparable trips; it is not eligible for live ranking."
+            if evidence_count < 8 else
+            "Enough comparable trips exist for a later guarded review; this release still does not apply it to ranking."
+        )
+    return {
+        "ok": True,
+        "source": "sqlite",
+        "live_ranking_changed": False,
+        "proposed_adjustment": proposed,
+        "maximum_allowed_adjustment": 5,
+        "evidence_count": evidence_count,
+        "sample_quality": quality,
+        "comparable_trip_definition": "Fished trips with direct adherence recorded as exact or partial.",
+        "positive_evidence": successes,
+        "negative_evidence": no_catches,
+        "excluded_outcomes": excluded,
+        "note": note,
     }

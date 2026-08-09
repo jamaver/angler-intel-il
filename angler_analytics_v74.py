@@ -14,6 +14,8 @@ from persistence.personal_analytics import (
     build_gear_analytics,
     build_lure_presentation_analytics,
     build_personal_analytics,
+    build_shadow_personal_intelligence,
+    build_trip_outcome_analytics,
 )
 
 
@@ -122,3 +124,25 @@ def register_analytics_routes_v74(app):
         except Exception as exc:
             return jsonify({"ok": False, "error": f"Gear analytics query failed: {type(exc).__name__}"}), 503
         return jsonify(payload)
+
+    @app.route("/api/analytics/outcomes")
+    def trip_outcome_analytics():
+        unavailable = _unavailable_response("reports", "recommendations")
+        if unavailable is not None:
+            return unavailable
+        try:
+            return jsonify(build_trip_outcome_analytics(_analytics_db_path(), limit=request.args.get("limit", 5)))
+        except AnalyticsInputError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+        except Exception as exc:
+            return jsonify({"ok": False, "error": f"Trip outcome analytics query failed: {type(exc).__name__}"}), 503
+
+    @app.route("/api/analytics/shadow-personal-intelligence")
+    def shadow_personal_intelligence():
+        unavailable = _unavailable_response("reports", "recommendations")
+        if unavailable is not None:
+            return unavailable
+        try:
+            return jsonify(build_shadow_personal_intelligence(_analytics_db_path()))
+        except Exception as exc:
+            return jsonify({"ok": False, "error": f"Personal evidence query failed: {type(exc).__name__}"}), 503
