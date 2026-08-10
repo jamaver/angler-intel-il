@@ -73,6 +73,18 @@ def _runtime_conflicts() -> list[dict[str, Any]]:
     return conflicts
 
 
+def _runtime_path_payload(path: Any) -> dict[str, Any]:
+    """Render resolver diagnostics without leaking non-JSON Path objects."""
+    return {
+        "domain": path.domain,
+        "path": str(path.path),
+        "source": path.source,
+        "candidates": [str(candidate) for candidate in path.candidates],
+        "conflict": bool(path.conflict),
+        "conflict_paths": list(path.conflict_paths),
+    }
+
+
 def _mirror_summary(rows: list[dict[str, Any]]) -> dict[str, int]:
     summary: dict[str, int] = {}
     for row in rows:
@@ -116,7 +128,7 @@ def get_v7_health_for_app() -> dict[str, Any]:
         "foreign_key_check": [],
         "latest_verified_backup": None,
         "runtime_path_conflicts": _runtime_conflicts(),
-        "runtime_paths": {domain: asdict(path) for domain, path in runtime_paths.items()},
+        "runtime_paths": {domain: _runtime_path_payload(path) for domain, path in runtime_paths.items()},
         "mirror_status": [],
         "mirror_summary": {},
         "reconciliation_summary": {"pending": [], "pending_total": 0, "stale": [], "stale_total": 0},
