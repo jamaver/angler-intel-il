@@ -18,6 +18,7 @@ from persistence import importers as importer_mod
 from persistence.migrations import migrate
 from persistence.validation import validate_database
 from persistence.connection import connect
+from persistence.safe_zip import safe_extract
 
 
 REFERENCE_DEFAULTS = (
@@ -59,13 +60,7 @@ def _seed_reference_defaults(data_dir: Path) -> list[str]:
 
 
 def _safe_extract(archive: Path, target_dir: Path) -> None:
-    with zipfile.ZipFile(archive, "r") as zf:
-        for member in zf.infolist():
-            target = target_dir / member.filename
-            resolved = target.resolve()
-            if not str(resolved).startswith(str(target_dir.resolve())):
-                raise RuntimeError(f"Unsafe archive path: {member.filename}")
-        zf.extractall(target_dir)
+    safe_extract(archive, target_dir)
 
 
 def _export_legacy_json(db_path: Path, export_dir: Path) -> dict[str, str]:

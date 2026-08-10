@@ -1,0 +1,9 @@
+{
+  "version": "v7.6.1-runtime-hardening",
+  "previous_version": "v7.6-runtime-directory-transition",
+  "sqlite_logical_digest": true,
+  "journaled_runtime_transition": true,
+  "zip_containment_hardening": true,
+  "authority_changed": false,
+  "installed_at": "2026-08-10"
+}

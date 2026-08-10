@@ -94,7 +94,14 @@ def _legacy_reference_summary(conn) -> dict[str, Any]:
 
 
 def get_v7_health_for_app() -> dict[str, Any]:
-    db_path = DATA_DIR / "angler_intel.sqlite3"
+    runtime_definitions = {
+        "sqlite": {"legacy_path": DATA_DIR / "angler_intel.sqlite3", "repo_default": DATA_DIR / "angler_intel.sqlite3"},
+        "reports_dir": {"legacy_path": BASE_DIR / "reports", "repo_default": BASE_DIR / "reports"},
+        "gear_uploads": {"legacy_path": DATA_DIR / "gear_uploads", "repo_default": DATA_DIR / "gear_uploads"},
+        "exports_dir": {"legacy_path": DATA_DIR / "exports", "repo_default": DATA_DIR / "exports"},
+    }
+    runtime_paths = {domain: resolve_runtime_path(domain, **definition) for domain, definition in runtime_definitions.items()}
+    db_path = runtime_paths["sqlite"].path
     payload: dict[str, Any] = {
         "ok": False,
         "available": False,
@@ -109,6 +116,7 @@ def get_v7_health_for_app() -> dict[str, Any]:
         "foreign_key_check": [],
         "latest_verified_backup": None,
         "runtime_path_conflicts": _runtime_conflicts(),
+        "runtime_paths": {domain: asdict(path) for domain, path in runtime_paths.items()},
         "mirror_status": [],
         "mirror_summary": {},
         "reconciliation_summary": {"pending": [], "pending_total": 0, "stale": [], "stale_total": 0},

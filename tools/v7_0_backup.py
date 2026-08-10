@@ -23,6 +23,7 @@ from persistence.canonical_json import canonical_dumps
 from persistence.importers import source_file_summaries
 from persistence.provenance import file_sha256, text_sha256
 from persistence.connection import connect
+from persistence.safe_zip import safe_extract
 DATA = ROOT / "data"
 BACKUPS = ROOT / "backups"
 REPORTS = ROOT / "reports"
@@ -208,13 +209,7 @@ def _zip_staging(staging_root: Path, archive_path: Path) -> None:
 def _verify_archive(archive_path: Path) -> dict[str, Any]:
     with tempfile.TemporaryDirectory(prefix="angler-v7-verify-") as tmpdir:
         extract_root = Path(tmpdir)
-        with zipfile.ZipFile(archive_path, "r") as zf:
-            for member in zf.infolist():
-                target = extract_root / member.filename
-                resolved = target.resolve()
-                if not str(resolved).startswith(str(extract_root.resolve())):
-                    raise RuntimeError(f"Unsafe archive path: {member.filename}")
-            zf.extractall(extract_root)
+        safe_extract(archive_path, extract_root)
 
         json_paths = [p for p in extract_root.rglob("*.json") if p.name != "v7_runtime_backup_manifest.json"]
         for path in json_paths:

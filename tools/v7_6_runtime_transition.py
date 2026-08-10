@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-"""Copy, verify, and activate the V7.6 instance runtime layout.
+"""Journaled V7.6 runtime relocation with explicit resume and rollback.
 
-This tool intentionally does not stop or start the service. Run it only while
-the service is stopped, after a verified V7 runtime backup. It preserves each
-legacy source under ``instance/legacy_pre_v7_6`` and replaces the legacy path
-with a compatibility symlink, keeping older code paths functional.
+The tool never starts or stops Angler Intel. Run apply, resume, and rollback
+only with the service stopped and a verified V7 backup available.
 """
 from __future__ import annotations
 
@@ -17,12 +15,16 @@ import sqlite3
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from persistence.sqlite_digest import assert_logical_database_match, logical_database_digest
+
 INSTANCE = ROOT / "instance"
 STATE_FILE = INSTANCE / "runtime_transition_v7_6.json"
-
 PATHS = {
     ROOT / "data" / "angler_intel.sqlite3": INSTANCE / "angler_intel.sqlite3",
     ROOT / "data" / "authority.json": INSTANCE / "authority.json",
@@ -59,17 +61,14 @@ def _tree_hashes(root: Path) -> dict[str, str]:
     return {str(path.relative_to(root)): _hash(path) for path in sorted(root.rglob("*")) if path.is_file()}
 
 
-def _sqlite_digest(path: Path) -> str:
-    """Compare logical content, not page bytes, after SQLite's backup API."""
-    with sqlite3.connect(f"file:{path}?mode=ro", uri=True) as conn:
-        rows = conn.execute("\n".join(("SELECT type, name, tbl_name, sql FROM sqlite_master", "ORDER BY type, name"))).fetchall()
-        payload = [tuple(str(value or "") for value in row) for row in rows]
-        for table in ("schema_migrations", "data_authority", "trip_reports", "catches", "gear_items"):
-            try:
-                payload.append((table, str(conn.execute(f"SELECT count(*) FROM {table}").fetchone()[0])))
-            except sqlite3.DatabaseError:
-                pass
-    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
+def _same_content(left: Path, right: Path) -> bool:
+    if left.is_file() and right.is_file() and left.suffix == ".sqlite3":
+        try:
+            assert_logical_database_match(left, right)
+            return True
+        except RuntimeError:
+            return False
+    return _tree_hashes(left) == _tree_hashes(right)
 
 
 def _copy(source: Path, target: Path) -> None:
@@ -82,78 +81,233 @@ def _copy(source: Path, target: Path) -> None:
     elif source.is_file():
         shutil.copy2(source, target)
     else:
+        if target.exists():
+            shutil.rmtree(target)
         shutil.copytree(source, target, symlinks=True)
 
 
-def _validate(source: Path, target: Path) -> None:
+def _validate(source: Path, target: Path) -> dict[str, Any]:
+    if not source.exists() or not target.exists():
+        raise RuntimeError("Runtime source or destination is missing during validation")
     if source.is_file() and source.suffix == ".sqlite3":
-        if _sqlite_digest(source) != _sqlite_digest(target):
-            raise RuntimeError("Logical SQLite digest mismatch after backup")
-    elif _tree_hashes(source) != _tree_hashes(target):
+        return assert_logical_database_match(source, target)
+    if _tree_hashes(source) != _tree_hashes(target):
         raise RuntimeError(f"Hash mismatch after copying {source.relative_to(ROOT)}")
     if target.is_file() and target.suffix == ".json":
         json.loads(target.read_text(encoding="utf-8"))
-    if target.is_file() and target.suffix == ".sqlite3":
-        with sqlite3.connect(f"file:{target}?mode=ro", uri=True) as conn:
-            if conn.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
-                raise RuntimeError("SQLite integrity check failed")
-            if list(conn.execute("PRAGMA foreign_key_check")):
-                raise RuntimeError("SQLite foreign-key check failed")
+    return {"match": True}
 
 
-def status() -> dict[str, object]:
+def _relative(path: Path) -> str:
+    return str(path.relative_to(ROOT))
+
+
+def _parked(legacy: Path) -> Path:
+    return INSTANCE / "legacy_pre_v7_6" / legacy.relative_to(ROOT)
+
+
+def _item(legacy: Path, target: Path) -> dict[str, Any]:
+    return {"target": _relative(target), "parked": _relative(_parked(legacy)), "status": "pending", "updated_at": _now(), "error": None}
+
+
+def _new_state() -> dict[str, Any]:
+    return {"schema": 2, "started_at": _now(), "completed_at": None, "items": {_relative(legacy): _item(legacy, target) for legacy, target in PATHS.items()}}
+
+
+def _load_state() -> dict[str, Any] | None:
+    if not STATE_FILE.exists():
+        return None
+    payload = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+    if payload.get("schema") == 2 and isinstance(payload.get("items"), dict):
+        return payload
+    # V7.6 initial state did not journal individual steps. Its recorded paths
+    # are already linked, so normalize it as completed without moving data.
+    if payload.get("schema") == 1 and isinstance(payload.get("records"), list):
+        state = _new_state()
+        for record in payload["records"]:
+            item = state["items"].get(str(record.get("legacy") or ""))
+            if item:
+                item["status"] = "complete"
+        state["completed_at"] = payload.get("activated_at") or _now()
+        return state
+    raise RuntimeError("Runtime transition state is malformed")
+
+
+def _write_state(state: dict[str, Any]) -> None:
+    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    temporary = STATE_FILE.with_suffix(".tmp")
+    with temporary.open("w", encoding="utf-8") as handle:
+        json.dump(state, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(temporary, STATE_FILE)
+
+
+def _set(state: dict[str, Any], legacy: Path, status: str, *, error: str | None = None) -> None:
+    item = state["items"][_relative(legacy)]
+    item["status"] = status
+    item["error"] = error
+    item["updated_at"] = _now()
+    _write_state(state)
+
+
+def _link(legacy: Path, target: Path) -> None:
+    if legacy.is_symlink():
+        if legacy.resolve() != target.resolve():
+            raise RuntimeError(f"Compatibility link points to an unexpected target: {_relative(legacy)}")
+        return
+    if legacy.exists():
+        raise RuntimeError(f"Legacy path still exists before link activation: {_relative(legacy)}")
+    temporary = legacy.with_name(legacy.name + ".v7_6_link")
+    temporary.symlink_to(target)
+    os.replace(temporary, legacy)
+
+
+def _advance_item(state: dict[str, Any], legacy: Path, target: Path) -> None:
+    item = state["items"][_relative(legacy)]
+    status = str(item.get("status") or "pending")
+    parked = _parked(legacy)
+    if status == "complete":
+        return
+    try:
+        if status == "pending":
+            _copy(legacy, target)
+            _set(state, legacy, "copied")
+            status = "copied"
+        if status == "copied":
+            _validate(legacy, target)
+            _set(state, legacy, "verified")
+            status = "verified"
+        if status == "verified":
+            parked.parent.mkdir(parents=True, exist_ok=True)
+            if legacy.exists() and not legacy.is_symlink():
+                legacy.rename(parked)
+            elif not parked.exists():
+                raise RuntimeError(f"Cannot park missing legacy path: {_relative(legacy)}")
+            _set(state, legacy, "parked")
+            status = "parked"
+        if status == "parked":
+            _link(legacy, target)
+            _set(state, legacy, "linked")
+            status = "linked"
+        if status == "linked":
+            _set(state, legacy, "complete")
+    except Exception as exc:
+        _set(state, legacy, "failed", error=f"{type(exc).__name__}: {exc}")
+        raise
+
+
+def status() -> dict[str, Any]:
+    state = _load_state()
     records = []
     for legacy, target in PATHS.items():
+        item = (state or {}).get("items", {}).get(_relative(legacy), {})
         records.append({
-            "legacy": str(legacy.relative_to(ROOT)), "instance": str(target.relative_to(ROOT)),
+            "legacy": _relative(legacy), "instance": _relative(target),
+            "status": item.get("status", "untracked"), "error": item.get("error"),
             "legacy_exists": legacy.exists() or legacy.is_symlink(), "legacy_is_link": legacy.is_symlink(),
-            "resolved": str(legacy.resolve().relative_to(ROOT)) if (legacy.exists() or legacy.is_symlink()) else None,
+            "resolved": _relative(legacy.resolve()) if (legacy.exists() or legacy.is_symlink()) else None,
             "target_exists": target.exists(),
         })
-    return {"instance": str(INSTANCE), "state_exists": STATE_FILE.exists(), "paths": records}
+    return {"instance": str(INSTANCE), "state": state, "paths": records}
 
 
-def apply() -> dict[str, object]:
+def apply() -> dict[str, Any]:
     if STATE_FILE.exists():
-        raise RuntimeError("V7.6 transition state already exists; inspect --status instead of reapplying")
-    legacy_root = INSTANCE / "legacy_pre_v7_6"
-    records = []
+        raise RuntimeError("Transition state already exists; use --status or --resume")
+    state = _new_state()
+    _write_state(state)
     for legacy, target in PATHS.items():
-        if not legacy.exists() or legacy.is_symlink():
+        if legacy.exists() and not legacy.is_symlink():
+            _advance_item(state, legacy, target)
+    state["completed_at"] = _now()
+    _write_state(state)
+    return {"ok": True, **status()}
+
+
+def resume() -> dict[str, Any]:
+    state = _load_state()
+    if state is None:
+        raise RuntimeError("No runtime transition state exists to resume")
+    for legacy, target in PATHS.items():
+        item = state["items"][_relative(legacy)]
+        if item.get("status") == "failed":
+            parked = _parked(legacy)
+            if legacy.is_symlink():
+                item["status"] = "linked"
+            elif parked.exists() and not legacy.exists():
+                item["status"] = "parked"
+            elif legacy.exists() and target.exists():
+                item["status"] = "copied"
+            elif legacy.exists():
+                item["status"] = "pending"
+            else:
+                raise RuntimeError(f"Cannot determine a safe resume point: {_relative(legacy)}")
+            _write_state(state)
+        if item.get("status") != "complete":
+            _advance_item(state, legacy, target)
+    state["completed_at"] = _now()
+    _write_state(state)
+    return {"ok": True, **status()}
+
+
+def rollback() -> dict[str, Any]:
+    state = _load_state()
+    if state is None:
+        raise RuntimeError("No runtime transition state exists to roll back")
+    restored: list[str] = []
+    for legacy, target in reversed(list(PATHS.items())):
+        item = state["items"].get(_relative(legacy), {})
+        parked = _parked(legacy)
+        if item.get("status") not in {"complete", "linked", "parked"}:
             continue
-        _copy(legacy, target)
-        _validate(legacy, target)
-        parked = legacy_root / legacy.relative_to(ROOT)
-        parked.parent.mkdir(parents=True, exist_ok=True)
-        legacy.rename(parked)
-        link_tmp = legacy.with_name(legacy.name + ".v7_6_link")
-        link_tmp.symlink_to(target)
-        os.replace(link_tmp, legacy)
-        records.append({"legacy": str(legacy.relative_to(ROOT)), "instance": str(target.relative_to(ROOT)), "parked": str(parked.relative_to(ROOT))})
-    INSTANCE.mkdir(parents=True, exist_ok=True)
-    STATE_FILE.write_text(json.dumps({"schema": 1, "activated_at": _now(), "records": records}, indent=2) + "\n", encoding="utf-8")
-    return {"ok": True, "records": records, "state": str(STATE_FILE.relative_to(ROOT))}
+        if not parked.exists() or not target.exists():
+            raise RuntimeError(f"Cannot roll back missing runtime item: {_relative(legacy)}")
+        if not _same_content(parked, target):
+            raise RuntimeError(f"Refusing rollback because current instance data diverged: {_relative(legacy)}")
+        if legacy.is_symlink():
+            legacy.unlink()
+        elif legacy.exists():
+            raise RuntimeError(f"Refusing rollback because legacy path is occupied: {_relative(legacy)}")
+        legacy.parent.mkdir(parents=True, exist_ok=True)
+        parked.rename(legacy)
+        _set(state, legacy, "pending")
+        restored.append(_relative(legacy))
+    state["rolled_back_at"] = _now()
+    state["completed_at"] = None
+    _write_state(state)
+    return {"ok": True, "restored": restored, **status()}
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--status", action="store_true")
-    parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--apply", action="store_true")
+    modes = parser.add_mutually_exclusive_group(required=True)
+    modes.add_argument("--status", action="store_true")
+    modes.add_argument("--dry-run", action="store_true")
+    modes.add_argument("--apply", action="store_true")
+    modes.add_argument("--resume", action="store_true")
+    modes.add_argument("--rollback", action="store_true")
     parser.add_argument("--confirm", default="")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
-    if sum(bool(value) for value in (args.status, args.dry_run, args.apply)) != 1:
-        parser.error("choose exactly one of --status, --dry-run, or --apply")
     if args.apply:
         if args.confirm != "MOVE_RUNTIME_DATA":
             parser.error("--apply requires --confirm MOVE_RUNTIME_DATA")
         payload = apply()
+    elif args.resume:
+        if args.confirm != "RESUME_RUNTIME_DATA":
+            parser.error("--resume requires --confirm RESUME_RUNTIME_DATA")
+        payload = resume()
+    elif args.rollback:
+        if args.confirm != "ROLLBACK_RUNTIME_DATA":
+            parser.error("--rollback requires --confirm ROLLBACK_RUNTIME_DATA")
+        payload = rollback()
     elif args.dry_run:
         payload = {"ok": True, "dry_run": True, **status()}
     else:
         payload = status()
-    print(json.dumps(payload, indent=2) if args.json else payload)
+    print(json.dumps(payload, indent=2, sort_keys=True) if args.json else payload)
     return 0
 
 

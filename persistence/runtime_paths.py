@@ -21,7 +21,7 @@ class ResolvedRuntimePath:
 
 
 DOMAIN_ENV_VARS = {
-    "sqlite": "AI_SQLITE_PATH",
+    "sqlite": "AI_SQLITE_DB_PATH",
     "gear_inventory": "AI_GEAR_INVENTORY_PATH",
     "gear_settings": "AI_GEAR_SETTINGS_PATH",
     "gear_catalog_cache": "AI_GEAR_CATALOG_CACHE_PATH",
@@ -34,6 +34,23 @@ DOMAIN_ENV_VARS = {
     "gear_uploads": "AI_GEAR_UPLOADS_DIR",
     "exports_dir": "AI_EXPORTS_DIR",
     "instance_dir": "AI_INSTANCE_DIR",
+}
+
+LEGACY_ENV_ALIASES = {"sqlite": ("AI_SQLITE_PATH",)}
+
+INSTANCE_RELATIVE_PATHS = {
+    "sqlite": "angler_intel.sqlite3",
+    "gear_inventory": "compatibility/gear_inventory.json",
+    "gear_settings": "compatibility/gear_settings.json",
+    "gear_catalog_cache": "cache/gear_catalog_cache.json",
+    "manual_waters": "compatibility/manual_waters.json",
+    "target_profile": "compatibility/target_profile.json",
+    "favorites": "compatibility/favorites.json",
+    "catches": "compatibility/catches.json",
+    "reports_index": "compatibility/reports_index.json",
+    "reports_dir": "reports",
+    "gear_uploads": "uploads",
+    "exports_dir": "exports",
 }
 
 
@@ -51,9 +68,7 @@ def _resolve_instance_candidate(domain: str, filename: str | None = None) -> Pat
     if not instance_dir:
         return None
     root = Path(instance_dir)
-    if filename:
-        return root / filename
-    return root / domain
+    return root / (filename or INSTANCE_RELATIVE_PATHS.get(domain, domain))
 
 
 def resolve_runtime_path(
@@ -66,10 +81,16 @@ def resolve_runtime_path(
 ) -> ResolvedRuntimePath:
     candidates: list[tuple[str, Path]] = []
 
-    if env_var:
-        env_value = os.environ.get(env_var, "").strip()
+    effective_env_var = env_var or DOMAIN_ENV_VARS.get(domain)
+    if effective_env_var:
+        env_value = os.environ.get(effective_env_var, "").strip()
         if env_value:
             candidates.append(("env", Path(env_value)))
+        elif domain in LEGACY_ENV_ALIASES:
+            for alias in LEGACY_ENV_ALIASES[domain]:
+                alias_value = os.environ.get(alias, "").strip()
+                if alias_value:
+                    candidates.append(("legacy_env", Path(alias_value)))
 
     instance_candidate = _resolve_instance_candidate(domain, filename=filename)
     if instance_candidate is not None:
@@ -84,7 +105,8 @@ def resolve_runtime_path(
     existing = [(source, path) for source, path in candidates if _existing(path) is not None]
     if existing:
         source, path = existing[0]
-        conflict_paths = [str(p) for _, p in existing if p != path]
+        resolved_path = path.resolve()
+        conflict_paths = [str(p) for _, p in existing if p.resolve() != resolved_path]
         return ResolvedRuntimePath(
             domain=domain,
             path=path,
@@ -113,4 +135,3 @@ def resolve_runtime_paths(definitions: dict[str, dict[str, str | Path | None]]) 
         )
         for domain, definition in definitions.items()
     }
-
