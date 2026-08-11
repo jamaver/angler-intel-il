@@ -105,6 +105,13 @@ def resolve_runtime_path(
     existing = [(source, path) for source, path in candidates if _existing(path) is not None]
     if existing:
         source, path = existing[0]
+        instance_root = os.environ.get("AI_INSTANCE_DIR", "").strip()
+        if source == "env" and instance_root:
+            try:
+                path.resolve().relative_to(Path(instance_root).resolve())
+                source = "instance"
+            except ValueError:
+                pass
         resolved_path = path.resolve()
         conflict_paths = [str(p) for _, p in existing if p.resolve() != resolved_path]
         return ResolvedRuntimePath(
