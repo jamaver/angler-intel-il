@@ -39,6 +39,8 @@ def inspect() -> dict:
 
 
 def record(archive: Path, manifest_path: Path) -> dict:
+    archive = archive.resolve()
+    manifest_path = manifest_path.resolve()
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     if not manifest.get("verified"):
         raise RuntimeError("Recovery baseline requires a verified V7 backup manifest")
