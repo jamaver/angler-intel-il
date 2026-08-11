@@ -129,6 +129,7 @@ def get_v7_health_for_app() -> dict[str, Any]:
         "latest_verified_backup": None,
         "runtime_path_conflicts": _runtime_conflicts(),
         "runtime_paths": {domain: _runtime_path_payload(path) for domain, path in runtime_paths.items()},
+        "runtime_recovery_baseline": _read_json(BASE_DIR / "instance" / "runtime_recovery_baseline_v7_6_1.json"),
         "mirror_status": [],
         "mirror_summary": {},
         "reconciliation_summary": {"pending": [], "pending_total": 0, "stale": [], "stale_total": 0},

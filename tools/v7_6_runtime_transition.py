@@ -107,7 +107,7 @@ def _parked(legacy: Path) -> Path:
 
 
 def _item(legacy: Path, target: Path) -> dict[str, Any]:
-    return {"target": _relative(target), "parked": _relative(_parked(legacy)), "status": "pending", "updated_at": _now(), "error": None}
+    return {"target": _relative(target), "parked": _relative(_parked(legacy)), "status": "pending", "rollback_eligible": True, "updated_at": _now(), "error": None}
 
 
 def _new_state() -> dict[str, Any]:
@@ -262,6 +262,8 @@ def rollback() -> dict[str, Any]:
         parked = _parked(legacy)
         if item.get("status") not in {"complete", "linked", "parked"}:
             continue
+        if item.get("rollback_eligible") is False:
+            raise RuntimeError(f"Refusing rollback because the parked baseline is historical: {_relative(legacy)}")
         if not parked.exists() or not target.exists():
             raise RuntimeError(f"Cannot roll back missing runtime item: {_relative(legacy)}")
         if not _same_content(parked, target):
