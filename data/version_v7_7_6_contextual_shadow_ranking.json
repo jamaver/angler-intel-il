@@ -1,0 +1,10 @@
+{
+  "version": "v7.7.6-contextual-shadow-ranking",
+  "contextual_evidence": true,
+  "shrunk_estimates": true,
+  "forecast_calibration": true,
+  "species_condition_scoring": true,
+  "weather_trend_intelligence": true,
+  "explainable_component_scoring": true,
+  "live_personal_ranking": false
+}

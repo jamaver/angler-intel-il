@@ -900,6 +900,8 @@ async function loadAnalyticsEvidence(data = {}) {
       fetchJson("/api/analytics/gear"),
       fetchJson("/api/analytics/outcomes"),
       fetchJson("/api/analytics/shadow-personal-intelligence"),
+      fetchJson("/api/analytics/contextual-personal-evidence"),
+      fetchJson("/api/analytics/forecast-calibration"),
     ]);
     const personal = analyticsResult(results[0]);
     const waters = analyticsResult(results[1]);
@@ -907,7 +909,9 @@ async function loadAnalyticsEvidence(data = {}) {
     const gear = analyticsResult(results[3]);
     const outcomes = analyticsResult(results[4]);
     const shadow = analyticsResult(results[5]);
-    if (!personal && !waters && !lures && !gear && !outcomes && !shadow) {
+    const contextual = analyticsResult(results[6]);
+    const calibration = analyticsResult(results[7]);
+    if (!personal && !waters && !lures && !gear && !outcomes && !shadow && !contextual && !calibration) {
       body.innerHTML = `<div class="small">Recorded analytics are unavailable right now. Catch logging and trip planning remain available.</div>`;
       return;
     }
@@ -951,6 +955,15 @@ async function loadAnalyticsEvidence(data = {}) {
         <span class="mini">${escapeHtml(shadow.sample_quality || "none")}</span>
         <div class="small">${escapeHtml(shadow.note || "Shadow evidence is unavailable.")}</div>
         <div class="small">Proposed adjustment: ${Number(shadow.proposed_adjustment || 0) >= 0 ? "+" : ""}${Number(shadow.proposed_adjustment || 0)} (not applied to live ranking).</div>
+      </div>` : ""}
+      ${contextual ? `<div class="analytics-shadow-summary">
+        <b>Contextual personal evidence</b> <span class="mini">${escapeHtml(contextual.quality || "none")}</span>
+        <div class="small">${escapeHtml(contextual.match_level || "personal baseline")} · ${Number(contextual.comparable_trips || 0)} comparable trip(s).</div>
+        <div class="small">Shadow adjustment: ${Number(contextual.proposed_adjustment || 0) >= 0 ? "+" : ""}${Number(contextual.proposed_adjustment || 0)} (not applied to live ranking).</div>
+      </div>` : ""}
+      ${calibration ? `<div class="analytics-shadow-summary">
+        <b>Score calibration</b>
+        <div class="small">${escapeHtml((calibration.buckets || []).filter(row => Number(row.followed_trips || 0) > 0).map(row => `${row.band}: ${row.catch_positive_trips}/${row.followed_trips} caught`).join(" · ") || "Needs completed followed trips.")}</div>
       </div>` : ""}
       <div class="small analytics-evidence-disclaimer">Patterns show recorded catches and gear use, not total effort or guaranteed effectiveness.</div>
     `;
@@ -1003,6 +1016,9 @@ function renderSmartIntelligence(intel) {
   const inputQuality = intel.input_quality || {};
   const missingInputs = asList(confidence.missing_inputs || inputQuality.missing);
   const catchHistory = intel.catch_history || {};
+  const componentScoring = intel.component_scoring || {};
+  const scoreComponents = componentScoring.components || {};
+  const trendSignals = asList(intel.weather_trends?.signals);
   const sampleSize = catchHistory.sample_size || {};
   const catchMeta = [];
   const lureRecommendation = intel.lure_recommendation || intel.lure_asset || {};
@@ -1078,6 +1094,13 @@ function renderSmartIntelligence(intel) {
       </div>` : ""}
 
       <div class="intel-grid intel-rationale-grid">${recommendations}</div>
+
+      ${Object.keys(scoreComponents).length ? `<details class="intel-details">
+        <summary>Score components (${Number(componentScoring.score ?? 0)}/100)</summary>
+        <div class="intel-rationale-list">${Object.entries(scoreComponents).map(([label, value]) => `<div class="intel-rationale-card"><b>${escapeHtml(label.replace(/_/g, " "))}</b><span class="mini">${Number(value.score ?? 0)}</span></div>`).join("")}</div>
+        <div class="small">Data confidence is separate from this fishing-fit explanation.</div>
+      </details>` : ""}
+      ${trendSignals.length ? `<div class="intel-group"><h4>Weather trend</h4><div class="intel-chip-row">${trendSignals.map(item => `<span class="mini">${escapeHtml(item)}</span>`).join("")}</div></div>` : ""}
 
       ${explanationSections.length ? `<div class="intel-group">
         <h4>Why this plan</h4>

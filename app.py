@@ -162,8 +162,8 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v7.6.1-runtime-hardening"
-APP_RELEASE = "v7.6.1-runtime-hardening"
+APP_VERSION = "v7.7.6-contextual-shadow-ranking"
+APP_RELEASE = "v7.7.6-contextual-shadow-ranking"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the
@@ -999,6 +999,18 @@ def build_water_intel(water, target_species="", zip_code=""):
         location_label = str(water.get("name") or "Selected waterbody")
 
     insights = catch_insights(zip_code or "")
+    # Preserve the compact weather summary while supplying bounded observations
+    # for V7.7 trend explanation. This remains display-only intelligence input.
+    smart_weather = dict(weather_summary)
+    hourly_source = weather.get("hourly", {}) if isinstance(weather, dict) else {}
+    smart_weather["hourly_forecast"] = [
+        {"time": moment, "temp": f_temp(temp), "pressure": inhg(pressure)}
+        for moment, temp, pressure in zip(
+            hourly_source.get("time", [])[:24],
+            hourly_source.get("temperature_2m", [])[:24],
+            hourly_source.get("pressure_msl", [])[:24],
+        )
+    ]
     try:
         smart_intelligence = build_smart_intelligence(
             zip_code=zip_code or "",
@@ -1006,7 +1018,7 @@ def build_water_intel(water, target_species="", zip_code=""):
                 "city": water.get("city", ""),
                 "state": water.get("state", ""),
             },
-            weather=weather_summary,
+            weather=smart_weather,
             area_type=area_type,
             best_bet=best_bet,
             best_time=best_block,
@@ -1019,7 +1031,7 @@ def build_water_intel(water, target_species="", zip_code=""):
                 "city": water.get("city", ""),
                 "state": water.get("state", ""),
             },
-            weather=weather_summary,
+            weather=smart_weather,
             area_type=area_type,
             best_bet=best_bet,
             best_time=best_block,

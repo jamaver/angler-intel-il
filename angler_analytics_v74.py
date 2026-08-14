@@ -17,6 +17,7 @@ from persistence.personal_analytics import (
     build_shadow_personal_intelligence,
     build_trip_outcome_analytics,
 )
+from intelligence.personal_evidence import build_contextual_personal_evidence, build_forecast_calibration, contextual_shadow_adjustment
 
 
 def _analytics_db_path() -> Path:
@@ -146,3 +147,27 @@ def register_analytics_routes_v74(app):
             return jsonify(build_shadow_personal_intelligence(_analytics_db_path()))
         except Exception as exc:
             return jsonify({"ok": False, "error": f"Personal evidence query failed: {type(exc).__name__}"}), 503
+
+    @app.route("/api/analytics/contextual-personal-evidence")
+    def contextual_personal_evidence():
+        unavailable = _unavailable_response("reports", "recommendations")
+        if unavailable is not None:
+            return unavailable
+        try:
+            evidence = build_contextual_personal_evidence(
+                _analytics_db_path(), species=request.args.get("species"), waterbody=request.args.get("waterbody"),
+                season=request.args.get("season"), lure_family=request.args.get("lure_family"),
+            )
+            return jsonify(contextual_shadow_adjustment(evidence))
+        except Exception as exc:
+            return jsonify({"ok": False, "error": f"Contextual evidence query failed: {type(exc).__name__}"}), 503
+
+    @app.route("/api/analytics/forecast-calibration")
+    def forecast_calibration():
+        unavailable = _unavailable_response("reports", "recommendations")
+        if unavailable is not None:
+            return unavailable
+        try:
+            return jsonify(build_forecast_calibration(_analytics_db_path()))
+        except Exception as exc:
+            return jsonify({"ok": False, "error": f"Forecast calibration query failed: {type(exc).__name__}"}), 503

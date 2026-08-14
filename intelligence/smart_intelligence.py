@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any
 
 from intelligence.lure_assets import resolve_lure_asset
+from intelligence.species_condition_scoring import explainable_components, species_condition_components, weather_trend_intelligence
 
 
 TRANSITION_DIRECTION = {
@@ -478,6 +479,17 @@ def _base_payload(
     labels = _condition_labels(temp_f, wind_mph, pressure_inhg, cloud_cover)
     input_quality = _input_quality(safe_weather, safe_best_bet, safe_best_time)
     confidence = _confidence_summary(input_quality, catch_signal, clarity)
+    species_conditions = species_condition_components(
+        species, temp_f=temp_f, wind_mph=wind_mph, pressure_inhg=pressure_inhg,
+        cloud_cover=cloud_cover, season=season, water_type=water_type,
+    )
+    component_scoring = explainable_components(
+        species_conditions,
+        water_fit=safe_best_bet.get("species_score"),
+        timing_fit=safe_best_time.get("score"),
+        presentation_fit=safe_best_bet.get("species_score"),
+    )
+    weather_trends = weather_trend_intelligence(safe_weather.get("hourly") or safe_weather.get("hourly_forecast"))
     positive_signals, caution_signals = _signal_lists(
         temp_f,
         wind_mph,
@@ -614,6 +626,9 @@ def _base_payload(
             f"pressure, cloud cover, season, water type, lure fit, confidence, and catch-history signal."
         ),
         "confidence": confidence,
+        "species_condition_scoring": species_conditions,
+        "component_scoring": component_scoring,
+        "weather_trends": weather_trends,
         "ranking_factors": ranking_factors,
         "explanation_sections": explanation_sections,
         "decision_factors": decision_factors,
