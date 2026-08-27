@@ -162,8 +162,8 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v7.7.7-water-species-maintenance"
-APP_RELEASE = "v7.7.7-water-species-maintenance"
+APP_VERSION = "v7.7.8-multi-target-species"
+APP_RELEASE = "v7.7.8-multi-target-species"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the

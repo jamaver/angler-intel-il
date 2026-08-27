@@ -1,0 +1,6 @@
+{
+  "version": "v7.7.8-multi-target-species",
+  "multi_target_trip_profile": true,
+  "primary_target_backwards_compatible": true,
+  "live_personal_ranking": false
+}

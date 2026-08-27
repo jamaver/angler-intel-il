@@ -142,6 +142,7 @@ def default_target_profile() -> dict[str, Any]:
     return {
         "default_target_species": default,
         "current_trip_target": "",
+        "current_trip_targets": [],
         "favorite_species": [default] if default else [],
         "updated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
     }
@@ -153,6 +154,11 @@ def load_target_profile() -> dict[str, Any]:
     if isinstance(stored, dict):
         profile["default_target_species"] = _canonical_species_name(stored.get("default_target_species") or profile["default_target_species"])
         profile["current_trip_target"] = _canonical_species_name(stored.get("current_trip_target") or profile["current_trip_target"])
+        profile["current_trip_targets"] = _normalize_species_list(stored.get("current_trip_targets"))
+        if not profile["current_trip_targets"] and profile["current_trip_target"]:
+            profile["current_trip_targets"] = [profile["current_trip_target"]]
+        if profile["current_trip_targets"]:
+            profile["current_trip_target"] = profile["current_trip_targets"][0]
         profile["favorite_species"] = _normalize_species_list(stored.get("favorite_species") or profile["favorite_species"])
         if not profile["favorite_species"] and profile["default_target_species"]:
             profile["favorite_species"] = [profile["default_target_species"]]
@@ -167,6 +173,11 @@ def save_target_profile(payload: dict[str, Any]) -> dict[str, Any]:
         profile["default_target_species"] = _canonical_species_name(payload.get("default_target_species"))
     if "current_trip_target" in payload:
         profile["current_trip_target"] = _canonical_species_name(payload.get("current_trip_target"))
+        if "current_trip_targets" not in payload:
+            profile["current_trip_targets"] = [profile["current_trip_target"]] if profile["current_trip_target"] else []
+    if "current_trip_targets" in payload:
+        profile["current_trip_targets"] = _normalize_species_list(payload.get("current_trip_targets"))
+        profile["current_trip_target"] = profile["current_trip_targets"][0] if profile["current_trip_targets"] else ""
     if "favorite_species" in payload:
         profile["favorite_species"] = _normalize_species_list(payload.get("favorite_species"))
     if "favorite_species_add" in payload:

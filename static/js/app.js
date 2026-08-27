@@ -456,8 +456,9 @@ document.getElementById("setTripTarget")?.addEventListener("click", () => {
 });
 
 document.getElementById("setDefaultTarget")?.addEventListener("click", () => {
-  const value = targetSpeciesNode ? targetSpeciesNode.value.trim() : "";
-  saveTargetProfile({ default_target_species: value, current_trip_target: value || "" })
+  const values = selectedTargetSpecies();
+  const value = values[0] || "";
+  saveTargetProfile({ default_target_species: value, current_trip_targets: values })
     .then(() => loadIntel(currentZip))
     .catch(err => {
       alert(err.message || "Could not save default target.");
@@ -465,9 +466,10 @@ document.getElementById("setDefaultTarget")?.addEventListener("click", () => {
 });
 
 document.getElementById("favoriteTarget")?.addEventListener("click", () => {
-  const value = targetSpeciesNode ? targetSpeciesNode.value.trim() : "";
-  if (!value) return;
-  saveTargetProfile({ favorite_species_add: value })
+  const values = selectedTargetSpecies();
+  if (!values.length) return;
+  const favorites = Array.isArray(targetProfile?.favorite_species) ? targetProfile.favorite_species : [];
+  saveTargetProfile({ favorite_species: [...new Set([...favorites, ...values])] })
     .then(() => loadIntel(currentZip))
     .catch(err => {
       alert(err.message || "Could not save favorite target.");
@@ -486,9 +488,19 @@ function openSnapshot() {
 }
 
 function currentTargetSpecies() {
-  const selected = targetSpeciesNode ? targetSpeciesNode.value.trim() : "";
-  if (selected) return selected;
+  const selected = selectedTargetSpecies();
+  if (selected.length) return selected[0];
   return targetProfile?.current_trip_target || targetProfile?.default_target_species || "";
+}
+
+function selectedTargetSpecies() {
+  return targetSpeciesNode ? [...targetSpeciesNode.selectedOptions].map(option => option.value.trim()).filter(Boolean) : [];
+}
+
+function setTargetSpeciesSelection(values = []) {
+  if (!targetSpeciesNode) return;
+  const selected = new Set((Array.isArray(values) ? values : [values]).map(value => String(value || "").trim()).filter(Boolean));
+  [...targetSpeciesNode.options].forEach(option => { option.selected = selected.has(option.value); });
 }
 
 function currentFocusWaterId() {
@@ -534,7 +546,9 @@ function renderTargetProfile() {
   }
 
   const favorites = Array.isArray(targetProfile.favorite_species) ? targetProfile.favorite_species : [];
-  const trip = targetProfile.current_trip_target || "Auto";
+  const tripTargets = Array.isArray(targetProfile.current_trip_targets) && targetProfile.current_trip_targets.length
+    ? targetProfile.current_trip_targets : targetProfile.current_trip_target ? [targetProfile.current_trip_target] : [];
+  const trip = tripTargets.join(", ") || "Auto";
   const defaultTarget = targetProfile.default_target_species || "Auto";
   targetProfileSummary.textContent = `Trip target: ${trip} · Default: ${defaultTarget} · Favorites: ${favorites.slice(0, 3).join(", ") || "none"}`;
 }
@@ -549,7 +563,7 @@ async function loadTargetProfile() {
 
     targetProfile = data.profile || {};
     if (targetSpeciesNode) {
-      targetSpeciesNode.value = targetProfile.current_trip_target || targetProfile.default_target_species || "";
+      setTargetSpeciesSelection(targetProfile.current_trip_targets?.length ? targetProfile.current_trip_targets : [targetProfile.current_trip_target || targetProfile.default_target_species]);
     }
     renderTargetProfile();
   } catch (err) {
@@ -625,7 +639,7 @@ async function saveTargetProfile(payload) {
 
   targetProfile = data.profile || {};
   if (targetSpeciesNode) {
-    targetSpeciesNode.value = targetProfile.current_trip_target || targetProfile.default_target_species || "";
+    setTargetSpeciesSelection(targetProfile.current_trip_targets?.length ? targetProfile.current_trip_targets : [targetProfile.current_trip_target || targetProfile.default_target_species]);
   }
   renderTargetProfile();
   return targetProfile;
@@ -992,14 +1006,17 @@ async function loadAnalyticsEvidence(data = {}) {
 }
 
 async function syncTargetSpecies(payload = {}) {
-  const value = targetSpeciesNode ? targetSpeciesNode.value.trim() : "";
+  const values = selectedTargetSpecies();
+  const value = values[0] || "";
   const nextPayload = { ...payload };
   if (value) {
     if (payload.use_trip !== false) {
       nextPayload.current_trip_target = value;
+      nextPayload.current_trip_targets = values;
     }
   } else if (payload.use_trip !== false) {
     nextPayload.current_trip_target = "";
+    nextPayload.current_trip_targets = [];
   }
 
   await saveTargetProfile(nextPayload);
@@ -1168,9 +1185,10 @@ function render(data) {
 
   if (zipInput) zipInput.value = currentZip;
   if (targetSpeciesNode && data.target_species) {
-    targetSpeciesNode.value = data.target_species;
+    const targets = targetProfile?.current_trip_targets?.length ? targetProfile.current_trip_targets : [data.target_species];
+    setTargetSpeciesSelection(targets);
   } else if (targetSpeciesNode && targetProfile) {
-    targetSpeciesNode.value = targetProfile.current_trip_target || targetProfile.default_target_species || "";
+    setTargetSpeciesSelection(targetProfile.current_trip_targets?.length ? targetProfile.current_trip_targets : [targetProfile.current_trip_target || targetProfile.default_target_species]);
   }
 
   if (focusWaterNode) {

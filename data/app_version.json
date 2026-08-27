@@ -1,6 +1,6 @@
 {
   "app_name": "Angler Intel",
-  "version": "v7.7.7-water-species-maintenance",
+  "version": "v7.7.8-multi-target-species",
   "updated": "2026-08-14T00:00:00-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {
@@ -70,7 +70,8 @@
     "weather_trend_intelligence": "v7.7.4",
     "explainable_component_scoring": "v7.7.5",
     "contextual_shadow_ranking": "v7.7.6",
-    "water_species_maintenance": "v7.7.7"
+    "water_species_maintenance": "v7.7.7",
+    "multi_target_species": "v7.7.8"
   },
   "notes": [
     "Common freshwater species are active by default.",
@@ -130,6 +131,7 @@
     "v7.6 relocates mutable runtime state to the ignored instance directory through a verified, reversible compatibility-link transition.",
     "v7.6.1 hardens runtime relocation with full logical SQLite hashes, journaled recovery, safe ZIP containment, and normalized runtime-path reporting without changing authority.",
     "v7.7 adds contextual, shrunk, shadow-only personal evidence; calibration, species conditions, weather trends, and component scoring remain explainable and do not enable live personal ranking.",
-    "v7.7.7 adds local waterbody overrides, Map editing, and careful species updates from logged catches and focused Smart Trip exports."
+    "v7.7.7 adds local waterbody overrides, Map editing, and careful species updates from logged catches and focused Smart Trip exports.",
+    "v7.7.8 allows an ordered multi-species trip target set while preserving the first selection as the primary target for existing recommendation paths."
   ]
 }
