@@ -113,8 +113,8 @@
         </section>
 
         <details class="card map-add-card" open>
-          <summary>Add waterbody</summary>
-          <p class="small">Save a waterbody that is not in the starter catalog. It will persist in a local JSON sidecar and appear on the map after saving.</p>
+          <summary id="mapWaterFormTitle">Add or edit waterbody</summary>
+          <p class="small">Edits save as local water data. Starter catalog records stay intact; changing one creates a local override for this Pi.</p>
           <form id="mapAddForm" class="map-add-form">
             <div class="map-add-grid">
               <label>
@@ -154,6 +154,14 @@
                 <input id="mapWaterAccess" name="access" type="text" placeholder="shore, small craft, wade">
               </label>
               <label class="map-wide">
+                Habitat
+                <input id="mapWaterHabitat" name="habitat" type="text" placeholder="weed edge, riprap, timber">
+              </label>
+              <label>
+                Clarity tendency
+                <input id="mapWaterClarity" name="clarity_tendency" type="text" placeholder="clear, stained, variable">
+              </label>
+              <label class="map-wide">
                 Notes
                 <textarea id="mapWaterNotes" name="notes" rows="4" placeholder="Short access note, seasonal pattern, or local intel."></textarea>
               </label>
@@ -168,7 +176,8 @@
             </div>
             <div class="map-add-actions">
               <button id="mapUseCenterButton" type="button" class="secondary-button">Use map center</button>
-              <button type="submit">Save waterbody</button>
+              <button id="mapWaterSubmit" type="submit">Save waterbody</button>
+              <button id="mapCancelWaterEdit" type="button" class="secondary-button" hidden>Cancel edit</button>
             </div>
             <div id="mapAddStatus" class="small" aria-live="polite"></div>
           </form>

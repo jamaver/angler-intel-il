@@ -115,6 +115,7 @@ from app import app as flask_app
 from intelligence.map_data import get_map_data_readiness
 from intelligence.water_registry import CUSTOM_WATERS_PATH
 from persistence.manual_waters_mirror import mirror_manual_waters
+from persistence.authority_resolution import resolve_authority
 
 readiness = get_map_data_readiness()
 if readiness.get("record_count", 0) < 1:
@@ -139,27 +140,34 @@ test_record = {
 }
 
 client = flask_app.test_client()
-created_id = None
-try:
-    response = client.post("/api/waters/custom", json=test_record)
-    if response.status_code != 201:
-        errors.append(f"Manual waterbody POST failed with HTTP {response.status_code}")
-    else:
-        created = response.get_json(force=True)
-        created_id = created.get("water", {}).get("id")
-        if not created_id:
-            errors.append("Manual waterbody POST did not return an id")
+authority = resolve_authority("manual_waters")
+if authority.effective_authority == "sqlite":
+    # V7.3 makes SQLite authoritative. Exercise temporary CRUD in the focused
+    # V7.7.7 QC; this legacy JSON-era check must never write test records into
+    # an operator's live authority store.
+    data = client.get("/api/map-data").get_json(force=True)
+    if not data.get("ok") or not isinstance(data.get("waters"), list):
+        errors.append("Map data was unavailable under SQLite authority")
+else:
+    created_id = None
+    try:
+        response = client.post("/api/waters/custom", json=test_record)
+        if response.status_code != 201:
+            errors.append(f"Manual waterbody POST failed with HTTP {response.status_code}")
         else:
-            data = client.get("/api/map-data").get_json(force=True)
-            if not any(item.get("id") == created_id for item in data.get("waters", [])):
-                errors.append("Manual waterbody did not appear in /api/map-data")
-            if data.get("custom_count", 0) < 1:
-                errors.append("Map data did not report any custom waters after POST")
-finally:
-    manual_path.write_text(original_manual, encoding="utf-8")
-    # The route mirrors its temporary JSON write; reconcile after restoring the
-    # fixture so this legacy QC does not intentionally leave V7.1 drift behind.
-    mirror_manual_waters(manual_path, force=True)
+            created = response.get_json(force=True)
+            created_id = created.get("water", {}).get("id")
+            if not created_id:
+                errors.append("Manual waterbody POST did not return an id")
+            else:
+                data = client.get("/api/map-data").get_json(force=True)
+                if not any(item.get("id") == created_id for item in data.get("waters", [])):
+                    errors.append("Manual waterbody did not appear in /api/map-data")
+                if data.get("custom_count", 0) < 1:
+                    errors.append("Map data did not report any custom waters after POST")
+    finally:
+        manual_path.write_text(original_manual, encoding="utf-8")
+        mirror_manual_waters(manual_path, force=True)
 
 if errors:
     print("QC FAILED: v4.9.2 Map Context + Custom Waters")

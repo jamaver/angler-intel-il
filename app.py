@@ -30,7 +30,7 @@ from intelligence.app_health_intelligence import get_smart_intelligence_health_f
 from intelligence.app_health_sqlite_transition import get_sqlite_transition_health_for_app
 from intelligence.app_health_map_data import get_map_data_health_for_app
 from intelligence.map_data import get_map_data_readiness
-from intelligence.water_registry import append_custom_water_record, load_water_catalog, get_water_record_by_id
+from intelligence.water_registry import append_custom_water_record, get_water_record_by_id, load_water_catalog, record_water_species_observation, update_water_record
 from persistence.repositories import JsonCatchesRepository, SQLiteCatchesRepository, read_domain
 from gear.inventory import get_item as get_gear_item, record_item_usage as record_gear_item_usage
 from persistence.catches_mirror import mirror_catches
@@ -162,8 +162,8 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v7.7.6-contextual-shadow-ranking"
-APP_RELEASE = "v7.7.6-contextual-shadow-ranking"
+APP_VERSION = "v7.7.7-water-species-maintenance"
+APP_RELEASE = "v7.7.7-water-species-maintenance"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the
@@ -1437,7 +1437,17 @@ def api_add_catch():
     except Exception:
         pass
 
-    return jsonify(_enrich_catch_record(catch))
+    water_species_update = None
+    if payload.get("record_species_for_water", True):
+        try:
+            water_species_update = record_water_species_observation(
+                catch["species"], water_id=str(payload.get("waterbody_id") or ""), water_name=catch["waterbody"],
+            )
+        except Exception as exc:
+            water_species_update = {"changed": False, "warning": f"Catch saved, but water species was not updated: {exc}"}
+    response = _enrich_catch_record(catch)
+    response["water_species_update"] = water_species_update
+    return jsonify(response)
 
 
 @app.route("/api/catches/<catch_id>", methods=["DELETE"])
@@ -1477,6 +1487,20 @@ def api_add_custom_water():
             "custom_path": catalog.get("custom_source_path"),
         },
     }), 201
+
+
+@app.route("/api/waters/custom/<water_id>", methods=["PUT"])
+def api_update_custom_water(water_id):
+    payload = request.get_json(silent=True) or {}
+    try:
+        water = update_water_record(water_id, payload)
+    except AuthorityWriteError:
+        raise
+    except ValueError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
+    except Exception as exc:
+        return jsonify({"ok": False, "error": f"Could not update waterbody: {exc}"}), 500
+    return jsonify({"ok": True, "version": APP_VERSION, "water": water})
 
 
 @app.route("/health")

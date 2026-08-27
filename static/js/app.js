@@ -512,6 +512,20 @@ function renderFocusWaterSummary(data = {}) {
   focusWaterSummary.textContent = `${fit}: ${focusName} · ${focusType}`;
 }
 
+function syncCatchWaterOptions(data = {}) {
+  const options = el("catchWaterOptions");
+  const input = el("catchWaterbody");
+  if (!options) return;
+  const waters = [data.water, ...(Array.isArray(data.waters) ? data.waters : [])]
+    .filter(item => item && item.name && item.id);
+  const unique = new Map();
+  waters.forEach(water => unique.set(`${water.name}|${water.id}`, water));
+  options.innerHTML = [...unique.values()].map(water =>
+    `<option value="${escapeHtml(water.name)}" data-water-id="${escapeHtml(water.id)}"></option>`
+  ).join("");
+  if (input && !input.value && data.water?.name) input.value = data.water.name;
+}
+
 function renderTargetProfile() {
   if (!targetProfileSummary) return;
   if (!targetProfile) {
@@ -706,6 +720,8 @@ async function saveCatch() {
   const species = speciesNode ? speciesNode.value : "";
   const lure = lureNode ? lureNode.value.trim() : "";
   const waterbody = waterbodyNode ? waterbodyNode.value.trim() : "";
+  const waterOption = [...(el("catchWaterOptions")?.options || [])].find(option => option.value === waterbody);
+  const waterId = waterOption?.dataset.waterId || (waterbody ? "" : currentFocusWaterId());
   const notes = notesNode ? notesNode.value.trim() : "";
 
   if (!species) {
@@ -721,6 +737,8 @@ async function saveCatch() {
       species,
       lure,
       waterbody,
+      waterbody_id: waterId,
+      record_species_for_water: Boolean(waterId),
       notes,
       rod_id: rodNode ? rodNode.value : "",
       reel_id: reelNode ? reelNode.value : "",
@@ -1165,6 +1183,7 @@ function render(data) {
       focusWaterNode.value = "";
     }
   }
+  syncCatchWaterOptions(data);
 
   setHTML("status", `
     <div class="status-layout">

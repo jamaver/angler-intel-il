@@ -1,0 +1,8 @@
+{
+  "version": "v7.7.7-water-species-maintenance",
+  "local_water_overrides": true,
+  "map_editing": true,
+  "catch_species_observation": true,
+  "smart_trip_species_observation": true,
+  "live_personal_ranking": false
+}

@@ -90,6 +90,7 @@
     filtered: [],
     ranked: [],
     selectedId: null,
+    editingId: null,
     targetProfile: null,
     filters: {
       favorite: false,
@@ -872,6 +873,7 @@
       <div class="map-intel-actions">
         <a class="button-link" href="/water/${encodeURIComponent(selected.id)}">Open water detail</a>
         <button type="button" class="secondary-button" id="mapZoomToSelection">Zoom here</button>
+        <button type="button" class="secondary-button" id="mapEditSelection">Edit water</button>
       </div>
     `;
 
@@ -884,6 +886,7 @@
         }
       });
     }
+    byId("mapEditSelection")?.addEventListener("click", () => startWaterEdit(selected));
   }
 
   function selectWater(id, options = {}) {
@@ -1009,6 +1012,8 @@
       state: byId("mapWaterState")?.value.trim() || "IL",
       species: splitList(byId("mapWaterSpecies")?.value).join(", "),
       access: splitList(byId("mapWaterAccess")?.value).join(", "),
+      habitat: splitList(byId("mapWaterHabitat")?.value).join(", "),
+      clarity_tendency: byId("mapWaterClarity")?.value.trim(),
       notes: byId("mapWaterNotes")?.value.trim(),
       favorite: !!byId("mapWaterFavorite")?.checked,
       stocked_trout: !!byId("mapWaterTrout")?.checked
@@ -1035,18 +1040,17 @@
 
     try {
       setAddStatus("Saving waterbody...");
-      const result = await fetchJson("/api/waters/custom", {
-        method: "POST",
+      const editingId = state.editingId;
+      const result = await fetchJson(editingId ? `/api/waters/custom/${encodeURIComponent(editingId)}` : "/api/waters/custom", {
+        method: editingId ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify(payload)
       });
 
-      setAddStatus(`Saved ${result.water?.name || "waterbody"}.`, "info");
-      byId("mapAddForm")?.reset();
-      const stateField = byId("mapWaterState");
-      if (stateField) stateField.value = "IL";
+      setAddStatus(`${editingId ? "Updated" : "Saved"} ${result.water?.name || "waterbody"}.`, "info");
+      resetWaterForm();
       const speciesFilter = byId("mapSpeciesFilter");
       const typeFilter = byId("mapTypeFilter");
       if (speciesFilter) speciesFilter.value = "";
@@ -1055,6 +1059,38 @@
     } catch (error) {
       setAddStatus(`Unable to save waterbody: ${error.message || error}`, "error");
     }
+  }
+
+  function resetWaterForm() {
+    state.editingId = null;
+    byId("mapAddForm")?.reset();
+    const stateField = byId("mapWaterState");
+    if (stateField) stateField.value = "IL";
+    const title = byId("mapWaterFormTitle");
+    if (title) title.textContent = "Add or edit waterbody";
+    const submit = byId("mapWaterSubmit");
+    if (submit) submit.textContent = "Save waterbody";
+    const cancel = byId("mapCancelWaterEdit");
+    if (cancel) cancel.hidden = true;
+  }
+
+  function startWaterEdit(water) {
+    if (!water) return;
+    state.editingId = water.id;
+    const values = {
+      mapWaterName: water.name, mapWaterType: water.type, mapWaterLat: water.lat, mapWaterLon: water.lon,
+      mapWaterCity: water.city, mapWaterCounty: water.county, mapWaterState: water.state,
+      mapWaterSpecies: splitList(water.species).join(", "), mapWaterAccess: splitList(water.access).join(", "),
+      mapWaterHabitat: splitList(water.habitat).join(", "), mapWaterClarity: water.clarity_tendency, mapWaterNotes: water.notes,
+    };
+    Object.entries(values).forEach(([id, value]) => { const node = byId(id); if (node) node.value = value ?? ""; });
+    const favorite = byId("mapWaterFavorite"); if (favorite) favorite.checked = !!water.favorite;
+    const trout = byId("mapWaterTrout"); if (trout) trout.checked = !!water.stocked_trout;
+    const title = byId("mapWaterFormTitle"); if (title) title.textContent = `Edit ${water.name || "waterbody"}`;
+    const submit = byId("mapWaterSubmit"); if (submit) submit.textContent = "Save water changes";
+    const cancel = byId("mapCancelWaterEdit"); if (cancel) cancel.hidden = false;
+    byId("mapAddForm")?.closest("details")?.setAttribute("open", "");
+    byId("mapAddForm")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function bindUi() {
@@ -1112,6 +1148,7 @@
 
     byId("mapUseCenterButton")?.addEventListener("click", fillCenterFields);
     byId("mapAddForm")?.addEventListener("submit", submitManualWater);
+    byId("mapCancelWaterEdit")?.addEventListener("click", resetWaterForm);
   }
 
   function init() {

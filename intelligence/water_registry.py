@@ -329,6 +329,23 @@ def load_water_catalog(include_custom: bool = True) -> dict[str, Any]:
     # catalog is the production surface and remains JSON-returning here.
     if not include_custom:
         return _load_water_catalog_json(include_custom=False)
+    resolution = resolve_authority("manual_waters", _database_path())
+    if resolution.effective_authority == "sqlite":
+        # Base waters remain repository reference data while manual waters are
+        # authoritative in SQLite. Compose those sources directly so a manual
+        # edit is visible immediately instead of waiting for a stale combined
+        # catalog envelope to be reconciled.
+        payload = _load_water_catalog_json(include_custom=True)
+        _READ_DIAGNOSTICS = {
+            "selected_source": "sqlite_manual_plus_reference",
+            "effective_source": "sqlite",
+            "comparison_status": "not_applicable",
+            "comparison_differences": [],
+            "fallback_used": False,
+            "timing_ms": {},
+            "error": None,
+        }
+        return payload
     result = read_domain(
         "waters",
         json_repository=JsonWaterCatalogRepository(lambda: _load_water_catalog_json(include_custom=True)),
@@ -420,8 +437,11 @@ def normalize_custom_water_record(payload: dict[str, Any]) -> dict[str, Any]:
         "source": "manual",
         "favorite": _to_bool(payload.get("favorite", False)),
         "stocked_trout": _to_bool(payload.get("stocked_trout", False)),
+        "clarity_tendency": str(payload.get("clarity_tendency") or "").strip(),
+        "overrides_starter": _to_bool(payload.get("overrides_starter", False)),
         "catch_history_count": max(0, _safe_int(payload.get("catch_history_count", 0))),
         "created_at": created_at,
+        "updated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
     }
 
 
@@ -441,6 +461,51 @@ def append_custom_water_record(payload: dict[str, Any]) -> dict[str, Any]:
         mirror_manual_waters(CUSTOM_WATERS_PATH)
 
     return record
+
+
+def update_water_record(water_id: str, changes: dict[str, Any]) -> dict[str, Any]:
+    """Save a local manual record or a local override of a starter water.
+
+    Starter catalog JSON is never changed. A same-ID manual record wins during
+    catalog merge and is visibly marked as a local override.
+    """
+    identifier = str(water_id or "").strip()
+    if not identifier:
+        raise ValueError("Waterbody id is required")
+    existing = get_water_record_by_id(identifier)
+    if existing is None:
+        raise ValueError("Waterbody was not found")
+    allowed = {
+        "name", "type", "lat", "lon", "city", "county", "state", "species", "species_ids",
+        "access", "habitat", "notes", "confidence", "favorite", "stocked_trout", "clarity_tendency",
+    }
+    merged = dict(existing)
+    merged.update({key: value for key, value in (changes or {}).items() if key in allowed})
+    merged["id"] = identifier
+    merged["created_at"] = existing.get("created_at")
+    if not bool(existing.get("manual")):
+        merged["overrides_starter"] = True
+    return append_custom_water_record(merged)
+
+
+def record_water_species_observation(
+    species: str, *, water_id: str = "", water_name: str = "",
+) -> dict[str, Any] | None:
+    """Add an observed species only when it can be linked to one water safely."""
+    label = str(species or "").strip()
+    if not label:
+        return None
+    record = get_water_record_by_id(water_id) if water_id else None
+    if record is None and water_name:
+        matches = [item for item in load_water_records() if str(item.get("name") or "").strip().casefold() == str(water_name).strip().casefold()]
+        record = matches[0] if len(matches) == 1 else None
+    if record is None:
+        return None
+    present = _as_text_list(record.get("species"))
+    if any(item.casefold() == label.casefold() for item in present):
+        return {"water": record, "changed": False}
+    updated = update_water_record(str(record["id"]), {"species": [*present, label]})
+    return {"water": updated, "changed": True}
 
 
 def export_waterbody_dataset(scope: str = "manual") -> dict[str, Any]:
