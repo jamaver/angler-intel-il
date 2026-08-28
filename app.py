@@ -162,8 +162,8 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v7.7.8-multi-target-species"
-APP_RELEASE = "v7.7.8-multi-target-species"
+APP_VERSION = "v7.7.8.1-intel-ui-qc"
+APP_RELEASE = "v7.7.8.1-intel-ui-qc"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the
@@ -1442,6 +1442,8 @@ def api_add_catch():
         try:
             water_species_update = record_water_species_observation(
                 catch["species"], water_id=str(payload.get("waterbody_id") or ""), water_name=catch["waterbody"],
+                source_id=str(catch.get("id") or ""), source="catch",
+                observed_at=str(catch.get("timestamp") or ""), confidence="direct",
             )
         except Exception as exc:
             water_species_update = {"changed": False, "warning": f"Catch saved, but water species was not updated: {exc}"}

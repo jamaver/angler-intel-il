@@ -39,9 +39,12 @@ def main() -> int:
         profile.mirror_target_profile = old_mirror
     template = (ROOT / "templates" / "index.html").read_text(encoding="utf-8")
     js = (ROOT / "static" / "js" / "app.js").read_text(encoding="utf-8")
-    assert 'id="targetSpecies" multiple' in template
+    assert 'id="primaryTargetSpecies"' in template
+    assert 'id="secondaryTargetSpecies"' in template
+    assert 'id="targetSpecies" multiple' not in template
     for needle in ("selectedTargetSpecies", "setTargetSpeciesSelection", "current_trip_targets"):
         assert needle in js
+    assert "selectedOptions" not in js
     assert "Admin" not in template
     print("PASS: V7.7.8 multi-target species QC")
     return 0

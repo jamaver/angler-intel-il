@@ -417,6 +417,17 @@ def normalize_custom_water_record(payload: dict[str, Any]) -> dict[str, Any]:
     species_ids = _normalize_species_ids(payload.get("species_ids") or species)
     confidence = str(payload.get("confidence") or "manual").strip() or "manual"
     created_at = str(payload.get("created_at") or "").strip() or datetime.now().astimezone().isoformat(timespec="seconds")
+    observations = []
+    for item in payload.get("species_observations") or []:
+        if not isinstance(item, dict) or not str(item.get("species") or "").strip():
+            continue
+        observations.append({
+            "species": str(item.get("species")).strip(),
+            "source": str(item.get("source") or "legacy").strip() or "legacy",
+            "source_id": str(item.get("source_id") or "").strip(),
+            "observed_at": str(item.get("observed_at") or "").strip(),
+            "confidence": str(item.get("confidence") or "unknown").strip() or "unknown",
+        })
 
     return {
         "id": record_id,
@@ -429,6 +440,7 @@ def normalize_custom_water_record(payload: dict[str, Any]) -> dict[str, Any]:
         "lon": lon,
         "species": species,
         "species_ids": species_ids,
+        "species_observations": observations,
         "access": access,
         "habitat": habitat,
         "notes": str(payload.get("notes") or "").strip(),
@@ -477,7 +489,7 @@ def update_water_record(water_id: str, changes: dict[str, Any]) -> dict[str, Any
         raise ValueError("Waterbody was not found")
     allowed = {
         "name", "type", "lat", "lon", "city", "county", "state", "species", "species_ids",
-        "access", "habitat", "notes", "confidence", "favorite", "stocked_trout", "clarity_tendency",
+        "access", "habitat", "notes", "confidence", "favorite", "stocked_trout", "clarity_tendency", "species_observations",
     }
     merged = dict(existing)
     merged.update({key: value for key, value in (changes or {}).items() if key in allowed})
@@ -489,7 +501,8 @@ def update_water_record(water_id: str, changes: dict[str, Any]) -> dict[str, Any
 
 
 def record_water_species_observation(
-    species: str, *, water_id: str = "", water_name: str = "",
+    species: str, *, water_id: str = "", water_name: str = "", source_id: str = "",
+    source: str = "catch", observed_at: str | None = None, confidence: str = "direct",
 ) -> dict[str, Any] | None:
     """Add an observed species only when it can be linked to one water safely."""
     label = str(species or "").strip()
@@ -502,10 +515,23 @@ def record_water_species_observation(
     if record is None:
         return None
     present = _as_text_list(record.get("species"))
+    observations = [item for item in (record.get("species_observations") or []) if isinstance(item, dict)]
+    if source_id and any(str(item.get("source_id") or "") == source_id for item in observations):
+        return {"water": record, "changed": False, "observation_added": False}
+    if not source_id and any(item.casefold() == label.casefold() for item in present):
+        return {"water": record, "changed": False, "observation_added": False}
+    observations.append({
+        "species": label,
+        "source": str(source or "catch").strip() or "catch",
+        "source_id": str(source_id or "").strip(),
+        "observed_at": str(observed_at or datetime.now().astimezone().isoformat(timespec="seconds")),
+        "confidence": str(confidence or "direct").strip() or "direct",
+    })
     if any(item.casefold() == label.casefold() for item in present):
-        return {"water": record, "changed": False}
-    updated = update_water_record(str(record["id"]), {"species": [*present, label]})
-    return {"water": updated, "changed": True}
+        updated = update_water_record(str(record["id"]), {"species": present, "species_observations": observations})
+        return {"water": updated, "changed": True, "observation_added": True}
+    updated = update_water_record(str(record["id"]), {"species": [*present, label], "species_observations": observations})
+    return {"water": updated, "changed": True, "observation_added": True}
 
 
 def export_waterbody_dataset(scope: str = "manual") -> dict[str, Any]:

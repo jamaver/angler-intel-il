@@ -1,0 +1,11 @@
+{
+  "version": "v7.7.8.1-intel-ui-qc",
+  "intelligence_integrity": true,
+  "report_recommendations_do_not_write_species_evidence": true,
+  "catch_species_observations_have_provenance": true,
+  "ordered_trip_targets": true,
+  "explicit_primary_target": true,
+  "live_personal_ranking_enabled": false,
+  "data_authority_changed": false,
+  "installed_at": "2026-08-27T00:00:00-05:00"
+}

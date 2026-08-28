@@ -38,7 +38,7 @@
       <div class="control-head">
         <div>
           <h2>Target fish</h2>
-          <p class="small">Choose one or more current trip targets. The first selected species remains the primary target for existing recommendations.</p>
+          <p class="small">Choose a primary target and optional secondary interests. The primary target drives today&apos;s ranking; secondary targets are saved for planning context.</p>
         </div>
         <div class="small control-head-note">Trip target and favorites update the ranking and Smart Intelligence defaults.</div>
       </div>
@@ -48,20 +48,37 @@
           <button type="submit">Search</button>
         </form>
 
-        <div class="target-control">
+        <div class="target-control command-center-targets">
           <label>
-            Target fish
-            <select id="targetSpecies" multiple size="5" aria-describedby="targetSpeciesHint">
+            Primary target
+            <select id="primaryTargetSpecies" aria-describedby="targetSpeciesHint">
+              <option value="">Auto from conditions</option>
               {% for species in target_species_options %}
                 <option value="{{ species }}">{{ species }}</option>
               {% endfor %}
             </select>
-            <span id="targetSpeciesHint" class="small">Select multiple species as needed. The first selection is the primary trip target.</span>
+            <span id="targetSpeciesHint" class="small">This target drives Smart Intelligence and today&apos;s ranking.</span>
           </label>
+          <div class="secondary-targets-block">
+            <div class="secondary-targets-heading">
+              <span>Also interested in</span>
+              <span class="small">Planning context only</span>
+            </div>
+            <div id="secondaryTargetSpecies" class="target-chip-list" aria-live="polite"></div>
+            <div class="secondary-target-add">
+              <select id="addSecondaryTarget" aria-label="Add secondary target">
+                <option value="">Add secondary target</option>
+                {% for species in target_species_options %}
+                  <option value="{{ species }}">{{ species }}</option>
+                {% endfor %}
+              </select>
+              <button type="button" class="secondary-button" id="addSecondaryTargetButton">Add target</button>
+            </div>
+          </div>
           <div class="target-actions">
             <button type="button" id="setTripTarget">Use for Trip</button>
             <button type="button" class="secondary-button" id="setDefaultTarget">Set Default</button>
-            <button type="button" class="secondary-button" id="favoriteTarget">Favorite</button>
+            <button type="button" class="secondary-button" id="favoriteTarget">Favorite targets</button>
           </div>
           <div id="targetProfileSummary" class="control-profile-summary"></div>
         </div>

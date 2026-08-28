@@ -31,6 +31,7 @@ def main() -> int:
             assert edited["overrides_starter"] is True and edited["city"] == "Oswego"
             observation = registry.record_water_species_observation("Channel Catfish", water_id="starter-a")
             assert observation and observation["changed"] is True
+            assert observation["water"]["species_observations"][0]["source"] == "catch"
             repeat = registry.record_water_species_observation("Channel Catfish", water_id="starter-a")
             assert repeat and repeat["changed"] is False
             merged = registry._load_water_catalog_json()["records"]
@@ -43,7 +44,8 @@ def main() -> int:
     app_source = (ROOT / "app.py").read_text(encoding="utf-8")
     assert 'methods=["PUT"]' in app_source and "record_water_species_observation" in app_source
     report_source = (ROOT / "angler_reports_v38.py").read_text(encoding="utf-8")
-    assert "water_species_update" in report_source
+    assert "record_water_species_observation" not in report_source
+    assert "water_species_update" not in report_source
     print("PASS: V7.7.7 water editing and observed-species QC")
     return 0
 

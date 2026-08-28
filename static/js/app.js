@@ -1,7 +1,9 @@
 const form = document.getElementById("searchForm");
 const zipInput = document.getElementById("zipInput");
 const favoriteName = document.getElementById("favoriteName");
-const targetSpeciesNode = document.getElementById("targetSpecies");
+const targetSpeciesNode = document.getElementById("primaryTargetSpecies");
+const secondaryTargetNode = document.getElementById("secondaryTargetSpecies");
+const addSecondaryTargetNode = document.getElementById("addSecondaryTarget");
 const targetProfileSummary = document.getElementById("targetProfileSummary");
 const focusWaterNode = document.getElementById("focusWater");
 const focusWaterSummary = document.getElementById("focusWaterSummary");
@@ -13,6 +15,7 @@ let currentFocusWaterIdValue = localStorage.getItem(FOCUS_WATER_STORAGE_KEY) || 
 let latestData = null;
 let targetProfile = null;
 let gearInventory = [];
+let secondaryTargetSpecies = [];
 
 function el(id) {
   return document.getElementById(id);
@@ -435,6 +438,8 @@ if (form) {
 }
 
 targetSpeciesNode?.addEventListener("change", () => {
+  secondaryTargetSpecies = secondaryTargetSpecies.filter(value => value !== targetSpeciesNode.value);
+  renderSecondaryTargets();
   syncTargetSpecies({ use_trip: true }).catch(err => {
     console.error(err);
   });
@@ -458,7 +463,7 @@ document.getElementById("setTripTarget")?.addEventListener("click", () => {
 document.getElementById("setDefaultTarget")?.addEventListener("click", () => {
   const values = selectedTargetSpecies();
   const value = values[0] || "";
-  saveTargetProfile({ default_target_species: value, current_trip_targets: values })
+  saveTargetProfile({ default_target_species: value })
     .then(() => loadIntel(currentZip))
     .catch(err => {
       alert(err.message || "Could not save default target.");
@@ -494,13 +499,72 @@ function currentTargetSpecies() {
 }
 
 function selectedTargetSpecies() {
-  return targetSpeciesNode ? [...targetSpeciesNode.selectedOptions].map(option => option.value.trim()).filter(Boolean) : [];
+  const primary = targetSpeciesNode?.value?.trim() || "";
+  return [...new Set([primary, ...secondaryTargetSpecies].filter(Boolean))];
 }
 
 function setTargetSpeciesSelection(values = []) {
   if (!targetSpeciesNode) return;
-  const selected = new Set((Array.isArray(values) ? values : [values]).map(value => String(value || "").trim()).filter(Boolean));
-  [...targetSpeciesNode.options].forEach(option => { option.selected = selected.has(option.value); });
+  const ordered = [...new Set((Array.isArray(values) ? values : [values]).map(value => String(value || "").trim()).filter(Boolean))];
+  const primary = ordered[0] || "";
+  targetSpeciesNode.value = [...targetSpeciesNode.options].some(option => option.value === primary) ? primary : "";
+  secondaryTargetSpecies = ordered.slice(1).filter(value => [...(addSecondaryTargetNode?.options || [])].some(option => option.value === value) && value !== primary);
+  renderSecondaryTargets();
+}
+
+function renderSecondaryTargets() {
+  if (!secondaryTargetNode) return;
+  secondaryTargetNode.innerHTML = secondaryTargetSpecies.map((species, index) => `
+    <span class="target-chip">
+      <span>${escapeHtml(species)}</span>
+      <button type="button" class="target-chip-remove" data-target-remove="${escapeHtml(species)}" aria-label="Remove ${escapeHtml(species)}">&times;</button>
+      <button type="button" class="target-chip-order" data-target-up="${index}" aria-label="Move ${escapeHtml(species)} up" ${index === 0 ? "disabled" : ""}>↑</button>
+      <button type="button" class="target-chip-order" data-target-down="${index}" aria-label="Move ${escapeHtml(species)} down" ${index === secondaryTargetSpecies.length - 1 ? "disabled" : ""}>↓</button>
+    </span>
+  `).join("") || '<span class="small target-empty">No secondary targets selected.</span>';
+  if (addSecondaryTargetNode) {
+    const selected = new Set(selectedTargetSpecies());
+    [...addSecondaryTargetNode.options].forEach(option => {
+      option.disabled = Boolean(option.value && selected.has(option.value));
+    });
+    addSecondaryTargetNode.value = "";
+  }
+}
+
+function persistTargetSelection() {
+  return syncTargetSpecies({ use_trip: true });
+}
+
+secondaryTargetNode?.addEventListener("click", event => {
+  const remove = event.target.closest("[data-target-remove]");
+  const up = event.target.closest("[data-target-up]");
+  const down = event.target.closest("[data-target-down]");
+  if (remove) {
+    secondaryTargetSpecies = secondaryTargetSpecies.filter(value => value !== remove.dataset.targetRemove);
+  } else if (up) {
+    const index = Number(up.dataset.targetUp);
+    if (index > 0) [secondaryTargetSpecies[index - 1], secondaryTargetSpecies[index]] = [secondaryTargetSpecies[index], secondaryTargetSpecies[index - 1]];
+  } else if (down) {
+    const index = Number(down.dataset.targetDown);
+    if (index < secondaryTargetSpecies.length - 1) [secondaryTargetSpecies[index], secondaryTargetSpecies[index + 1]] = [secondaryTargetSpecies[index + 1], secondaryTargetSpecies[index]];
+  } else {
+    return;
+  }
+  renderSecondaryTargets();
+  persistTargetSelection().catch(err => console.error(err));
+});
+
+document.getElementById("addSecondaryTargetButton")?.addEventListener("click", () => {
+  const value = addSecondaryTargetNode?.value?.trim() || "";
+  if (!value || selectedTargetSpecies().includes(value)) return;
+  secondaryTargetSpecies.push(value);
+  renderSecondaryTargets();
+  persistTargetSelection().catch(err => alert(err.message || "Could not save secondary target."));
+});
+
+function targetSelectionLabel() {
+  const values = selectedTargetSpecies();
+  return values.length ? values.join(", ") : "Auto";
 }
 
 function currentFocusWaterId() {

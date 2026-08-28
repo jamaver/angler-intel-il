@@ -18,7 +18,6 @@ from persistence.reports_authority import load_authoritative_report, record_json
 from persistence.trip_completion import load_trip_completion
 from persistence.recommendations_authority import load_recommendation_adherence
 from integrations.google_drive import report_export_status
-from intelligence.water_registry import record_water_species_observation
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -1088,23 +1087,10 @@ def register_report_routes_v38(app):
             meta = _save_report(payload, title=title, zip_code=zip_code)
         except AuthorityWriteError as exc:
             return jsonify({"ok": False, "error": str(exc), "authority": exc.resolution.effective_authority}), exc.http_status
-        water_species_update = None
-        try:
-            selected_water = intel.get("water") if isinstance(intel.get("water"), dict) else {}
-            selected_species = str((intel.get("best_bet") or {}).get("species") or "").strip()
-            if selected_water and selected_species:
-                water_species_update = record_water_species_observation(
-                    selected_species,
-                    water_id=str(selected_water.get("id") or ""),
-                    water_name=str(selected_water.get("name") or ""),
-                )
-        except Exception as exc:
-            water_species_update = {"changed": False, "warning": f"Report saved, but water species was not updated: {exc}"}
         return jsonify({
             "ok": True,
             "version": "v3.8",
             "report": meta,
-            "water_species_update": water_species_update,
         })
 
     @app.route("/api/reports/save", methods=["POST"])
