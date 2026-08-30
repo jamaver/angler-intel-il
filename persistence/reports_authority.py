@@ -295,10 +295,24 @@ def soft_delete_all_authoritative_reports(
     index_path: str | Path,
     reports_dir: str | Path,
 ) -> list[ReportDeletionResult]:
-    """Soft-delete all active reports before any JSON/HTML cleanup begins."""
+    """Soft-delete active reports that have no recorded trip outcome.
+
+    A completion row means the report has become historical trip data, even
+    when the outcome was did-not-fish, so bulk removal must leave it intact.
+    """
     database = Path(db_path)
     with connect(database, read_only=True) as conn:
-        ids = [str(row["id"]) for row in conn.execute("SELECT id FROM trip_reports WHERE status='active' ORDER BY created_at, id")]
+        ids = [str(row["id"]) for row in conn.execute(
+            """
+            SELECT r.id
+            FROM trip_reports AS r
+            WHERE r.status = 'active'
+              AND NOT EXISTS (
+                SELECT 1 FROM trip_outcomes AS o WHERE o.report_id = r.id
+              )
+            ORDER BY r.created_at, r.id
+            """
+        )]
     return [soft_delete_authoritative_report(report_id, db_path=database, index_path=index_path, reports_dir=reports_dir) for report_id in ids]
 
 

@@ -381,7 +381,7 @@
     <div class="card">
     <h2>Saved trip plans</h2>
     <button onclick="loadReports()">Refresh reports</button>
-    <button id="deleteAllReports" type="button" class="danger" onclick="deleteAllReports()" disabled>Remove all saved reports</button>
+    <button id="deleteAllReports" type="button" class="danger" onclick="deleteAllReports()" disabled>Remove all not-completed reports</button>
     <div id="reportsList">Loading...</div>
   </div>
 
@@ -538,7 +538,11 @@ async function loadReports() {
       return;
     }
 
-    if (deleteAllButton) deleteAllButton.disabled = false;
+    const notCompletedCount = data.reports.filter(report => !report.completion).length;
+    if (deleteAllButton) {
+      deleteAllButton.disabled = notCompletedCount === 0;
+      deleteAllButton.dataset.uncompletedCount = String(notCompletedCount);
+    }
 
     const groups = new Map();
     data.reports.forEach(r => {
@@ -850,15 +854,14 @@ async function deleteReport(reportId) {
 async function deleteAllReports() {
   const box = document.getElementById("createResult");
   const deleteAllButton = document.getElementById("deleteAllReports");
-  const cards = document.querySelectorAll("[data-delete-report]");
-  const count = cards.length;
+  const count = Number(document.getElementById("deleteAllReports")?.dataset.uncompletedCount || 0);
 
   if (!count) {
-    box.textContent = "There are no saved reports to remove.";
+    box.textContent = "There are no not-completed reports to remove. Completed reports remain saved.";
     return;
   }
 
-  const message = `Remove all ${count} saved report record${count === 1 ? "" : "s"} from Saved Reports? Generated local HTML/JSON artifacts are removed; archived SQLite history is retained.`;
+  const message = `Remove all ${count} not-completed report${count === 1 ? "" : "s"} from Saved Reports? Completed reports will remain. Generated local HTML/JSON artifacts are removed; archived SQLite history is retained.`;
   if (!confirm(message)) {
     return;
   }
@@ -878,7 +881,7 @@ async function deleteAllReports() {
       return;
     }
 
-    box.textContent = `Removed ${data.deleted_report_count || 0} saved report record${data.deleted_report_count === 1 ? "" : "s"} from Saved Reports.`;
+    box.textContent = `Removed ${data.deleted_report_count || 0} not-completed report${data.deleted_report_count === 1 ? "" : "s"}. Completed reports remain saved.`;
     loadReports();
   } catch (err) {
     box.textContent = "Remove all failed: " + err;

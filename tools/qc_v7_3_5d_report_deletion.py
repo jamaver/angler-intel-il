@@ -44,11 +44,20 @@ def main() -> int:
         assert (reports / meta["json_file"]).exists() and (reports / meta["html_file"]).exists()
 
         _, second = save_fixture(db, index, reports, "report-delete-all")
+        with connect(db) as conn:
+            conn.execute(
+                """INSERT INTO trip_outcomes(trip_id, report_id, outcome, notes, legacy_payload_json,
+                   trip_occurred, completed_at, updated_at)
+                   VALUES(?, ?, 'completed', '', '{}', 1, '2026-07-14T09:00:00+00:00', '2026-07-14T09:00:00+00:00')""",
+                (second["id"], second["id"]),
+            )
+            conn.commit()
         all_deleted = authority.soft_delete_all_authoritative_reports(db_path=db, index_path=index, reports_dir=reports)
-        assert {item.report_id for item in all_deleted} == {meta["id"], second["id"]}
+        assert {item.report_id for item in all_deleted} == {meta["id"]}
         with connect(db, read_only=True) as conn:
-            assert conn.execute("SELECT COUNT(*) FROM trip_reports WHERE status='active'").fetchone()[0] == 0
+            assert conn.execute("SELECT COUNT(*) FROM trip_reports WHERE status='active'").fetchone()[0] == 1
             assert conn.execute("SELECT COUNT(*) FROM trips").fetchone()[0] == 2
+            assert conn.execute("SELECT status FROM trip_reports WHERE id=?", (second["id"],)).fetchone()[0] == "active"
             assert conn.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
             assert list(conn.execute("PRAGMA foreign_key_check")) == []
         # Soft-deleted report rows are retained for auditability and must not
@@ -60,7 +69,9 @@ def main() -> int:
         for name in ("target_profile.json", "favorites.json", "gear_inventory.json", "catches.json"):
             (data / name).write_text("{}" if name == "target_profile.json" else "[]", encoding="utf-8")
         validation = validate_database(db, source_root=data, reports_root=reports)
-        assert validation["domains"]["reports"]["extra_in_sqlite"] == 0
+        # The completed report intentionally remains active while its fixture
+        # source index is empty, so validation reports it as preserved data.
+        assert validation["domains"]["reports"]["extra_in_sqlite"] == 1
     print("PASS: V7.3.5d report deletion QC")
     return 0
 
