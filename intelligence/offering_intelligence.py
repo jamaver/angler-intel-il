@@ -28,6 +28,38 @@ def _load(path: Path, default: Any) -> Any:
 
 PROFILES = _load(PROFILE_PATH, {})
 OFFERINGS = _load(OFFERING_PATH, [])
+COMPATIBILITY = {
+    "jig": {"species_ids": ["largemouth-bass", "smallmouth-bass", "crappie", "bluegill", "walleye", "sauger", "white-bass", "northern-pike", "rainbow-trout"], "avoid_species_ids": ["common-carp", "channel-catfish"]},
+    "spinnerbait": {"species_ids": ["largemouth-bass", "smallmouth-bass", "white-bass", "northern-pike", "walleye"], "avoid_species_ids": ["common-carp", "channel-catfish", "bluegill"]},
+    "soft-plastic-worm": {"species_ids": ["largemouth-bass", "smallmouth-bass", "crappie", "bluegill", "walleye", "sauger", "common-carp", "channel-catfish"], "avoid_species_ids": ["rainbow-trout"]},
+    "crankbait": {"species_ids": ["largemouth-bass", "smallmouth-bass", "walleye", "white-bass", "northern-pike"], "avoid_species_ids": ["common-carp", "channel-catfish", "bluegill"]},
+    "topwater-popper": {"species_ids": ["largemouth-bass", "smallmouth-bass", "bluegill", "northern-pike", "white-bass"], "avoid_species_ids": ["channel-catfish", "common-carp"]},
+    "spoon": {"species_ids": ["smallmouth-bass", "walleye", "sauger", "white-bass", "northern-pike", "rainbow-trout"], "avoid_species_ids": ["common-carp", "channel-catfish"]},
+    "minnow": {"species_ids": ["crappie", "walleye", "sauger", "white-bass", "smallmouth-bass", "rainbow-trout", "channel-catfish"], "avoid_species_ids": ["common-carp"]},
+    "shiner": {"species_ids": ["walleye", "sauger", "white-bass", "crappie", "northern-pike", "smallmouth-bass"], "avoid_species_ids": ["common-carp"]},
+    "sweet-corn": {"species_ids": ["common-carp", "channel-catfish", "bluegill"], "avoid_species_ids": ["walleye", "sauger", "northern-pike"]},
+    "bread-ball": {"species_ids": ["common-carp", "bluegill", "channel-catfish"], "avoid_species_ids": ["walleye", "sauger", "northern-pike"]},
+    "dough-ball": {"species_ids": ["common-carp", "channel-catfish"], "avoid_species_ids": ["walleye", "sauger", "northern-pike"]},
+    "nightcrawler": {"species_ids": ["common-carp", "channel-catfish", "bluegill", "walleye", "sauger", "rainbow-trout"], "avoid_species_ids": []},
+    "crayfish": {"species_ids": ["largemouth-bass", "smallmouth-bass", "walleye", "sauger", "channel-catfish"], "avoid_species_ids": ["common-carp"]},
+    "cut-bait": {"species_ids": ["channel-catfish", "northern-pike", "walleye"], "avoid_species_ids": ["bluegill", "common-carp"]},
+}
+COMPATIBILITY.update({
+    "bread": {"species_ids": ["common-carp", "bluegill", "channel-catfish"], "avoid_species_ids": ["walleye", "sauger", "northern-pike"]},
+    "hot-dog": {"species_ids": ["channel-catfish", "common-carp"], "avoid_species_ids": ["walleye", "sauger"]},
+    "chicken-liver": {"species_ids": ["channel-catfish"], "avoid_species_ids": ["walleye", "sauger", "northern-pike"]},
+    "chicken-heart-gizzard": {"species_ids": ["channel-catfish"], "avoid_species_ids": ["walleye", "sauger"]},
+    "shrimp": {"species_ids": ["channel-catfish", "bluegill", "crappie"], "avoid_species_ids": ["walleye", "sauger"]},
+    "cheese": {"species_ids": ["common-carp", "channel-catfish"], "avoid_species_ids": ["walleye", "sauger"]},
+    "luncheon-meat": {"species_ids": ["common-carp", "channel-catfish"], "avoid_species_ids": ["walleye", "sauger"]},
+    "pack-bait": {"species_ids": ["common-carp", "channel-catfish"], "avoid_species_ids": ["walleye", "sauger"]},
+    "red-worm": {"species_ids": ["common-carp", "channel-catfish", "bluegill", "crappie"], "avoid_species_ids": ["walleye", "sauger"]},
+    "waxworm": {"species_ids": ["bluegill", "crappie", "rainbow-trout"], "avoid_species_ids": ["channel-catfish", "common-carp"]},
+    "mealworm": {"species_ids": ["bluegill", "crappie", "rainbow-trout"], "avoid_species_ids": ["channel-catfish", "common-carp"]},
+    "leech": {"species_ids": ["walleye", "sauger", "smallmouth-bass", "channel-catfish"], "avoid_species_ids": ["common-carp"]},
+})
+for _offering in OFFERINGS:
+    _offering.update(COMPATIBILITY.get(_offering.get("id"), {"species_ids": [], "avoid_species_ids": []}))
 ALIASES = {
     "largemouth bass": "largemouth-bass", "smallmouth bass": "smallmouth-bass",
     "crappie": "crappie", "black crappie": "crappie", "white crappie": "crappie",
@@ -158,6 +190,14 @@ def rank_offerings(ctx: dict[str, Any], forage: list[dict[str, Any]], modes: lis
     results = []
     for offering in OFFERINGS:
         score = 42
+        compatible = ctx["species_id"] in offering.get("species_ids", [])
+        avoided = ctx["species_id"] in offering.get("avoid_species_ids", [])
+        if offering.get("species_ids") and not compatible:
+            continue
+        if avoided:
+            continue
+        species_fit = 24 if compatible else 0
+        score += species_fit
         if forage_ids.intersection(offering.get("forage_classes") or []): score += 22
         if mode_ids.intersection(offering.get("feeding_modes") or []): score += 16
         if presentation["depth_zone"] in offering.get("vertical_zones", []): score += 8
@@ -170,7 +210,7 @@ def rank_offerings(ctx: dict[str, Any], forage: list[dict[str, Any]], modes: lis
         if stage == "winter" and offering.get("mobility") in {"stationary", "natural", "slow"}: score += 10
         if stage in {"fall_feed", "fall", "fall_cooling"} and offering.get("mobility") == "moving": score += 7
         if stage in {"summer", "post_spawn"} and offering["id"] in {"spinnerbait", "crankbait", "topwater-popper"}: score += 5
-        item = {"id": offering["id"], "name": offering["name"], "category": offering["category"], "score": min(100, score), "why": f"Matches {presentation['pace']} {presentation['coverage']} presentation for {position['structural_position'].replace('_', ' ')} fish position.", "presentation": presentation, "regulation_check": offering.get("regulation_check", "check_local_rules"), "live_personal_evidence": {"live_applied": False, "status": "shadow_only"}}
+        item = {"id": offering["id"], "name": offering["name"], "category": offering["category"], "score": min(100, score), "species_fit": species_fit, "why": f"Species compatibility and {presentation['pace']} {presentation['coverage']} presentation fit the {position['structural_position'].replace('_', ' ')} position.", "presentation": presentation, "regulation_check": offering.get("regulation_check", "check_local_rules"), "live_personal_evidence": {"live_applied": False, "status": "shadow_only"}}
         if offering["category"] == "artificial_lure":
             lure_type = {"jig": "jig", "spinnerbait": "spinnerbait", "crankbait": "crankbait", "topwater-popper": "topwater_popper", "spoon": "spoon"}.get(offering["id"], "soft_plastic_worm")
             item["image"] = resolve_lure_asset(lure_type=lure_type, recommendation_text=offering["name"]) ["path"]

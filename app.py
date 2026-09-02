@@ -72,6 +72,10 @@ def _store_usgs_key(key: str) -> None:
 @app.post("/api/app-health/usgs-key")
 def api_app_health_usgs_key():
     """Maintenance-only credential upload; never return or log the key."""
+    remote = str(request.remote_addr or "")
+    remote_allowed = os.environ.get("AI_ALLOW_REMOTE_USGS_KEY_UPLOAD", "0").strip().lower() in {"1", "true", "yes"}
+    if remote not in {"127.0.0.1", "::1"} and not remote_allowed:
+        return jsonify({"ok": False, "error": "USGS key upload is limited to the Pi itself unless explicitly enabled for maintenance."}), 403
     uploaded = request.files.get("key_file")
     if uploaded is not None:
         raw = uploaded.read(4096).decode("utf-8", errors="ignore").strip()

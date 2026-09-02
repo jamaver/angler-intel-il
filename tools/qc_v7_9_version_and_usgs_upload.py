@@ -18,7 +18,7 @@ def run():
         response = client.get(route)
         assert response.status_code == 200, f"{route} returned {response.status_code}"
         assert expected in response.get_data(as_text=True), f"{route} does not show current release"
-    invalid = client.post("/api/app-health/usgs-key", json={"api_key": "invalid"})
+    invalid = client.post("/api/app-health/usgs-key", json={"api_key": "invalid"}, environ_base={"REMOTE_ADDR": "127.0.0.1"})
     assert invalid.status_code == 400
     body = invalid.get_data(as_text=True)
     assert "AI_USGS_API_KEY" not in body and "c2tGm" not in body

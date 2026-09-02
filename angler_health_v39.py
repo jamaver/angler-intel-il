@@ -582,7 +582,7 @@ def _render_health_html(payload: dict[str, Any]) -> str:
     <p>API key status: <strong>{'Configured' if usgs.get('configured') else 'Not configured'}</strong></p>
     <p class="muted">The credential is stored outside the repository and is never shown here.</p>
     <form id="usgs-key-form" enctype="multipart/form-data">
-      <label for="usgs-key-file">Upload a USGS key file or enter a key line</label><br>
+      <label for="usgs-key-file">Upload a USGS key file</label><br>
       <input id="usgs-key-file" name="key_file" type="file" accept=".env,.txt,text/plain">
       <button type="submit">Save USGS Key</button>
       <div id="usgs-key-status" aria-live="polite"></div>
