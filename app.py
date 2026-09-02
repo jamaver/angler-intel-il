@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify, render_template, redirect
 import json
 import os
+import re
+import tempfile
 from pathlib import Path
 from datetime import datetime, timedelta
 import uuid
@@ -43,6 +45,48 @@ from persistence.catches_authority import (
 from persistence.authority_resolution import AuthorityWriteError, require_write_authority, resolve_authority
 
 app = Flask(__name__)
+
+USGS_ENV_FILE = Path(os.environ.get("AI_USGS_ENV_FILE", "/home/pi/.config/angler-intel/usgs.env"))
+
+
+def _store_usgs_key(key: str) -> None:
+    """Atomically replace the external USGS environment file."""
+    USGS_ENV_FILE.parent.mkdir(parents=True, exist_ok=True)
+    os.chmod(USGS_ENV_FILE.parent, 0o700)
+    fd, temporary = tempfile.mkstemp(prefix=".usgs-", dir=USGS_ENV_FILE.parent, text=True)
+    try:
+        os.fchmod(fd, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(f"AI_USGS_API_KEY={key}\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, USGS_ENV_FILE)
+    except Exception:
+        try:
+            os.unlink(temporary)
+        except OSError:
+            pass
+        raise
+
+
+@app.post("/api/app-health/usgs-key")
+def api_app_health_usgs_key():
+    """Maintenance-only credential upload; never return or log the key."""
+    uploaded = request.files.get("key_file")
+    if uploaded is not None:
+        raw = uploaded.read(4096).decode("utf-8", errors="ignore").strip()
+    else:
+        payload = request.get_json(silent=True) or {}
+        raw = str(payload.get("api_key", "")).strip()
+    if raw.startswith("AI_USGS_API_KEY="):
+        raw = raw.split("=", 1)[1].strip()
+    if not raw or "\n" in raw or "\r" in raw or not re.fullmatch(r"[A-Za-z0-9._-]{20,256}", raw):
+        return jsonify({"ok": False, "error": "Enter a valid USGS API key or key-file value."}), 400
+    try:
+        _store_usgs_key(raw)
+    except OSError:
+        return jsonify({"ok": False, "error": "USGS key storage is unavailable to the service user."}), 503
+    return jsonify({"ok": True, "configured": True, "message": "USGS API key saved securely. Restart the service to load it."})
 
 
 def _offering_intel_for(species, weather_summary, *, water_type="", habitat=None):

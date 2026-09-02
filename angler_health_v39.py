@@ -255,6 +255,11 @@ def build_health_payload(app) -> dict[str, Any]:
         "version": "v3.9",
         "created": _now_iso(),
         "issues": issues,
+        "release": app.config.get("APP_RELEASE", "unknown"),
+        "usgs": {
+            "configured": bool(os.environ.get("AI_USGS_API_KEY", "").strip()),
+            "env_file": "/home/pi/.config/angler-intel/usgs.env",
+        },
         "counts": {
             "favorites": json_checks["favorites"]["count"],
             "catches": json_checks["catches"]["count"],
@@ -409,6 +414,7 @@ def _render_health_html(payload: dict[str, Any]) -> str:
     counts = payload.get("counts", {})
     disk = payload.get("disk", {})
     issues = payload.get("issues", [])
+    usgs = payload.get("usgs", {})
 
     json_rows = []
     for name, check in payload.get("json", {}).items():
@@ -569,7 +575,20 @@ def _render_health_html(payload: dict[str, Any]) -> str:
   <a class="ai-main-tab active" href="/app-health">App Health</a>
 </nav>
   <h1>Angler Intel App Health</h1>
-  <p>Diagnostics and cleanup readiness check.</p>
+  <p>Diagnostics and cleanup readiness check. Current release: <strong>{_html_escape(payload.get("release"))}</strong></p>
+
+  <div class="card">
+    <h2>USGS Water Data</h2>
+    <p>API key status: <strong>{'Configured' if usgs.get('configured') else 'Not configured'}</strong></p>
+    <p class="muted">The credential is stored outside the repository and is never shown here.</p>
+    <form id="usgs-key-form" enctype="multipart/form-data">
+      <label for="usgs-key-file">Upload a USGS key file or enter a key line</label><br>
+      <input id="usgs-key-file" name="key_file" type="file" accept=".env,.txt,text/plain">
+      <button type="submit">Save USGS Key</button>
+      <div id="usgs-key-status" aria-live="polite"></div>
+    </form>
+    <p class="small">Accepted file content: <code>AI_USGS_API_KEY=your-key</code> or the key value alone.</p>
+  </div>
 
   <div class="card">
     <h2>Status: {_status_badge(status_ok, payload.get("status", "unknown"))}</h2>
@@ -652,6 +671,17 @@ def _render_health_html(payload: dict[str, Any]) -> str:
   <script src="/static/js/ui_polish_v442.js"></script>
   <script src="/static/js/app_health_backups_v443.js"></script>
   <script src="/static/js/google_drive_v751.js"></script>
+  <script>
+    const form = document.getElementById('usgs-key-form');
+    const status = document.getElementById('usgs-key-status');
+    form?.addEventListener('submit', async (event) => {{
+      event.preventDefault();
+      status.textContent = 'Saving securely...';
+      const response = await fetch('/api/app-health/usgs-key', {{method: 'POST', body: new FormData(form)}});
+      const result = await response.json().catch(() => ({{}}));
+      status.textContent = result.message || result.error || 'USGS key update finished.';
+    }});
+  </script>
 </body>
 </html>
 """
