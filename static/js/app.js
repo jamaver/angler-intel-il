@@ -898,6 +898,39 @@ function colorPills(colors) {
   return (colors || []).map(c => `<span class="color-pill">${c}</span>`).join("");
 }
 
+function renderOfferingIntelligence(model) {
+  if (!model) return `<div class="small">Offering guidance is unavailable for this update.</div>`;
+  const best = (model.offerings || [])[0];
+  const forage = (model.forage_hypotheses || []).slice(0, 2).map(f => f.forage.replaceAll("_", " ")).join(" / ");
+  const mode = (model.feeding_modes || [])[0]?.mode?.replaceAll("_", " ") || "opportunistic";
+  const position = model.fish_position || {};
+  const stage = model.seasonal_stage?.stage?.replaceAll("_", " ") || "seasonal transition";
+  const presentation = model.presentation || {};
+  return `
+    <div class="recommendation-summary">
+      <div class="recommendation-summary-head">
+        <div>
+          <span class="mini">Best offering</span>
+          <h3>${best?.name || "No clear offering"}</h3>
+        </div>
+        ${best?.image ? `<img class="lure-art lure-art-sm" src="${best.image}" alt="${best.name}">` : ""}
+        ${best ? `<span class="score-pill">${best.score}/100 fit</span>` : ""}
+      </div>
+      <p class="small">${best?.category?.replaceAll("_", " ") || "Local guidance"} · ${presentation.pace || "adaptive"} ${presentation.coverage || "targeted"} presentation</p>
+      <div class="offering-signal-grid">
+        <span><b>Likely mode</b>${mode}</span>
+        <span><b>Likely position</b>${position.structural_position || "unknown"} · ${position.vertical_zone || "unknown"}</span>
+        <span><b>Forage profile</b>${forage || "mixed"}</span>
+        <span><b>Stage</b>${stage} · ${model.seasonal_stage?.confidence || "low"} confidence</span>
+      </div>
+      <p class="small">${best?.why || model.note || "Use visible fish activity to adjust."}</p>
+      ${(model.time_block_recommendations || []).filter(w => w.best_offering).slice(0, 4).map(w => `<div class="small"><b>${w.label}:</b> ${w.best_offering.name} · ${w.presentation.pace} ${w.presentation.depth_zone}</div>`).join("")}
+      ${(model.offerings || []).length > 1 ? `<p class="small"><b>Alternatives:</b> ${(model.offerings || []).slice(1, 3).map(o => o.name).join(" · ")}</p>` : ""}
+      <p class="small muted-note">Heuristic guidance. Water temperature is not measured by the air-temperature feed.</p>
+    </div>
+  `;
+}
+
 function renderInsights(insights) {
   if (!insights || insights.total === 0) {
     return `<div class="small">${insights ? insights.message : "No catch history yet."}</div>`;
@@ -1311,9 +1344,10 @@ function render(data) {
   }
 
   setHTML("smartIntelligence", renderSmartIntelligence(data.smart_intelligence));
+  setHTML("offeringIntelligence", renderOfferingIntelligence(data.offering_intelligence));
 
   setHTML("conditions", `
-    🌡 ${data.weather?.temp ?? "?"}°F<br>
+    🌡 Air temperature: ${data.weather?.air_temp_f ?? data.weather?.temp ?? "?"}°F<br>
     💨 ${data.weather?.wind ?? "?"} mph<br>
     📉 ${data.weather?.pressure ?? "?"} inHg<br>
     ☁️ ${data.weather?.cloud ?? "?"}% cloud cover<br>

@@ -100,9 +100,9 @@ else:
         for needle in ("lure_asset", "fish_image", "lure_image", "fallback_used", "filename", "species_score", "best_hour", "{\"date\":", "{'date':", "{\"fish_image\"", "{\"color\""):
             if needle in prefix:
                 errors.append(f"Main report view still exposes {needle}")
-        for needle in ("Best Bet Today", "Trip Conditions", "Species Ranking", "Recommended Lures", "7-Day Fishing Outlook"):
-            if needle not in html:
-                errors.append(f"Missing report section: {needle}")
+        for needles in (("Best Bet Today",), ("Trip Conditions",), ("Species Ranking",), ("Recommended Baits &amp; Lures", "Recommended Lures"), ("7-Day Fishing Outlook",)):
+            if not any(needle in html for needle in needles):
+                errors.append(f"Missing report section: {needles[0]}")
         for needle in ("Species:", "Best Time:", "Lure:", "Why:"):
             if needle not in html:
                 errors.append(f"Missing friendly best-bet label: {needle}")

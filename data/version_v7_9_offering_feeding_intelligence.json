@@ -1,0 +1,10 @@
+{
+  "version": "v7.9-offering-feeding-intelligence",
+  "offering_intelligence": true,
+  "behavioral_pipeline": "species-behavior-forage-position-presentation-offering",
+  "air_temperature_semantics": true,
+  "solar_dayparts": true,
+  "live_personal_ranking": false,
+  "sqlite_authority_changed": false,
+  "installed_at": "2026-09-02T00:00:00Z"
+}

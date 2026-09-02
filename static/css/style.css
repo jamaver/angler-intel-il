@@ -952,6 +952,69 @@ button {
   }
 }
 
+/* V7.9 behavioral offering summary: compact enough for the dashboard, while
+   keeping the reasoning visible without exposing internal payloads. */
+.recommendation-summary {
+  border: 1px solid rgba(125, 211, 252, 0.18);
+  border-radius: 10px;
+  padding: 0.85rem;
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.recommendation-summary-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.recommendation-summary-head h3 {
+  margin: 0.2rem 0 0;
+}
+
+.score-pill {
+  color: #dbeafe;
+  background: rgba(14, 116, 144, 0.28);
+  border: 1px solid rgba(103, 232, 249, 0.25);
+  border-radius: 999px;
+  padding: 0.28rem 0.55rem;
+  white-space: nowrap;
+  font-size: 0.82rem;
+}
+
+.offering-signal-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin: 0.75rem 0;
+}
+
+.offering-signal-grid span {
+  min-width: 0;
+  color: var(--text-muted, #a8b4c7);
+  font-size: 0.82rem;
+  text-transform: capitalize;
+}
+
+.offering-signal-grid b {
+  display: block;
+  color: var(--text, #f8fafc);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.2rem;
+}
+
+.muted-note {
+  opacity: 0.78;
+}
+
+@media (max-width: 700px) {
+  .offering-signal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .secondary {
   margin-top: 12px;
   background: #38bdf8;

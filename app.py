@@ -14,6 +14,7 @@ from intelligence.species_assets import get_species_image
 from intelligence.lure_assets import resolve_lure_asset
 from intelligence.gear_intelligence import recommend_owned_setup, build_trip_packing_list, summarize_gear_maintenance, summarize_gear_usage
 from intelligence.lures import choose_lure
+from intelligence.offering_intelligence import build_offering_intelligence
 from intelligence.scoring import overall_score, time_blocks, rating, hourly_bite_forecast
 from intelligence.smart_intelligence import build_smart_intelligence, build_smart_intelligence_fallback
 from intelligence.target_profile import (
@@ -41,6 +42,22 @@ from persistence.catches_authority import (
 from persistence.authority_resolution import AuthorityWriteError, require_write_authority, resolve_authority
 
 app = Flask(__name__)
+
+
+def _offering_intel_for(species, weather_summary, *, water_type="", habitat=None):
+    """Add V7.9 behavioral guidance without changing legacy ranking fields."""
+    weather_summary = weather_summary if isinstance(weather_summary, dict) else {}
+    return build_offering_intelligence(
+        species or "Target species",
+        air_temp_f=weather_summary.get("air_temp_f", weather_summary.get("temp")),
+        water_temp_f=weather_summary.get("water_temp_f"),
+        water_temp_source=weather_summary.get("water_temp_source", "unknown"),
+        wind_mph=weather_summary.get("wind"),
+        pressure_inhg=weather_summary.get("pressure"),
+        cloud_cover=weather_summary.get("cloud"),
+        water_type=water_type,
+        habitat=habitat,
+    )
 
 
 @app.errorhandler(AuthorityWriteError)
@@ -162,8 +179,8 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v7.7.8.1-intel-ui-qc"
-APP_RELEASE = "v7.7.8.1-intel-ui-qc"
+APP_VERSION = "v7.9-offering-feeding-intelligence"
+APP_RELEASE = "v7.9-offering-feeding-intelligence"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the
@@ -840,6 +857,9 @@ def _weather_summary_for_coords(lat, lon):
 
     weather_summary = {
         "temp": round(temp_f, 1),
+        "air_temp_f": round(temp_f, 1),
+        "water_temp_f": None,
+        "water_temp_source": "unknown",
         "wind": round(wind_mph, 1),
         "pressure": round(pressure_inhg, 2),
         "cloud": cloud,
@@ -892,6 +912,9 @@ def build_water_intel(water, target_species="", zip_code=""):
         weather = fallback_weather_payload()
         weather_summary = {
             "temp": round(f_temp(weather["current"]["temperature_2m"]), 1),
+            "air_temp_f": round(f_temp(weather["current"]["temperature_2m"]), 1),
+            "water_temp_f": None,
+            "water_temp_source": "unknown",
             "wind": round(mph(weather["current"]["wind_speed_10m"]), 1),
             "pressure": round(inhg(weather["current"]["pressure_msl"]), 2),
             "cloud": weather["current"].get("cloud_cover", 0),
@@ -932,6 +955,12 @@ def build_water_intel(water, target_species="", zip_code=""):
     water_species_keys = {species_key(item) for item in water_species}
     target_species_key = species_key(resolved_target_species) if resolved_target_species else ""
     target_fit = species_fit_bonus(water, resolved_target_species)
+    offering_intelligence = _offering_intel_for(
+        resolved_target_species or "Target species",
+        weather_summary,
+        water_type=area_type,
+        habitat=water.get("habitat"),
+    )
 
     species_ranked = []
     for sp in SPECIES:
@@ -1105,6 +1134,7 @@ def build_water_intel(water, target_species="", zip_code=""):
         "species": species_ranked,
         "smart_intelligence": smart_intelligence,
         "catch_insights": insights,
+        "offering_intelligence": offering_intelligence,
     }
 
 
@@ -1215,6 +1245,13 @@ def build_intel(zip_code, target_species=""):
             error=str(exc),
         )
 
+    offering_intelligence = _offering_intel_for(
+        resolved_target_species or "Target species",
+        weather_summary,
+        water_type=area_type,
+        habitat=None,
+    )
+
     return {
         "version": APP_VERSION,
         "generated_at": datetime.now().strftime("%b %d, %Y %I:%M %p"),
@@ -1238,7 +1275,8 @@ def build_intel(zip_code, target_species=""):
         "target_profile": profile,
         "forecast": forecast,
         "catch_insights": insights,
-        "smart_intelligence": smart_intelligence
+        "smart_intelligence": smart_intelligence,
+        "offering_intelligence": offering_intelligence
     }
 
 

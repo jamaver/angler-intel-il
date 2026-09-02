@@ -297,9 +297,9 @@ def _signal_lists(
     caution: list[str] = []
 
     if temp_f is None:
-        caution.append("Water temperature is missing from the feed.")
+        caution.append("Air temperature is missing from the feed; direct water temperature is unavailable.")
     elif 55 <= temp_f <= 75:
-        positive.append("Water temperature is in a productive range.")
+        positive.append("Air temperature is in a workable range; water temperature was not measured.")
     elif temp_f < 50:
         caution.append("Cold water usually slows bait and calls for a slower presentation.")
     else:
