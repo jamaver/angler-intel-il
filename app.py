@@ -15,6 +15,7 @@ from intelligence.lure_assets import resolve_lure_asset
 from intelligence.gear_intelligence import recommend_owned_setup, build_trip_packing_list, summarize_gear_maintenance, summarize_gear_usage
 from intelligence.lures import choose_lure
 from intelligence.offering_intelligence import build_offering_intelligence
+from intelligence.environmental_evidence import build_environmental_context
 from intelligence.scoring import overall_score, time_blocks, rating, hourly_bite_forecast
 from intelligence.smart_intelligence import build_smart_intelligence, build_smart_intelligence_fallback
 from intelligence.target_profile import (
@@ -47,11 +48,18 @@ app = Flask(__name__)
 def _offering_intel_for(species, weather_summary, *, water_type="", habitat=None):
     """Add V7.9 behavioral guidance without changing legacy ranking fields."""
     weather_summary = weather_summary if isinstance(weather_summary, dict) else {}
+    evidence = weather_summary.get("environmental_evidence") or {}
+    water_evidence = evidence.get("water") if isinstance(evidence, dict) else {}
+    water_temp = weather_summary.get("water_temp_f")
+    water_source = weather_summary.get("water_temp_source")
+    if water_temp is None:
+        water_temp = water_evidence.get("temp_f")
+        water_source = water_evidence.get("temp_source", "unknown")
     return build_offering_intelligence(
         species or "Target species",
         air_temp_f=weather_summary.get("air_temp_f", weather_summary.get("temp")),
-        water_temp_f=weather_summary.get("water_temp_f"),
-        water_temp_source=weather_summary.get("water_temp_source", "unknown"),
+        water_temp_f=water_temp,
+        water_temp_source=water_source or "unknown",
         wind_mph=weather_summary.get("wind"),
         pressure_inhg=weather_summary.get("pressure"),
         cloud_cover=weather_summary.get("cloud"),
@@ -179,8 +187,8 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v7.9-offering-feeding-intelligence"
-APP_RELEASE = "v7.9-offering-feeding-intelligence"
+APP_VERSION = "v7.9.0-environmental-evidence"
+APP_RELEASE = "v7.9.0-environmental-evidence"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the
@@ -867,6 +875,7 @@ def _weather_summary_for_coords(lat, lon):
         "fallback": bool(weather.get("fallback")),
         "error": weather_error,
     }
+    weather_summary["environmental_evidence"] = build_environmental_context(weather_payload=weather)
 
     return weather, weather_summary
 
@@ -922,6 +931,7 @@ def build_water_intel(water, target_species="", zip_code=""):
             "fallback": True,
             "error": "Waterbody has no coordinates, so fallback weather is shown until it is mapped.",
         }
+        weather_summary["environmental_evidence"] = build_environmental_context(weather_payload=weather, waterbody=water)
 
     temp_f = weather_summary["temp"]
     wind_mph = weather_summary["wind"]

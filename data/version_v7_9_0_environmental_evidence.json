@@ -1,0 +1,11 @@
+{
+  "version": "v7.9.0-environmental-evidence",
+  "environmental_evidence_contract": true,
+  "open_meteo_expanded": true,
+  "solar_dayparts": true,
+  "provider_independent_context": true,
+  "runtime_cache": "instance/cache/environment",
+  "sqlite_authority_changed": false,
+  "live_personal_ranking": false,
+  "installed_at": "2026-09-02T00:00:00Z"
+}
