@@ -12,6 +12,8 @@ reports
 *.log
 *.tmp
 *.bak
+*.env
+AI_USGS_API_KEY=*
 data/admin_token.txt
 data/favorites.json
 data/catches.json

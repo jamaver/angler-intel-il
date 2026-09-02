@@ -11,9 +11,11 @@ observation is available.
 
 V7.9.0 adds the provider-neutral contract, conservative provenance, solar
 dayparts, direct-observation precedence, and an ignored runtime cache under
-`instance/cache/environment/`. Provider adapters for USGS and NOAA are staged
-for later subreleases. The dashboard continues to use its existing weather
-fallback when a provider is unavailable.
+`instance/cache/environment/`. The optional USGS adapter now uses the modern
+`api.waterdata.usgs.gov` OGC API with station-distance filtering. It reports
+anonymous/configured credential status without exposing the key. NOAA remains
+staged for a later subrelease. The dashboard continues to use its existing
+weather fallback when a provider is unavailable.
 
 Configuration planned for provider subreleases:
 
