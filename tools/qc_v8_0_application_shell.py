@@ -27,6 +27,7 @@ def run():
     for template in ("index.html", "map.html", "waters.html", "reports.html", "tackle_locker.html", "recommendations.html", "water.html"):
         body = (ROOT / "templates" / template).read_text()
         assert '{% include "_nav.html" %}' in body, template
+        assert "Current release:" not in body, f"routine release line remains in {template}"
     assert "id=\"primaryTargetSpecies\"" in (ROOT / "templates/index.html").read_text()
     dashboard = (ROOT / "templates/index.html").read_text()
     for required in ("tripPlan", "smartIntelligence", "adaptivePattern", "offeringIntelligence", "lureCards"):
@@ -36,6 +37,12 @@ def run():
         assert token in css
     assert "Admin" not in dashboard
     assert not re.search(r"<select[^>]+multiple", dashboard, re.I)
+    nav = (ROOT / "templates/_nav.html").read_text()
+    for label in ("Today", "Map", "Waters", "Trips", "Gear", "More", "Smart Picks", "Species Guide", "Data Tools", "App Health"):
+        assert label in nav
+    assert "application_shell.js" in nav
+    for template in ("index.html", "map.html", "waters.html", "reports.html", "tackle_locker.html", "recommendations.html"):
+        assert "global_nav_v433.js" not in (ROOT / "templates" / template).read_text(), template
     assert ast.parse((ROOT / "app.py").read_text())
     print("PASS: V8.0 application shell QC (9 routes)")
 

@@ -1016,6 +1016,11 @@ input::placeholder, textarea::placeholder { color: var(--ai-text-muted); }
 button { min-height: 42px; border-radius: var(--ai-radius-sm); }
 button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--ai-info); outline-offset: 2px; }
 .release-line { color: var(--ai-text-muted); font-size: .8rem; }
+.reports-page, .local-waters-page { background: var(--ai-bg) !important; color: var(--ai-text) !important; }
+.reports-page .card, .local-waters-page .card { background: var(--ai-surface) !important; color: var(--ai-text) !important; border-color: var(--ai-border) !important; box-shadow: none !important; }
+.reports-page .muted, .local-waters-page .muted, .reports-page .report-muted { color: var(--ai-text-muted) !important; }
+.reports-page a, .local-waters-page a { color: var(--ai-info); }
+.reports-page input, .reports-page select, .reports-page textarea, .local-waters-page input, .local-waters-page select, .local-waters-page textarea { background: var(--ai-surface-subtle) !important; color: var(--ai-text) !important; border-color: var(--ai-border-strong) !important; }
 
 @media (max-width: 700px) {
   body { padding-bottom: 70px; }
@@ -4326,8 +4331,37 @@ body.local-waters-page {
     grid-template-columns: 1fr;
   }
 
-  .gear-trip-context-grid,
+.gear-trip-context-grid,
   .catch-gear-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Final V8 palette reconciliation for legacy page rules. */
+body.local-waters-page,
+body.reports-page {
+  background: var(--ai-bg) !important;
+  color: var(--ai-text) !important;
+}
+.local-waters-page .card,
+.reports-page .card {
+  background: var(--ai-surface) !important;
+  color: var(--ai-text) !important;
+  border-color: var(--ai-border) !important;
+  box-shadow: none !important;
+}
+.local-waters-page .muted,
+.reports-page .muted,
+.reports-page .report-muted {
+  color: var(--ai-text-muted) !important;
+}
+.local-waters-page input,
+.local-waters-page select,
+.local-waters-page textarea,
+.reports-page input,
+.reports-page select,
+.reports-page textarea {
+  background: var(--ai-surface-subtle) !important;
+  color: var(--ai-text) !important;
+  border-color: var(--ai-border-strong) !important;
 }

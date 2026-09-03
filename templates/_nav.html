@@ -2,13 +2,13 @@
   <div class="ai-nav-inner">
     <a class="ai-brand" href="/">Angler Intel</a>
     <div class="ai-nav-links ai-nav-desktop">
-      <a class="ai-nav-link{% if request.path == '/' %} is-active{% endif %}" href="/">Today</a>
-      <a class="ai-nav-link{% if request.path == '/map' %} is-active{% endif %}" href="/map">Map</a>
-      <a class="ai-nav-link{% if request.path in ['/waters', '/water'] %} is-active{% endif %}" href="/waters">Waters</a>
-      <a class="ai-nav-link{% if request.path in ['/reports'] or request.path.startswith('/api/reports') %} is-active{% endif %}" href="/reports">Trips</a>
-      <a class="ai-nav-link{% if request.path in ['/rigs'] %} is-active{% endif %}" href="/rigs">Gear</a>
+      <a class="ai-nav-link{% if request.path == '/' %} is-active{% endif %}" href="/"{% if request.path == '/' %} aria-current="page"{% endif %}>Today</a>
+      <a class="ai-nav-link{% if request.path == '/map' %} is-active{% endif %}" href="/map"{% if request.path == '/map' %} aria-current="page"{% endif %}>Map</a>
+      <a class="ai-nav-link{% if request.path in ['/waters', '/water'] %} is-active{% endif %}" href="/waters"{% if request.path in ['/waters', '/water'] %} aria-current="page"{% endif %}>Waters</a>
+      <a class="ai-nav-link{% if request.path in ['/reports'] or request.path.startswith('/api/reports') %} is-active{% endif %}" href="/reports"{% if request.path in ['/reports'] or request.path.startswith('/api/reports') %} aria-current="page"{% endif %}>Trips</a>
+      <a class="ai-nav-link{% if request.path in ['/rigs'] %} is-active{% endif %}" href="/rigs"{% if request.path == '/rigs' %} aria-current="page"{% endif %}>Gear</a>
       <details class="ai-more-menu">
-        <summary class="ai-nav-link">More</summary>
+        <summary class="ai-nav-link" aria-label="Open more navigation">More</summary>
         <div class="ai-more-panel">
           <a href="/recommendations">Smart Picks</a>
           <a href="/species">Species Guide</a>
@@ -24,7 +24,7 @@
       <a class="ai-mobile-link{% if request.path in ['/waters', '/water'] %} is-active{% endif %}" href="/waters"><span>Waters</span></a>
       <a class="ai-mobile-link{% if request.path == '/reports' %} is-active{% endif %}" href="/reports"><span>Trips</span></a>
       <details class="ai-more-menu ai-more-mobile">
-        <summary class="ai-mobile-link"><span>More</span></summary>
+        <summary class="ai-mobile-link" aria-label="Open more navigation"><span>More</span></summary>
         <div class="ai-more-panel">
           <a href="/rigs">Gear</a>
           <a href="/recommendations">Smart Picks</a>
@@ -36,3 +36,4 @@
     </div>
   </div>
 </nav>
+<script src="/static/js/application_shell.js" defer></script>
