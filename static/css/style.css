@@ -1016,6 +1016,17 @@ button {
   cursor: pointer;
 }
 
+.pattern-plan-list {
+  display: grid;
+  gap: .35rem;
+  margin: .75rem 0;
+  padding: .65rem .75rem;
+  border-left: 3px solid var(--accent, #5b8c85);
+  background: color-mix(in srgb, var(--panel, #fff) 88%, var(--accent, #5b8c85));
+}
+
+.pattern-switches { margin-top: .6rem; }
+
 .pattern-summary {
   padding-top: 0.75rem;
 }

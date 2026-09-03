@@ -917,6 +917,7 @@ function renderOfferingIntelligence(model) {
         ${best ? `<span class="score-pill">${best.score}/100 fit</span>` : ""}
       </div>
       <p class="small">${best?.category?.replaceAll("_", " ") || "Local guidance"} · ${presentation.pace || "adaptive"} ${presentation.coverage || "targeted"} presentation</p>
+      ${best ? `<div class="pattern-plan-list"><b>Plan sequence</b>${(model.plan_variants || []).map(plan => `<div><span class="mini">${plan.plan}</span> ${plan.offering.name} · ${plan.offering.score}/100${plan.offering.pattern_adjustment ? ` <span class="small">(${plan.offering.pattern_adjustment > 0 ? "+" : ""}${plan.offering.pattern_adjustment} pattern fit)</span>` : ""}</div>`).join("")}</div>` : ""}
       <div class="offering-signal-grid">
         <span><b>Likely mode</b>${mode}</span>
         <span><b>Likely position</b>${position.structural_position || "unknown"} · ${position.vertical_zone || "unknown"}</span>
@@ -926,6 +927,7 @@ function renderOfferingIntelligence(model) {
       <p class="small">${best?.why || model.note || "Use visible fish activity to adjust."}</p>
       ${(model.time_block_recommendations || []).filter(w => w.best_offering).slice(0, 4).map(w => `<div class="small"><b>${w.label}:</b> ${w.best_offering.name} · ${w.presentation.pace} ${w.presentation.depth_zone}</div>`).join("")}
       ${(model.offerings || []).length > 1 ? `<p class="small"><b>Alternatives:</b> ${(model.offerings || []).slice(1, 3).map(o => o.name).join(" · ")}</p>` : ""}
+      ${(model.switch_triggers || []).length ? `<details class="pattern-switches"><summary>When to switch</summary><ul>${model.switch_triggers.map(line => `<li>${line}</li>`).join("")}</ul></details>` : ""}
       <p class="small muted-note">Heuristic guidance. Water temperature is not measured by the air-temperature feed.</p>
     </div>
   `;

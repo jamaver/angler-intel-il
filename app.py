@@ -94,7 +94,7 @@ def api_app_health_usgs_key():
     return jsonify({"ok": True, "configured": True, "message": "USGS API key saved securely. Restart the service to load it."})
 
 
-def _offering_intel_for(species, weather_summary, *, water_type="", habitat=None):
+def _offering_intel_for(species, weather_summary, *, water_type="", habitat=None, pattern=None):
     """Add V7.9 behavioral guidance without changing legacy ranking fields."""
     weather_summary = weather_summary if isinstance(weather_summary, dict) else {}
     evidence = weather_summary.get("environmental_evidence") or {}
@@ -114,6 +114,7 @@ def _offering_intel_for(species, weather_summary, *, water_type="", habitat=None
         cloud_cover=weather_summary.get("cloud"),
         water_type=water_type,
         habitat=habitat,
+        pattern=pattern,
     )
 
 
@@ -245,8 +246,8 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v7.10.1-adaptive-pattern-refinement"
-APP_RELEASE = "v7.10.1-adaptive-pattern-refinement"
+APP_VERSION = "v7.10.2-pattern-aware-offerings"
+APP_RELEASE = "v7.10.2-pattern-aware-offerings"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the
@@ -597,6 +598,8 @@ def build_snapshot_report(data, selected_forecast_date=None):
     weather = data.get("weather", {}) if isinstance(data, dict) else {}
     smart = data.get("smart_intelligence", {}) if isinstance(data, dict) else {}
     catch_insights = data.get("catch_insights", {}) if isinstance(data, dict) else {}
+    adaptive_pattern = data.get("adaptive_pattern", {}) if isinstance(data, dict) else {}
+    offering_model = data.get("offering_intelligence", {}) if isinstance(data, dict) else {}
     target_species = compact_text(data.get("selected_species") or data.get("target_species"), "Auto")
     forecast_rows = report_outlook_rows(data.get("forecast", []))
     forecast_selection = selected_forecast_context(
@@ -687,6 +690,17 @@ def build_snapshot_report(data, selected_forecast_date=None):
             "strategy": [compact_text(item, "") for item in smart.get("strategy", []) if compact_text(item, "")],
             "positive_signals": [compact_text(item, "") for item in smart.get("positive_signals", []) if compact_text(item, "")],
             "caution_signals": [compact_text(item, "") for item in smart.get("caution_signals", []) if compact_text(item, "")],
+        },
+        "pattern": {
+            "activity": compact_text((adaptive_pattern.get("activity") or {}).get("state"), "unknown"),
+            "mode": compact_text((adaptive_pattern.get("feeding_mode") or {}).get("primary"), "unknown"),
+            "position": compact_text((adaptive_pattern.get("position") or {}).get("horizontal"), "unknown"),
+            "vertical": compact_text((adaptive_pattern.get("position") or {}).get("vertical"), "unknown"),
+            "forage": compact_text((adaptive_pattern.get("forage") or {}).get("primary"), "unknown"),
+            "pace": compact_text((adaptive_pattern.get("presentation") or {}).get("pace"), "unknown"),
+            "confidence": compact_text((adaptive_pattern.get("confidence") or {}).get("overall"), "unknown"),
+            "plans": offering_model.get("plan_variants") or [],
+            "switch_triggers": offering_model.get("switch_triggers") or [],
         },
         "species_ranking": report_species_rows(data.get("species", []), best_bet=best_bet, best_time=data.get("best_time")),
         "recommended_lures": report_lure_rows(data.get("lure_cards", [])),
@@ -1023,13 +1037,14 @@ def build_water_intel(water, target_species="", zip_code=""):
     water_species_keys = {species_key(item) for item in water_species}
     target_species_key = species_key(resolved_target_species) if resolved_target_species else ""
     target_fit = species_fit_bonus(water, resolved_target_species)
+    adaptive_pattern = _pattern_for(resolved_target_species or "Target species", weather_summary, water=water)
     offering_intelligence = _offering_intel_for(
         resolved_target_species or "Target species",
         weather_summary,
         water_type=area_type,
         habitat=water.get("habitat"),
+        pattern=adaptive_pattern,
     )
-    adaptive_pattern = _pattern_for(resolved_target_species or "Target species", weather_summary, water=water)
 
     species_ranked = []
     for sp in SPECIES:
@@ -1315,13 +1330,14 @@ def build_intel(zip_code, target_species=""):
             error=str(exc),
         )
 
+    adaptive_pattern = _pattern_for(resolved_target_species or "Target species", weather_summary)
     offering_intelligence = _offering_intel_for(
         resolved_target_species or "Target species",
         weather_summary,
         water_type=area_type,
         habitat=None,
+        pattern=adaptive_pattern,
     )
-    adaptive_pattern = _pattern_for(resolved_target_species or "Target species", weather_summary)
 
     return {
         "version": APP_VERSION,

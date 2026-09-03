@@ -626,6 +626,25 @@
       {% endif %}
     </section>
 
+    {% if report.pattern %}
+    <section class="report-card">
+      <h2>Current Fishing Pattern</h2>
+      <div class="report-condition-grid">
+        <div class="report-metric"><b>Activity</b><span>{{ report.pattern.activity|title }}</span></div>
+        <div class="report-metric"><b>Feeding mode</b><span>{{ report.pattern.mode|replace('_', ' ')|title }}</span></div>
+        <div class="report-metric"><b>Position</b><span>{{ report.pattern.position|replace('_', ' ')|title }} · {{ report.pattern.vertical|replace('_', ' ')|title }}</span></div>
+        <div class="report-metric"><b>Likely forage</b><span>{{ report.pattern.forage|replace('_', ' ')|title }}</span></div>
+        <div class="report-metric"><b>Presentation</b><span>{{ report.pattern.pace|title }} · {{ report.pattern.confidence|title }} confidence</span></div>
+      </div>
+      {% if report.pattern.plans %}
+        <p class="report-muted"><b>Plan sequence:</b> {% for plan in report.pattern.plans %}{{ plan.plan }}: {{ plan.offering.name }}{% if not loop.last %} · {% endif %}{% endfor %}</p>
+      {% endif %}
+      {% if report.pattern.switch_triggers %}
+        <p class="report-muted"><b>Switch guidance:</b> {{ report.pattern.switch_triggers[0] }}</p>
+      {% endif %}
+    </section>
+    {% endif %}
+
     <section class="report-card">
       <h2>Species Ranking</h2>
       <div class="report-species-grid">

@@ -1,0 +1,9 @@
+{
+  "version": "v7.10.2-pattern-aware-offerings",
+  "updated": "2026-09-02T00:00:00-05:00",
+  "pattern_aware_offerings": true,
+  "live_personal_ranking_enabled": false,
+  "live_offering_ranking_changed": "bounded_pattern_fit_only",
+  "sqlite_authority_changed": false,
+  "notes": "Plan A/B/C and switch guidance are derived from the Pattern Object; personal evidence remains shadow-only."
+}

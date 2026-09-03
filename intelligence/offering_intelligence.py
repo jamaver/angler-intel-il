@@ -205,7 +205,7 @@ def presentation_strategy(ctx: dict[str, Any], modes: list[dict[str, Any]], posi
     return {"pace": "medium" if moving else "slow", "coverage": "search" if moving else "targeted", "depth_zone": position["vertical_zone"], "cover_contact": "high" if position["structural_position"] not in {"open_water", "mid_column"} else "low", "profile": "compact" if not moving else "baitfish", "action": "subtle" if not moving else "active", "color_strategy": "contrast" if (ctx["cloud_cover"] or 0) >= 60 else "natural", "scent_value": "useful" if mode in {"bottom_feeding", "opportunistic"} else "neutral"}
 
 
-def rank_offerings(ctx: dict[str, Any], forage: list[dict[str, Any]], modes: list[dict[str, Any]], position: dict[str, Any], presentation: dict[str, Any]) -> list[dict[str, Any]]:
+def rank_offerings(ctx: dict[str, Any], forage: list[dict[str, Any]], modes: list[dict[str, Any]], position: dict[str, Any], presentation: dict[str, Any], pattern: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     forage_ids = {x["forage"] for x in forage[:2]}
     mode_ids = {x["mode"] for x in modes[:2]}
     results = []
@@ -231,7 +231,17 @@ def rank_offerings(ctx: dict[str, Any], forage: list[dict[str, Any]], modes: lis
         if stage == "winter" and offering.get("mobility") in {"stationary", "natural", "slow"}: score += 10
         if stage in {"fall_feed", "fall", "fall_cooling"} and offering.get("mobility") == "moving": score += 7
         if stage in {"summer", "post_spawn"} and offering["id"] in {"spinnerbait", "crankbait", "topwater-popper"}: score += 5
-        item = {"id": offering["id"], "name": offering["name"], "category": offering["category"], "score": min(100, score), "species_fit": species_fit, "why": f"Species compatibility and {presentation['pace']} {presentation['coverage']} presentation fit the {position['structural_position'].replace('_', ' ')} position.", "presentation": presentation, "regulation_check": offering.get("regulation_check", "check_local_rules"), "live_personal_evidence": {"live_applied": False, "status": "shadow_only"}}
+        baseline_score = min(100, score)
+        pattern_adjustment = 0
+        pattern_fit = {}
+        if isinstance(pattern, dict):
+            p_forages = {str(pattern.get("forage", {}).get("primary") or "")}
+            p_modes = {str(pattern.get("feeding_mode", {}).get("primary") or "")}
+            p_vertical = str(pattern.get("position", {}).get("vertical") or "")
+            p_pace = str(pattern.get("presentation", {}).get("pace") or "")
+            pattern_fit = {"forage": 2 if p_forages.intersection(offering.get("forage_classes") or []) else 0, "feeding_mode": 2 if p_modes.intersection(offering.get("feeding_modes") or []) else 0, "position": 1 if p_vertical in (offering.get("vertical_zones") or []) else 0, "presentation": 1 if ((p_pace == "slow" and offering.get("mobility") in {"stationary", "natural", "slow"}) or (p_pace != "slow" and offering.get("mobility") == "moving")) else 0}
+            pattern_adjustment = max(-5, min(5, sum(pattern_fit.values())))
+        item = {"id": offering["id"], "name": offering["name"], "category": offering["category"], "score": min(100, baseline_score + pattern_adjustment), "baseline_score": baseline_score, "pattern_adjustment": pattern_adjustment, "pattern_fit": pattern_fit, "species_fit": species_fit, "why": f"Species compatibility and {presentation['pace']} {presentation['coverage']} presentation fit the {position['structural_position'].replace('_', ' ')} position.", "presentation": presentation, "regulation_check": offering.get("regulation_check", "check_local_rules"), "live_personal_evidence": {"live_applied": False, "status": "shadow_only"}}
         if offering["category"] == "artificial_lure":
             lure_type = {"jig": "jig", "spinnerbait": "spinnerbait", "crankbait": "crankbait", "topwater-popper": "topwater_popper", "spoon": "spoon"}.get(offering["id"], "soft_plastic_worm")
             item["image"] = resolve_lure_asset(lure_type=lure_type, recommendation_text=offering["name"]) ["path"]
@@ -255,11 +265,26 @@ def _time_block_recommendations(ctx: dict[str, Any], forage: list[dict[str, Any]
     return output
 
 
-def build_offering_intelligence(species: object, *, air_temp_f=None, water_temp_f=None, water_temp_source="unknown", wind_mph=None, pressure_inhg=None, cloud_cover=None, precipitation=False, water_type="", habitat=None, date=None, timestamp=None, sunrise=None, sunset=None) -> dict[str, Any]:
+def _plan_variants(offerings: list[dict[str, Any]], pattern: dict[str, Any] | None) -> tuple[list[dict[str, Any]], list[str]]:
+    if not offerings:
+        return [], []
+    labels = ["Plan A", "Plan B", "Plan C"]
+    plans = [{"plan": label, "offering": item, "role": "primary" if i == 0 else "alternative"} for i, (label, item) in enumerate(zip(labels, offerings[:3]))]
+    triggers = []
+    if isinstance(pattern, dict):
+        mode = pattern.get("feeding_mode", {}).get("primary")
+        if mode in {"chasing", "schooling"}: triggers.append("If fish do not respond to the search presentation, slow down and work the nearest cover or edge.")
+        elif mode in {"ambushing", "bottom_feeding"}: triggers.append("If the targeted presentation produces no activity, expand coverage or move to the next known edge.")
+        if pattern.get("environment", {}).get("daypart") in {"dawn", "dusk"}: triggers.append("As light changes, reassess whether fish are moving higher or holding tighter to cover.")
+    return plans, triggers[:2]
+
+
+def build_offering_intelligence(species: object, *, air_temp_f=None, water_temp_f=None, water_temp_source="unknown", wind_mph=None, pressure_inhg=None, cloud_cover=None, precipitation=False, water_type="", habitat=None, date=None, timestamp=None, sunrise=None, sunset=None, pattern: dict[str, Any] | None = None) -> dict[str, Any]:
     ctx = _context(species, air_temp_f=air_temp_f, water_temp_f=water_temp_f, water_temp_source=water_temp_source, wind_mph=wind_mph, pressure_inhg=pressure_inhg, cloud_cover=cloud_cover, precipitation=precipitation, water_type=water_type, habitat=habitat, date=date, timestamp=timestamp, sunrise=sunrise, sunset=sunset)
     forage = rank_forage(ctx)
     modes = feeding_modes(ctx)
     position = fish_position(ctx, modes)
     presentation = presentation_strategy(ctx, modes, position)
-    offerings = rank_offerings(ctx, forage, modes, position, presentation)
-    return {"species_id": ctx["species_id"], "air_temp_f": ctx["air_temp_f"], "water_temp_f": ctx["water_temp_f"], "water_temp_source": ctx["water_temp_source"], "seasonal_stage": ctx["stage"], "daypart": ctx["daypart"], "forage_hypotheses": forage, "feeding_modes": modes, "fish_position": position, "presentation": presentation, "offerings": offerings, "time_block_recommendations": _time_block_recommendations(ctx, forage, position), "live_personal_evidence_applied": False, "note": "Heuristic offering guidance; direct water temperature and local structure were not assumed when unavailable."}
+    offerings = rank_offerings(ctx, forage, modes, position, presentation, pattern=pattern)
+    plans, triggers = _plan_variants(offerings, pattern)
+    return {"species_id": ctx["species_id"], "air_temp_f": ctx["air_temp_f"], "water_temp_f": ctx["water_temp_f"], "water_temp_source": ctx["water_temp_source"], "seasonal_stage": ctx["stage"], "daypart": ctx["daypart"], "forage_hypotheses": forage, "feeding_modes": modes, "fish_position": position, "presentation": presentation, "offerings": offerings, "plan_variants": plans, "switch_triggers": triggers, "pattern_integration": {"enabled": isinstance(pattern, dict), "live_personal_evidence_applied": False, "adjustment_cap": 5}, "time_block_recommendations": _time_block_recommendations(ctx, forage, position), "live_personal_evidence_applied": False, "note": "Heuristic offering guidance; direct water temperature and local structure were not assumed when unavailable."}
