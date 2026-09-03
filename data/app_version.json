@@ -1,6 +1,6 @@
 {
   "app_name": "Angler Intel",
-  "version": "v8.0.0-application-shell",
+  "version": "v8.0.1-application-shell-completion",
   "updated": "2026-08-14T00:00:00-05:00",
   "base_core": "v3.6 UI repair",
   "modules": {

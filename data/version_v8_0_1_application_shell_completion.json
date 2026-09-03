@@ -1,0 +1,10 @@
+{
+  "version": "v8.0.1-application-shell-completion",
+  "updated": "2026-09-02T00:00:00-05:00",
+  "navigation_unified": true,
+  "legacy_nav_injector_removed": true,
+  "responsive_shell_completed": true,
+  "recommendation_logic_changed": false,
+  "pattern_logic_changed": false,
+  "sqlite_authority_changed": false
+}
