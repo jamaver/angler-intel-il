@@ -1,0 +1,9 @@
+{
+  "version": "v7.10.1-adaptive-pattern-refinement",
+  "updated": "2026-09-02T00:00:00-05:00",
+  "adaptive_pattern_refinement": true,
+  "live_offering_ranking_changed": false,
+  "live_personal_ranking_enabled": false,
+  "sqlite_authority_changed": false,
+  "notes": "Pattern stage now considers direct water temperature and hydrology signals without changing live offering order."
+}

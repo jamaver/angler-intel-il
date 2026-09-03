@@ -118,7 +118,7 @@ def infer_daypart(*, timestamp: object = None, sunrise: object = None, sunset: o
     return {"daypart": label, "sunrise": sunrise, "sunset": sunset, "minutes_from_sunset": None, "source": "clock_fallback"}
 
 
-def infer_seasonal_stage(species: object, *, date: object = None, air_temp_f: object = None, water_temp_f: object = None, air_temp_trend: object = None) -> dict[str, Any]:
+def infer_seasonal_stage(species: object, *, date: object = None, air_temp_f: object = None, water_temp_f: object = None, air_temp_trend: object = None, water_temp_trend_f: object = None) -> dict[str, Any]:
     sid = species_id(species)
     profile = PROFILES.get(sid) or {}
     dt = date if isinstance(date, datetime) else None
@@ -126,13 +126,34 @@ def infer_seasonal_stage(species: object, *, date: object = None, air_temp_f: ob
         try: dt = datetime.fromisoformat(date[:10])
         except ValueError: dt = None
     month = dt.month if dt else datetime.now().month
-    stage = next((name for name, months in (profile.get("stages") or {}).items() if month in months), "seasonal_transition")
+    calendar_stage = next((name for name, months in (profile.get("stages") or {}).items() if month in months), "seasonal_transition")
+    stage = calendar_stage
     confidence = "moderate" if profile else "low"
     evidence = [f"calendar month {month}"]
-    if water_temp_f is not None: evidence.append("direct water-temperature input")
+    thermal_signal = "unknown"
+    water_temp = _num(water_temp_f)
+    water_trend = _num(water_temp_trend_f)
+    if water_temp is not None:
+        evidence.append("direct water-temperature input")
+        if water_trend is not None and water_trend >= 1.5: thermal_signal = "warming"
+        elif water_trend is not None and water_trend <= -1.5: thermal_signal = "cooling"
+        elif water_temp <= 50: thermal_signal = "cool_cold-water"
+        elif water_temp >= 70: thermal_signal = "warm_water"
+        else: thermal_signal = "seasonally_moderate"
+        # Use temperature as a conservative correction when the calendar prior
+        # is clearly inconsistent; avoid inventing an exact spawning claim.
+        stages = profile.get("stages") or {}
+        if water_temp <= 50 and calendar_stage in {"spawn", "post_spawn", "summer"} and "pre_spawn" in stages:
+            stage = "pre_spawn"
+            evidence.append("cool direct water temperature keeps the pattern earlier than the calendar prior")
+        elif water_temp >= 70 and calendar_stage in {"pre_spawn", "spawn"} and "post_spawn" in stages:
+            stage = "post_spawn"
+            evidence.append("warm direct water temperature supports a later transition than the calendar prior")
+        confidence = "high" if stage != calendar_stage else "moderate"
     elif air_temp_f is not None: evidence.append("air temperature only; water stage remains estimated")
     if air_temp_trend: evidence.append(f"{air_temp_trend} air-temperature trend")
-    return {"stage": stage, "confidence": confidence, "evidence_basis": evidence, "estimated": water_temp_f is None}
+    if water_trend is not None: evidence.append(f"{('warming' if water_trend > 0 else 'cooling' if water_trend < 0 else 'stable')} water-temperature trend")
+    return {"stage": stage, "calendar_stage": calendar_stage, "confidence": confidence, "evidence_basis": evidence, "estimated": water_temp is None, "thermal_signal": thermal_signal, "water_temp_f": water_temp, "water_temp_trend_f": water_trend}
 
 
 def _context(species: object, *, air_temp_f=None, wind_mph=None, pressure_inhg=None, cloud_cover=None, precipitation=False, water_type="", habitat=None, date=None, timestamp=None, sunrise=None, sunset=None, water_temp_f=None, water_temp_source="unknown") -> dict[str, Any]:
