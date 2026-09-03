@@ -137,16 +137,18 @@ def _esc(value: Any) -> str:
 
 
 def _nav() -> str:
-    return """<nav class="ai-main-tabs" aria-label="Angler Intel navigation">
-  <a class="ai-main-tab" href="/">Dashboard</a>
-  <a class="ai-main-tab" href="/waters">Local Waters</a>
-  <a class="ai-main-tab" href="/species">Species</a>
-  <a class="ai-main-tab" href="/rigs">Rig Setups</a>
-  <a class="ai-main-tab" href="/reports">Saved Reports</a>
-  <a class="ai-main-tab active" href="/data-tools">Data Tools</a>
-  <a class="ai-main-tab" href="/app-health">App Health</a>
-  <a class="ai-main-tab" href="/admin">Admin</a>
-  <a class="ai-main-tab" href="/exports">Export</a>
+    return """<nav class="ai-nav" aria-label="Angler Intel primary navigation">
+  <div class="ai-nav-inner">
+    <a class="ai-brand" href="/">Angler Intel</a>
+    <div class="ai-nav-links">
+      <a class="ai-nav-link" href="/">Today</a>
+      <a class="ai-nav-link" href="/map">Map</a>
+      <a class="ai-nav-link" href="/waters">Waters</a>
+      <a class="ai-nav-link" href="/reports">Trips</a>
+      <a class="ai-nav-link" href="/rigs">Gear</a>
+      <a class="ai-nav-link is-active" href="/data-tools">More</a>
+    </div>
+  </div>
 </nav>"""
 
 

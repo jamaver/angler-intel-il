@@ -1,11 +1,38 @@
+:root {
+  --ai-bg: #0b1118;
+  --ai-bg-soft: #0f1720;
+  --ai-surface: #121b25;
+  --ai-surface-raised: #17222e;
+  --ai-surface-subtle: #101821;
+  --ai-border: rgba(148, 163, 184, 0.14);
+  --ai-border-strong: rgba(148, 163, 184, 0.24);
+  --ai-text: #eef3f8;
+  --ai-text-muted: #9caebe;
+  --ai-text-soft: #c9d3dd;
+  --ai-accent: #3f9b64;
+  --ai-accent-hover: #4baa70;
+  --ai-accent-soft: rgba(63, 155, 100, 0.14);
+  --ai-info: #69a7d8;
+  --ai-warning: #d5a64f;
+  --ai-danger: #d26464;
+  --ai-success: #57a773;
+  --ai-radius-sm: 8px;
+  --ai-radius: 12px;
+  --ai-radius-lg: 16px;
+  --ai-space-1: 0.25rem;
+  --ai-space-2: 0.5rem;
+  --ai-space-3: 0.75rem;
+  --ai-space-4: 1rem;
+  --ai-space-5: 1.5rem;
+  --ai-space-6: 2rem;
+  --ai-content-width: 1180px;
+}
+
 body {
   margin: 0;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background:
-    radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 30%),
-    radial-gradient(circle at top right, rgba(34, 197, 94, 0.06), transparent 26%),
-    linear-gradient(180deg, #07111e 0%, #09131f 55%, #0a1220 100%);
-  color: #eef3fb;
+  background: var(--ai-bg);
+  color: var(--ai-text);
 }
 
 .app {
@@ -950,6 +977,55 @@ button {
   h1 {
     font-size: 26px;
   }
+}
+
+/* V8 shared application shell overrides. */
+.ai-nav {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(11, 17, 24, 0.96);
+  border-bottom: 1px solid var(--ai-border);
+  backdrop-filter: blur(10px);
+}
+.ai-nav-inner {
+  width: min(100% - 2rem, var(--ai-content-width));
+  min-height: 58px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+.ai-brand { color: var(--ai-text); font-weight: 800; text-decoration: none; white-space: nowrap; }
+.ai-nav-links { display: flex; align-items: center; gap: .2rem; }
+.ai-nav-link, .ai-mobile-link { color: var(--ai-text-muted); text-decoration: none; padding: .55rem .7rem; border-radius: var(--ai-radius-sm); font-size: .92rem; font-weight: 650; }
+.ai-nav-link:hover, .ai-nav-link.is-active, .ai-mobile-link:hover, .ai-mobile-link.is-active { color: var(--ai-text); background: var(--ai-accent-soft); }
+.ai-more-menu { position: relative; }
+.ai-more-menu summary { list-style: none; cursor: pointer; }
+.ai-more-menu summary::-webkit-details-marker { display: none; }
+.ai-more-panel { position: absolute; right: 0; top: calc(100% + .45rem); min-width: 180px; padding: .45rem; display: grid; gap: .2rem; background: var(--ai-surface-raised); border: 1px solid var(--ai-border-strong); border-radius: var(--ai-radius); box-shadow: 0 12px 30px rgba(0,0,0,.3); }
+.ai-more-panel a { color: var(--ai-text-soft); text-decoration: none; padding: .55rem .65rem; border-radius: var(--ai-radius-sm); }
+.ai-more-panel a:hover { background: var(--ai-accent-soft); color: var(--ai-text); }
+.ai-more-version { color: var(--ai-text-muted); font-size: .75rem; padding: .45rem .65rem; border-top: 1px solid var(--ai-border); }
+.ai-nav-mobile { display: none; }
+.app, .gear-shell { width: min(100% - 2rem, var(--ai-content-width)); max-width: var(--ai-content-width); }
+.app { padding-top: 1.25rem; }
+.card { box-shadow: none; }
+input, select, textarea { min-height: 42px; box-sizing: border-box; border-radius: var(--ai-radius-sm); border: 1px solid var(--ai-border-strong); background: var(--ai-surface); color: var(--ai-text); padding: .55rem .7rem; }
+input::placeholder, textarea::placeholder { color: var(--ai-text-muted); }
+button { min-height: 42px; border-radius: var(--ai-radius-sm); }
+button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--ai-info); outline-offset: 2px; }
+.release-line { color: var(--ai-text-muted); font-size: .8rem; }
+
+@media (max-width: 700px) {
+  body { padding-bottom: 70px; }
+  .ai-nav { position: fixed; top: auto; bottom: 0; width: 100%; border-top: 1px solid var(--ai-border); border-bottom: 0; }
+  .ai-nav-inner { width: 100%; min-height: 64px; display: block; }
+  .ai-brand, .ai-nav-desktop { display: none; }
+  .ai-nav-mobile { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; height: 64px; }
+  .ai-mobile-link { min-height: 64px; padding: .45rem .2rem; display: grid; place-items: center; text-align: center; font-size: .75rem; border-radius: 0; }
+  .ai-more-mobile .ai-more-panel { position: absolute; bottom: calc(100% + .45rem); top: auto; right: .5rem; }
+  .app, .gear-shell { width: min(100% - 1rem, var(--ai-content-width)); }
 }
 
 /* V7.9 behavioral offering summary: compact enough for the dashboard, while

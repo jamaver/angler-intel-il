@@ -568,12 +568,12 @@ def _render_health_html(payload: dict[str, Any]) -> str:
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
   <body class="app-health-page">
-  <nav class="ai-main-tabs" aria-label="Angler Intel navigation">
-  <a class="ai-main-tab" href="/">Dashboard</a>
-  <a class="ai-main-tab" href="/waters">Local Waters</a>
-  <a class="ai-main-tab" href="/reports">Saved Reports</a>
-  <a class="ai-main-tab active" href="/app-health">App Health</a>
-</nav>
+  <nav class="ai-nav" aria-label="Angler Intel primary navigation">
+    <div class="ai-nav-inner">
+      <a class="ai-brand" href="/">Angler Intel</a>
+      <div class="ai-nav-links"><a class="ai-nav-link" href="/">Today</a><a class="ai-nav-link" href="/map">Map</a><a class="ai-nav-link" href="/waters">Waters</a><a class="ai-nav-link" href="/reports">Trips</a><a class="ai-nav-link" href="/rigs">Gear</a><a class="ai-nav-link is-active" href="/app-health">More</a></div>
+    </div>
+  </nav>
   <h1>Angler Intel App Health</h1>
   <p>Diagnostics and cleanup readiness check. Current release: <strong>{_html_escape(payload.get("release"))}</strong></p>
 

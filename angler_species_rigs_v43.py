@@ -328,21 +328,12 @@ def _trip_context() -> dict[str, Any]:
 
 
 def _nav(active: str) -> str:
-    links = [
-        ("/", "Dashboard"),
-        ("/waters", "Local Waters"),
-        ("/species", "Species"),
-        ("/rigs", "My Tackle Locker"),
-        ("/reports", "Saved Reports"),
-        ("/data-tools", "Data Tools"),
-        ("/app-health", "App Health"),
-    ]
-
-    out = ['<nav class="ai-main-tabs" aria-label="Angler Intel navigation">']
+    links = [("/", "Today"), ("/map", "Map"), ("/waters", "Waters"), ("/reports", "Trips"), ("/rigs", "Gear")]
+    out = ['<nav class="ai-nav" aria-label="Angler Intel primary navigation">', '  <div class="ai-nav-inner">', '    <a class="ai-brand" href="/">Angler Intel</a>', '    <div class="ai-nav-links">']
     for href, label in links:
-        cls = "ai-main-tab active" if href == active else "ai-main-tab"
-        out.append(f'  <a class="{cls}" href="{href}">{label}</a>')
-    out.append("</nav>")
+        cls = "ai-nav-link is-active" if href == active else "ai-nav-link"
+        out.append(f'      <a class="{cls}" href="{href}">{label}</a>')
+    out.extend(['      <a class="ai-nav-link" href="/recommendations">More</a>', '    </div>', '  </div>', '</nav>'])
     return "\n".join(out)
 
 

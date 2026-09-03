@@ -246,8 +246,8 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v7.10.2-pattern-aware-offerings"
-APP_RELEASE = "v7.10.2-pattern-aware-offerings"
+APP_VERSION = "v8.0.0-application-shell"
+APP_RELEASE = "v8.0.0-application-shell"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the

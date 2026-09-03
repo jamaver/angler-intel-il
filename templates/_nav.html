@@ -1,0 +1,38 @@
+<nav class="ai-nav" aria-label="Angler Intel primary navigation">
+  <div class="ai-nav-inner">
+    <a class="ai-brand" href="/">Angler Intel</a>
+    <div class="ai-nav-links ai-nav-desktop">
+      <a class="ai-nav-link{% if request.path == '/' %} is-active{% endif %}" href="/">Today</a>
+      <a class="ai-nav-link{% if request.path == '/map' %} is-active{% endif %}" href="/map">Map</a>
+      <a class="ai-nav-link{% if request.path in ['/waters', '/water'] %} is-active{% endif %}" href="/waters">Waters</a>
+      <a class="ai-nav-link{% if request.path in ['/reports'] or request.path.startswith('/api/reports') %} is-active{% endif %}" href="/reports">Trips</a>
+      <a class="ai-nav-link{% if request.path in ['/rigs'] %} is-active{% endif %}" href="/rigs">Gear</a>
+      <details class="ai-more-menu">
+        <summary class="ai-nav-link">More</summary>
+        <div class="ai-more-panel">
+          <a href="/recommendations">Smart Picks</a>
+          <a href="/species">Species Guide</a>
+          <a href="/data-tools">Data Tools</a>
+          <a href="/app-health">App Health</a>
+          <span class="ai-more-version">{{ app_version }}</span>
+        </div>
+      </details>
+    </div>
+    <div class="ai-nav-links ai-nav-mobile" aria-label="Mobile navigation">
+      <a class="ai-mobile-link{% if request.path == '/' %} is-active{% endif %}" href="/"><span>Today</span></a>
+      <a class="ai-mobile-link{% if request.path == '/map' %} is-active{% endif %}" href="/map"><span>Map</span></a>
+      <a class="ai-mobile-link{% if request.path in ['/waters', '/water'] %} is-active{% endif %}" href="/waters"><span>Waters</span></a>
+      <a class="ai-mobile-link{% if request.path == '/reports' %} is-active{% endif %}" href="/reports"><span>Trips</span></a>
+      <details class="ai-more-menu ai-more-mobile">
+        <summary class="ai-mobile-link"><span>More</span></summary>
+        <div class="ai-more-panel">
+          <a href="/rigs">Gear</a>
+          <a href="/recommendations">Smart Picks</a>
+          <a href="/species">Species Guide</a>
+          <a href="/data-tools">Data Tools</a>
+          <a href="/app-health">App Health</a>
+        </div>
+      </details>
+    </div>
+  </div>
+</nav>
