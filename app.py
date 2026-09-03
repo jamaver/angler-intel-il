@@ -18,6 +18,7 @@ from intelligence.gear_intelligence import recommend_owned_setup, build_trip_pac
 from intelligence.lures import choose_lure
 from intelligence.offering_intelligence import build_offering_intelligence
 from intelligence.environmental_evidence import build_environmental_context
+from intelligence.pattern_intelligence import build_pattern
 from intelligence.scoring import overall_score, time_blocks, rating, hourly_bite_forecast
 from intelligence.smart_intelligence import build_smart_intelligence, build_smart_intelligence_fallback
 from intelligence.target_profile import (
@@ -113,6 +114,15 @@ def _offering_intel_for(species, weather_summary, *, water_type="", habitat=None
         cloud_cover=weather_summary.get("cloud"),
         water_type=water_type,
         habitat=habitat,
+    )
+
+
+def _pattern_for(species, weather_summary, *, water=None):
+    evidence = (weather_summary or {}).get("environmental_evidence") or {}
+    return build_pattern(
+        species or "Target species",
+        evidence,
+        water_context=water or {},
     )
 
 
@@ -235,8 +245,8 @@ except Exception as exc:
 # --- end v3.7 backup/export routes ---
 
 
-APP_VERSION = "v7.9.0-environmental-evidence"
-APP_RELEASE = "v7.9.0-environmental-evidence"
+APP_VERSION = "v7.10.0-pattern-foundation"
+APP_RELEASE = "v7.10.0-pattern-foundation"
 app.config["APP_VERSION"] = APP_VERSION
 app.config["APP_RELEASE"] = APP_RELEASE
 # Keep the core version marker stable for compatibility while surfacing the
@@ -1019,6 +1029,7 @@ def build_water_intel(water, target_species="", zip_code=""):
         water_type=area_type,
         habitat=water.get("habitat"),
     )
+    adaptive_pattern = _pattern_for(resolved_target_species or "Target species", weather_summary, water=water)
 
     species_ranked = []
     for sp in SPECIES:
@@ -1193,6 +1204,7 @@ def build_water_intel(water, target_species="", zip_code=""):
         "smart_intelligence": smart_intelligence,
         "catch_insights": insights,
         "offering_intelligence": offering_intelligence,
+        "adaptive_pattern": adaptive_pattern,
     }
 
 
@@ -1309,6 +1321,7 @@ def build_intel(zip_code, target_species=""):
         water_type=area_type,
         habitat=None,
     )
+    adaptive_pattern = _pattern_for(resolved_target_species or "Target species", weather_summary)
 
     return {
         "version": APP_VERSION,
@@ -1334,7 +1347,8 @@ def build_intel(zip_code, target_species=""):
         "forecast": forecast,
         "catch_insights": insights,
         "smart_intelligence": smart_intelligence,
-        "offering_intelligence": offering_intelligence
+        "offering_intelligence": offering_intelligence,
+        "adaptive_pattern": adaptive_pattern
     }
 
 

@@ -931,6 +931,29 @@ function renderOfferingIntelligence(model) {
   `;
 }
 
+function renderAdaptivePattern(pattern) {
+  if (!pattern) return `<div class="small">Pattern guidance is unavailable.</div>`;
+  const clean = value => String(value || "unknown").replaceAll("_", " ");
+  const forage = pattern.forage || {};
+  const position = pattern.position || {};
+  const presentation = pattern.presentation || {};
+  const confidence = pattern.confidence || {};
+  return `
+    <div class="pattern-summary">
+      <div class="pattern-grid">
+        <span><b>Activity</b>${clean(pattern.activity?.state)} · ${pattern.activity?.score ?? "?"}/100</span>
+        <span><b>Feeding mode</b>${clean(pattern.feeding_mode?.primary)}</span>
+        <span><b>Likely position</b>${clean(position.horizontal)} · ${clean(position.vertical)}</span>
+        <span><b>Likely forage</b>${clean(forage.primary)}</span>
+        <span><b>Presentation</b>${clean(presentation.pace)} · ${clean(presentation.coverage)} · ${clean(presentation.profile)}</span>
+        <span><b>Confidence</b>${clean(confidence.overall)} · ${confidence.score ?? "?"}/100</span>
+      </div>
+      <details><summary>Why this pattern?</summary><ul>${(pattern.explanation || []).map(line => `<li>${line}</li>`).join("")}</ul></details>
+      <p class="small muted-note">Pattern guidance is heuristic. Personal evidence remains shadow-only and does not change today’s ranking.</p>
+    </div>
+  `;
+}
+
 function renderInsights(insights) {
   if (!insights || insights.total === 0) {
     return `<div class="small">${insights ? insights.message : "No catch history yet."}</div>`;
@@ -1344,6 +1367,7 @@ function render(data) {
   }
 
   setHTML("smartIntelligence", renderSmartIntelligence(data.smart_intelligence));
+  setHTML("adaptivePattern", renderAdaptivePattern(data.adaptive_pattern));
   setHTML("offeringIntelligence", renderOfferingIntelligence(data.offering_intelligence));
 
   setHTML("conditions", `
