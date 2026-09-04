@@ -404,6 +404,10 @@ def _html_escape(value: Any) -> str:
     return html.escape("" if value is None else str(value))
 
 
+def _nav() -> str:
+    return render_template("_nav.html")
+
+
 def _status_badge(ok: bool, text: str) -> str:
     cls = "ok" if ok else "bad"
     return f"<span class='badge {cls}'>{_html_escape(text)}</span>"
@@ -568,12 +572,7 @@ def _render_health_html(payload: dict[str, Any]) -> str:
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
   <body class="app-health-page">
-  <nav class="ai-nav" aria-label="Angler Intel primary navigation">
-    <div class="ai-nav-inner">
-      <a class="ai-brand" href="/">Angler Intel</a>
-      <div class="ai-nav-links"><a class="ai-nav-link" href="/">Today</a><a class="ai-nav-link" href="/map">Map</a><a class="ai-nav-link" href="/waters">Waters</a><a class="ai-nav-link" href="/reports">Trips</a><a class="ai-nav-link" href="/rigs">Gear</a><a class="ai-nav-link is-active" href="/app-health">More</a></div>
-    </div>
-  </nav>
+  {_nav()}
   <h1>Angler Intel App Health</h1>
   <p>Diagnostics and cleanup readiness check. Current release: <strong>{_html_escape(payload.get("release"))}</strong></p>
 
@@ -667,7 +666,6 @@ def _render_health_html(payload: dict[str, Any]) -> str:
     <a href="/">Dashboard</a> |
     <a href="/reports">Saved Reports</a>
   </p>
-  <script src="/static/js/global_nav_v433.js"></script>
   <script src="/static/js/ui_polish_v442.js"></script>
   <script src="/static/js/app_health_backups_v443.js"></script>
   <script src="/static/js/google_drive_v751.js"></script>

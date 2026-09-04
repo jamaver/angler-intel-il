@@ -28,6 +28,8 @@ def run():
         body = (ROOT / "templates" / template).read_text()
         assert '{% include "_nav.html" %}' in body, template
         assert "Current release:" not in body, f"routine release line remains in {template}"
+    assert "<style>" not in (ROOT / "templates/waters.html").read_text()
+    assert "<style>" not in (ROOT / "templates/reports.html").read_text()
     assert "id=\"primaryTargetSpecies\"" in (ROOT / "templates/index.html").read_text()
     dashboard = (ROOT / "templates/index.html").read_text()
     for required in ("tripPlan", "smartIntelligence", "adaptivePattern", "offeringIntelligence", "lureCards"):
@@ -43,6 +45,11 @@ def run():
     assert "application_shell.js" in nav
     for template in ("index.html", "map.html", "waters.html", "reports.html", "tackle_locker.html", "recommendations.html"):
         assert "global_nav_v433.js" not in (ROOT / "templates" / template).read_text(), template
+    for module in ("angler_species_rigs_v43.py", "angler_cleanup_v431.py", "angler_health_v39.py", "angler_exports_v37.py"):
+        source = (ROOT / module).read_text()
+        assert "render_template(\"_nav.html\")" in source, module
+        assert '<nav class="ai-nav"' not in source, f"duplicated nav in {module}"
+        assert "global_nav_v433.js" not in source, f"legacy injector in {module}"
     assert ast.parse((ROOT / "app.py").read_text())
     print("PASS: V8.0 application shell QC (9 routes)")
 

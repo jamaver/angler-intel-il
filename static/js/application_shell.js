@@ -7,6 +7,10 @@
   });
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
-    document.querySelectorAll(".ai-more-menu[open]").forEach((menu) => menu.removeAttribute("open"));
+    document.querySelectorAll(".ai-more-menu[open]").forEach((menu) => {
+      const summary = menu.querySelector("summary");
+      menu.removeAttribute("open");
+      if (summary) summary.focus();
+    });
   });
 })();

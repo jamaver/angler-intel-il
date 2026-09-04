@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from flask import Response, jsonify, send_file
+from flask import Response, jsonify, render_template, send_file
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -256,12 +256,7 @@ def register_export_routes_v37(app):
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-  <nav class="ai-nav" aria-label="Angler Intel primary navigation">
-    <div class="ai-nav-inner">
-      <a class="ai-brand" href="/">Angler Intel</a>
-      <div class="ai-nav-links"><a class="ai-nav-link" href="/">Today</a><a class="ai-nav-link" href="/map">Map</a><a class="ai-nav-link" href="/waters">Waters</a><a class="ai-nav-link" href="/reports">Trips</a><a class="ai-nav-link" href="/rigs">Gear</a><a class="ai-nav-link is-active" href="/data-tools">More</a></div>
-    </div>
-  </nav>
+  {render_template("_nav.html")}
   <h1>Angler Intel IL Backup & Export</h1>
   <p>v3.7 adds safe exports for favorites, catches, and local app data.</p>
 
@@ -322,7 +317,6 @@ async function loadBackups() {
   }
 }
 </script>
-  <script src="/static/js/global_nav_v433.js"></script>
   <script src="/static/js/ui_polish_v442.js"></script>
 </body>
 </html>

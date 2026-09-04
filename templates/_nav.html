@@ -7,13 +7,13 @@
       <a class="ai-nav-link{% if request.path in ['/waters', '/water'] %} is-active{% endif %}" href="/waters"{% if request.path in ['/waters', '/water'] %} aria-current="page"{% endif %}>Waters</a>
       <a class="ai-nav-link{% if request.path in ['/reports'] or request.path.startswith('/api/reports') %} is-active{% endif %}" href="/reports"{% if request.path in ['/reports'] or request.path.startswith('/api/reports') %} aria-current="page"{% endif %}>Trips</a>
       <a class="ai-nav-link{% if request.path in ['/rigs'] %} is-active{% endif %}" href="/rigs"{% if request.path == '/rigs' %} aria-current="page"{% endif %}>Gear</a>
-      <details class="ai-more-menu">
-        <summary class="ai-nav-link" aria-label="Open more navigation">More</summary>
+      <details class="ai-more-menu{% if request.path in ['/recommendations', '/species', '/data-tools', '/app-health'] %} is-active{% endif %}">
+        <summary class="ai-nav-link" aria-label="Open more navigation"{% if request.path in ['/recommendations', '/species', '/data-tools', '/app-health'] %} aria-current="page"{% endif %}>More</summary>
         <div class="ai-more-panel">
-          <a href="/recommendations">Smart Picks</a>
-          <a href="/species">Species Guide</a>
-          <a href="/data-tools">Data Tools</a>
-          <a href="/app-health">App Health</a>
+          <a href="/recommendations"{% if request.path == '/recommendations' %} aria-current="page"{% endif %}>Smart Picks</a>
+          <a href="/species"{% if request.path == '/species' %} aria-current="page"{% endif %}>Species Guide</a>
+          <a href="/data-tools"{% if request.path == '/data-tools' %} aria-current="page"{% endif %}>Data Tools</a>
+          <a href="/app-health"{% if request.path == '/app-health' %} aria-current="page"{% endif %}>App Health</a>
           <span class="ai-more-version">{{ app_version }}</span>
         </div>
       </details>
@@ -23,14 +23,15 @@
       <a class="ai-mobile-link{% if request.path == '/map' %} is-active{% endif %}" href="/map"><span>Map</span></a>
       <a class="ai-mobile-link{% if request.path in ['/waters', '/water'] %} is-active{% endif %}" href="/waters"><span>Waters</span></a>
       <a class="ai-mobile-link{% if request.path == '/reports' %} is-active{% endif %}" href="/reports"><span>Trips</span></a>
-      <details class="ai-more-menu ai-more-mobile">
-        <summary class="ai-mobile-link" aria-label="Open more navigation"><span>More</span></summary>
+      <details class="ai-more-menu ai-more-mobile{% if request.path in ['/rigs', '/recommendations', '/species', '/data-tools', '/app-health'] %} is-active{% endif %}">
+        <summary class="ai-mobile-link" aria-label="Open more navigation"{% if request.path in ['/rigs', '/recommendations', '/species', '/data-tools', '/app-health'] %} aria-current="page"{% endif %}><span>More</span></summary>
         <div class="ai-more-panel">
-          <a href="/rigs">Gear</a>
-          <a href="/recommendations">Smart Picks</a>
-          <a href="/species">Species Guide</a>
-          <a href="/data-tools">Data Tools</a>
-          <a href="/app-health">App Health</a>
+          <a href="/rigs"{% if request.path == '/rigs' %} aria-current="page"{% endif %}>Gear</a>
+          <a href="/recommendations"{% if request.path == '/recommendations' %} aria-current="page"{% endif %}>Smart Picks</a>
+          <a href="/species"{% if request.path == '/species' %} aria-current="page"{% endif %}>Species Guide</a>
+          <a href="/data-tools"{% if request.path == '/data-tools' %} aria-current="page"{% endif %}>Data Tools</a>
+          <a href="/app-health"{% if request.path == '/app-health' %} aria-current="page"{% endif %}>App Health</a>
+          <span class="ai-more-version">{{ app_version }}</span>
         </div>
       </details>
     </div>

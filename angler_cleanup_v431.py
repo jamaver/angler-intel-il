@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from flask import jsonify, request
+from flask import jsonify, render_template, request
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -137,19 +137,7 @@ def _esc(value: Any) -> str:
 
 
 def _nav() -> str:
-    return """<nav class="ai-nav" aria-label="Angler Intel primary navigation">
-  <div class="ai-nav-inner">
-    <a class="ai-brand" href="/">Angler Intel</a>
-    <div class="ai-nav-links">
-      <a class="ai-nav-link" href="/">Today</a>
-      <a class="ai-nav-link" href="/map">Map</a>
-      <a class="ai-nav-link" href="/waters">Waters</a>
-      <a class="ai-nav-link" href="/reports">Trips</a>
-      <a class="ai-nav-link" href="/rigs">Gear</a>
-      <a class="ai-nav-link is-active" href="/data-tools">More</a>
-    </div>
-  </div>
-</nav>"""
+    return render_template("_nav.html")
 
 
 def _data_tools_page() -> str:
@@ -305,7 +293,6 @@ async function resetSpecies() {{
 
 loadSpecies();
 </script>
-  <script src="/static/js/global_nav_v433.js"></script>
   <script src="/static/js/ui_polish_v442.js"></script>
 </body>
 </html>

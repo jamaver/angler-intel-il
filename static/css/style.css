@@ -1,21 +1,22 @@
 :root {
-  --ai-bg: #0b1118;
-  --ai-bg-soft: #0f1720;
-  --ai-surface: #121b25;
-  --ai-surface-raised: #17222e;
-  --ai-surface-subtle: #101821;
-  --ai-border: rgba(148, 163, 184, 0.14);
-  --ai-border-strong: rgba(148, 163, 184, 0.24);
-  --ai-text: #eef3f8;
-  --ai-text-muted: #9caebe;
-  --ai-text-soft: #c9d3dd;
-  --ai-accent: #3f9b64;
-  --ai-accent-hover: #4baa70;
-  --ai-accent-soft: rgba(63, 155, 100, 0.14);
-  --ai-info: #69a7d8;
-  --ai-warning: #d5a64f;
-  --ai-danger: #d26464;
-  --ai-success: #57a773;
+  --ai-bg: #101614;
+  --ai-bg-soft: #141b18;
+  --ai-surface: #18211d;
+  --ai-surface-raised: #222e27;
+  --ai-surface-subtle: #151d19;
+  --ai-border: #35463b;
+  --ai-border-strong: #4a5d50;
+  --ai-text: #edf2ea;
+  --ai-text-muted: #a9b7aa;
+  --ai-text-soft: #d5ded5;
+  --ai-accent: #7db88b;
+  --ai-accent-hover: #91c49b;
+  --ai-accent-soft: rgba(125, 184, 139, 0.16);
+  --ai-info: #91b8c8;
+  --ai-warning: #d7b56d;
+  --ai-danger: #e28f83;
+  --ai-success: #7db88b;
+  --ai-on-accent: #101614;
   --ai-radius-sm: 8px;
   --ai-radius: 12px;
   --ai-radius-lg: 16px;
@@ -999,13 +1000,13 @@ button {
 .ai-brand { color: var(--ai-text); font-weight: 800; text-decoration: none; white-space: nowrap; }
 .ai-nav-links { display: flex; align-items: center; gap: .2rem; }
 .ai-nav-link, .ai-mobile-link { color: var(--ai-text-muted); text-decoration: none; padding: .55rem .7rem; border-radius: var(--ai-radius-sm); font-size: .92rem; font-weight: 650; }
-.ai-nav-link:hover, .ai-nav-link.is-active, .ai-mobile-link:hover, .ai-mobile-link.is-active { color: var(--ai-text); background: var(--ai-accent-soft); }
+.ai-nav-link:hover, .ai-nav-link.is-active, .ai-more-menu.is-active > summary, .ai-mobile-link:hover, .ai-mobile-link.is-active { color: var(--ai-on-accent); background: var(--ai-accent); }
 .ai-more-menu { position: relative; }
 .ai-more-menu summary { list-style: none; cursor: pointer; }
 .ai-more-menu summary::-webkit-details-marker { display: none; }
 .ai-more-panel { position: absolute; right: 0; top: calc(100% + .45rem); min-width: 180px; padding: .45rem; display: grid; gap: .2rem; background: var(--ai-surface-raised); border: 1px solid var(--ai-border-strong); border-radius: var(--ai-radius); box-shadow: 0 12px 30px rgba(0,0,0,.3); }
 .ai-more-panel a { color: var(--ai-text-soft); text-decoration: none; padding: .55rem .65rem; border-radius: var(--ai-radius-sm); }
-.ai-more-panel a:hover { background: var(--ai-accent-soft); color: var(--ai-text); }
+.ai-more-panel a:hover, .ai-more-panel a[aria-current="page"] { background: var(--ai-accent-soft); color: var(--ai-text); }
 .ai-more-version { color: var(--ai-text-muted); font-size: .75rem; padding: .45rem .65rem; border-top: 1px solid var(--ai-border); }
 .ai-nav-mobile { display: none; }
 .app, .gear-shell { width: min(100% - 2rem, var(--ai-content-width)); max-width: var(--ai-content-width); }
@@ -1022,9 +1023,27 @@ button:focus-visible, a:focus-visible, summary:focus-visible, input:focus-visibl
 .reports-page a, .local-waters-page a { color: var(--ai-info); }
 .reports-page input, .reports-page select, .reports-page textarea, .local-waters-page input, .local-waters-page select, .local-waters-page textarea { background: var(--ai-surface-subtle) !important; color: var(--ai-text) !important; border-color: var(--ai-border-strong) !important; }
 
+/* Final scoped palette reconciliation for the legacy waters result components. */
+.local-waters-page .card h1,
+.local-waters-page .card h2,
+.local-waters-page .card h3,
+.local-waters-page .card h4,
+.local-waters-page .waters-results-card h2,
+.local-waters-page .waters-results-card #summary,
+.local-waters-page .water h3,
+.local-waters-page .water p,
+.local-waters-page .water-title {
+  color: var(--ai-text) !important;
+}
+.local-waters-page .card .muted,
+.local-waters-page .card p.muted,
+.local-waters-page .water .muted {
+  color: var(--ai-text-muted) !important;
+}
+
 @media (max-width: 700px) {
-  body { padding-bottom: 70px; }
-  .ai-nav { position: fixed; top: auto; bottom: 0; width: 100%; border-top: 1px solid var(--ai-border); border-bottom: 0; }
+  body { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+  .ai-nav { position: fixed; top: auto; bottom: 0; width: 100%; border-top: 1px solid var(--ai-border); border-bottom: 0; padding-bottom: env(safe-area-inset-bottom); }
   .ai-nav-inner { width: 100%; min-height: 64px; display: block; }
   .ai-brand, .ai-nav-desktop { display: none; }
   .ai-nav-mobile { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; height: 64px; }
@@ -3515,11 +3534,8 @@ body.local-waters-page {
 
 /* Angler Intel v6.10 My Tackle Locker */
 .gear-page {
-  background:
-    radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 30%),
-    radial-gradient(circle at top right, rgba(34, 197, 94, 0.06), transparent 26%),
-    linear-gradient(180deg, #07111e 0%, #09131f 55%, #0a1220 100%);
-  color: #eef3fb;
+  background: var(--ai-bg);
+  color: var(--ai-text);
 }
 
 .gear-shell {
